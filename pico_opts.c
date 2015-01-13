@@ -11,6 +11,7 @@ typedef struct{
   char   *dev;
   int16_t h;     /* device handle (0 if not opened yet) */
   int16_t help;
+  FILE   *log;
     /* chan */
   int16_t channel;
   int16_t enable;
@@ -43,6 +44,7 @@ par_ini(pico_pars_t *pars){
   pars->dev      = NULL;
   pars->h        = 0;
   pars->help     = 0;
+  pars->log      = NULL;
     /* chan */
   pars->channel  = PS3000A_CHANNEL_A;
   pars->enable   = 1;
@@ -73,8 +75,8 @@ par_ini(pico_pars_t *pars){
   pars->time     = 1.0;
   pars->rate     = 1000;
   pars->pretrig  = 0;
-  pars->file     = "rec.dat";
-  pars->trig_gen  = 0;
+  pars->file     = NULL;
+  pars->trig_gen = 0;
 }
 
 /**********************************************************/
@@ -167,10 +169,12 @@ opts[] = {
   {"rec",       "time",     't', 1, "record time,s (default 1)"},
   {"rec",       "rate",     'r', 1, "record rate, Hz (default 1000)"},
   {"rec",       "pretrig",  'p', 1, "record pretrig time, s (default 0)"},
-  {"rec",       "file",     'f', 1, "record filename (default rec.dat)"},
+  {"rec",       "file",     'f', 1, "record filename (default: rec.dat)"},
   {"rec",       "trig_gen", 'T', 0, "trigger the generator (default off)"},
 
   {"wait",      "time",     't', 1, "waiting time,s (default 1)"},
+
+  {"log",       "file",     'f', 1, "log file name (default: rec.log)"},
 
   {NULL, NULL, 0,0, NULL}
 };
@@ -185,6 +189,7 @@ void cmd_gen(pico_pars_t*);
 void cmd_rec(pico_pars_t*);
 void cmd_trig_gen(pico_pars_t*);
 void cmd_wait(pico_pars_t*);
+void cmd_log(pico_pars_t*);
 
 struct {
   const char *cmd;
@@ -205,6 +210,7 @@ cmds[] = {
   {"rec",       &cmd_rec,       "record a signal"},
   {"trig_gen",  &cmd_trig_gen,  "trigger the generator"},
   {"wait",      &cmd_wait,      "wait for some time"},
+  {"log",       &cmd_log,       "open log file"},
   {NULL,NULL,NULL}
 };
 

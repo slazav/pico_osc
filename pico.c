@@ -38,6 +38,7 @@ main(int argc, char *argv[]){
 
   /* close the device if needed */
   dev_close(&pars);
+  log_close(&pars);
   exit(0);
 }
 

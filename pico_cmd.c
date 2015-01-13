@@ -21,6 +21,23 @@ dev_close(pico_pars_t *pars){
 }
 
 /********************************************************************/
+/* open log file */
+void
+cmd_log(pico_pars_t *pars){
+  if (pars->file==NULL) pars->file="rec.log";
+  pars->log = fopen(pars->file, "w");
+  if (!pars->log)
+    fprintf(stderr, "Error: can't open file: %s\n", pars->file);
+}
+
+/********************************************************************/
+/* close log file if needed */
+void
+log_close(pico_pars_t *pars){
+  if (pars->log) fclose(pars->log);
+}
+
+/********************************************************************/
 /* look for pico devices and print the list */
 void
 cmd_find(pico_pars_t *pars){
@@ -158,7 +175,7 @@ cmd_trig_gen(pico_pars_t *pars){
 }
 
 /********************************************************************/
-/* trigger the generator */
+/* wait */
 void
 cmd_wait(pico_pars_t *pars){
   usleep((int)(pars->time*1e6));
@@ -257,6 +274,7 @@ cmd_rec(pico_pars_t *pars){
   }
 
   /* open a file */
+  if (pars->file==NULL) pars->file="rec.dat";
   fo = fopen(pars->file, "w");
   if (fo==NULL) {
     printf("error: can not open file: %s\n", pars->file);
@@ -269,6 +287,10 @@ cmd_rec(pico_pars_t *pars){
   presamp  = (int)(pars->pretrig * pars->rate);
   res=ps3000aRunStreaming(pars->h, &interval, PS3000A_NS,
     presamp, 0, 0, 1, PS3000A_RATIO_MODE_NONE, buflen);
+
+  /* on output interval containss real set interval - log it */
+  if (pars->log) fprintf(pars->log, "rec::interval: %d [ns]\n", interval);
+
   if (res!=PICO_OK) { print_err(res); free_bufs(&buffers); fclose(fo); return; }
 
   fprintf(stderr, "start streaming mode, time: %f s,"
@@ -286,6 +308,8 @@ cmd_rec(pico_pars_t *pars){
     if (cb_out.ready && cb_out.count > 0){
       if (cb_out.trig)
         printf("Trigger at index %d\n", cb_out.trig_at+total);
+        /* log the trigger position */
+        if (pars->log) fprintf(pars->log, "rec::trig_at: %d [sample]\n", cb_out.trig_at+total);
         fprintf(fo, "\n");
       for (i=0; i<cb_out.count; i++){
         if (total+i > maxsamp+presamp) break;
@@ -300,6 +324,9 @@ cmd_rec(pico_pars_t *pars){
     if (total > maxsamp+presamp) break;
     if (total > presamp && pars->trig_gen){ cmd_trig_gen(pars); pars->trig_gen=0;}
   }
+  /* log the total number of samples */
+  if (pars->log) fprintf(pars->log, "rec::total: %d [sample]\n", total);
+
  
   /* close file */
   fclose(fo);
@@ -309,4 +336,3 @@ cmd_rec(pico_pars_t *pars){
   if (res!=PICO_OK) print_err(res);
 }
 
-/********************************************************************/
