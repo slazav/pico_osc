@@ -374,11 +374,12 @@ cmd_int(pico_pars_t *glob_pars){
   char *argv[512];
   pico_pars_t pars;
 
-  printf("Interactive mode. Type 'list' for command list\n"
-         " or '<command> -h' for command options\n");
+  if (isatty(fileno(stdin)))
+    printf("Interactive mode. Type 'list' for command list\n"
+           " or '<command> -h' for command options\n");
   while(1){
     line=NULL;
-    printf("> ");
+    if (isatty(fileno(stdin))) printf("> ");
     if (getline(&line,&argc,stdin)==-1 || !line || feof(stdin)) break;
     str2argv(line, &argc, argv, 512);
     /* commands - same as in main */
