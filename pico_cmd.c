@@ -306,11 +306,12 @@ cmd_rec(pico_pars_t *pars){
     if (cb_out.autostop) break;
 
     if (cb_out.ready && cb_out.count > 0){
-      if (cb_out.trig)
+      if (cb_out.trig){
         printf("Trigger at index %d\n", cb_out.trig_at+total);
         /* log the trigger position */
         if (pars->log) fprintf(pars->log, "rec::trig_at: %d [sample]\n", cb_out.trig_at+total);
         fprintf(fo, "\n");
+      }
       for (i=0; i<cb_out.count; i++){
         if (total+i > maxsamp+presamp) break;
         for (ch=0; ch<MAXCH;ch++){
