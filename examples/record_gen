@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# generator output is connected to A channel
+# recording 5 cycle pulse
+
+../pico\
+  log  --file=rec.log\
+  chan --channel=A --coupling=DC --enable --range=0.4\
+  chan --channel=B --disable\
+  gen  --pk2pk=0.35 --cycles=5 --startf=1000 --trig_gen_src=soft\
+  trig --disable\
+  rec  --file=rec.dat --time=0.1 --rate=100000 --trig_gen
+
+
