@@ -179,23 +179,15 @@ opts[] = {
   {NULL, NULL, 0,0, NULL}
 };
 
-void cmd_find(pico_pars_t*);
-void cmd_ping(pico_pars_t*);
-void cmd_info(pico_pars_t*);
-void cmd_chan(pico_pars_t*);
-void cmd_get_range(pico_pars_t*);
-void cmd_trig(pico_pars_t*);
-void cmd_gen(pico_pars_t*);
-void cmd_rec(pico_pars_t*);
-void cmd_trig_gen(pico_pars_t*);
-void cmd_wait(pico_pars_t*);
-void cmd_log(pico_pars_t*);
-void cmd_int(pico_pars_t*);
-void cmd_list(pico_pars_t*);
+typedef void (cmd_t)(pico_pars_t*);
+
+cmd_t cmd_find, cmd_ping, cmd_info, cmd_chan, cmd_get_range,
+      cmd_trig, cmd_gen, cmd_rec, cmd_trig_gen, cmd_wait, cmd_log,
+      cmd_int, cmd_list;
 
 struct {
   const char *cmd;
-  void (*func)(pico_pars_t*);
+  cmd_t *func;
   const char *text;
 }
 cmds[] = {
