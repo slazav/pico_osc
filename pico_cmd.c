@@ -1,4 +1,5 @@
 #include <ps3000aApi.h>
+#include <err.h>
 int16_t res;
 
 
@@ -24,7 +25,9 @@ dev_close(pico_pars_t *pars){
 /* close log file if needed */
 void
 log_close(pico_pars_t *pars){
-  if (pars->log) fclose(pars->log);
+  if (pars->log==NULL) return;
+  res = fclose(pars->log);
+  if (res!=0) printf("Error: can't close log file\n");
 }
 /********************************************************************/
 /* open log file */
@@ -264,10 +267,14 @@ free_bufs(struct cb_in_t *buffers){
 /* record data to a file */
 void
 cmd_rec(pico_pars_t *pars){
-  uint32_t interval, total, maxsamp, presamp;
+  uint32_t interval, total, maxsamp, presamp, trigsamp;
   const int32_t buflen=2<<16;
   int i,ch;
   FILE *fo;
+
+  /* pipe handles */
+  int pp[2];
+  int del=0;
 
   struct cb_in_t buffers;
 
@@ -294,6 +301,10 @@ cmd_rec(pico_pars_t *pars){
      free_bufs(&buffers); return;
   }
 
+  /* open a pipe */
+  res=pipe(pp);
+  if (res){ printf("Can't open a pipe\n"); return; }
+
   /* start streaming mode */
   res=ps3000aRunStreaming(pars->h, &interval, PS3000A_NS,
     presamp, 0, 0, 1, PS3000A_RATIO_MODE_NONE, buflen);
@@ -301,11 +312,19 @@ cmd_rec(pico_pars_t *pars){
 
   /* on output interval contains real set interval - log it */
   if (pars->log){
-    fprintf(pars->log, "rec::interval: %d [ns]\n", interval);
-    fprintf(pars->log, "rec::start_t: %d [s]\n", time());
+    fprintf(pars->log, "rec::interval: %e [s]\n",  (double)interval*1e-9);
+    fprintf(pars->log, "rec::t1:       %e [s]\n", -(double)presamp*interval*1e-9);
+    fprintf(pars->log, "rec::t2:       %e [s]\n",  (double)maxsamp*interval*1e-9);
+    fprintf(pars->log, "rec::presamp:  %d [s]\n", presamp);
+    fprintf(pars->log, "rec::maxsamp:  %d [s]\n", maxsamp);
   }
 
+  /* total number of samples written to the pipe, including waiting for trigger */
   total = 0;
+  /* trigsamp is t0 - a trigger if presamp>0 and 0 otherwise */
+  /* Note: it's uint, don't compare with 0, don't subtract! */
+  trigsamp = presamp>0? -1:0;
+
   while (1){
     usleep(100);
     cb_out.ready=0;
@@ -315,36 +334,52 @@ cmd_rec(pico_pars_t *pars){
     if (cb_out.count == 0) break; /* no more data */
     if (cb_out.autostop) break;
 
+    /* trigger event */
     if (cb_out.trig){
+      if (presamp) trigsamp=cb_out.trig_at + total;
       if (pars->log){ /* log the trigger position */
-        fprintf(pars->log, "rec::trig_s: %d [sample]\n", cb_out.trig_at+total);
-        fprintf(pars->log, "rec::trig_t: %e [s]\n", (cb_out.trig_at+total)*interval*1e-9);
+        uint32_t trigpos = presamp? presamp: cb_out.trig_at + total;
+        fprintf(pars->log, "rec::trig_s: %d [sample]\n", trigpos);
+        fprintf(pars->log, "rec::trig_t: %d [s]\n",
+          time()-(int)((cb_out.count-cb_out.trig_at)*interval*1e-9));
       }
-      fprintf(fo, "\n");
     }
 
+    /* processing data */
     for (i=0; i<cb_out.count; i++){
-      if (total+i > maxsamp+presamp) break;
+      if (trigsamp!=-1 && total+i > maxsamp+trigsamp) break;
       for (ch=0; ch<MAXCH;ch++){
-        if (buffers.prg_buf[ch])
-          fprintf(fo, " %5d", buffers.prg_buf[ch][i+cb_out.start]);
+        write(pp[1], &(buffers.prg_buf[ch][i+cb_out.start]), sizeof(int16_t));
+        /* read data from the pipe with presamp delay */
+        if (del>=presamp) { 
+          int16_t v;
+          read(pp[0], &v, sizeof(int16_t));
+          /* write data to the file only if we crossed t0 */
+          if (trigsamp!=-1 && total+i >= trigsamp) fprintf(fo, " %5d%s", v, ch==MAXCH-1?"\n":" ");
+        }
       }
-      fprintf(fo, "\n");
+      if (del<presamp) del++;
     }
     total+=(i+1);
-
-    if (total > maxsamp+presamp) break;
+    if (trigsamp!=-1 && total > maxsamp+trigsamp ) break;
     if (total > presamp && pars->trig_gen){ cmd_trig_gen(pars); pars->trig_gen=0;}
   }
-  /* log the total number of samples */
-  if (pars->log){
-    fprintf(pars->log, "rec::total_s: %d [sample]\n", total);
-    fprintf(pars->log, "rec::total_t: %e [s]\n", total*interval*1e-9);
+
+  /* remove data from the pipe */
+  for (;del>0; del--){
+    for (ch=0; ch<MAXCH;ch++){
+      int16_t v;
+      read(pp[0], &v, sizeof(int16_t));
+      fprintf(fo, " %5d%s", v, ch==MAXCH-1?"\n":" ");
+    }
   }
 
- 
+  /* log the total number of samples */
+  if (pars->log) fprintf(pars->log, "rec::total_s: %d [sample]\n", total+presamp-trigsamp);
+
   /* close file */
-  fclose(fo);
+  res=fclose(fo);
+  if (res!=0) printf("Error: can't close data file\n");
 
   /* stop streaming mode */
   ps3000aStop(pars->h);
