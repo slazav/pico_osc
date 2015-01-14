@@ -364,7 +364,6 @@ str2argv(char *line, int *argc, char *argv[], int maxargs){
     }
   }
   argv[*argc]=0;
-  //fprintf(stderr, ">>-- %d\n", *argc);
 }
 
 void
@@ -372,22 +371,36 @@ cmd_int(pico_pars_t *glob_pars){
   char *line;
   int argc;
   char *argv[512];
-  char **a = argv;
   pico_pars_t pars;
 
+  printf("Interactive mode. Type 'list' for command list\n"
+         " or '<command> -h' for command options\n");
   while(1){
     line=NULL;
+    printf("> ");
     if (getline(&line,&argc,stdin)==-1 || !line || feof(stdin)) break;
     str2argv(line, &argc, argv, 512);
     /* commands - same as in main */
     while (argc>0) {
       char *cmd = argv[0];
+      char **a = argv;
       pars = *glob_pars;
       get_pars(&argc, &a, cmd, &pars);
       run_cmd(cmd, &pars);
       glob_pars->h=pars.h; /* return device handle to global pars - to use later */
     }
     if (line) free(line);
+  }
+}
+
+/********************************************************************/
+/* print command list */
+void
+cmd_list(pico_pars_t *glob_pars){
+  int i;
+  printf("\nCommands:\n");
+  for (i=1; cmds[i].cmd; i++){ /* i=0 -- pico, not needed */
+    printf("  %10s -- %s\n", cmds[i].cmd, cmds[i].text);
   }
 }
 /********************************************************************/

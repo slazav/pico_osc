@@ -191,6 +191,7 @@ void cmd_trig_gen(pico_pars_t*);
 void cmd_wait(pico_pars_t*);
 void cmd_log(pico_pars_t*);
 void cmd_int(pico_pars_t*);
+void cmd_list(pico_pars_t*);
 
 struct {
   const char *cmd;
@@ -213,6 +214,7 @@ cmds[] = {
   {"wait",      &cmd_wait,      "wait for some time"},
   {"log",       &cmd_log,       "open log file"},
   {"int",       &cmd_int,       "interactive mode"},
+  {"list",      &cmd_list,      "print command list"},
   {NULL,NULL,NULL}
 };
 
@@ -238,12 +240,7 @@ run_cmd(const char *cmd, pico_pars_t *pars){
           opts[i].val, opts[i].name, opts[i].has_arg?"<arg>":"", opts[i].descr);
     }
     /* print commands */
-    if (strcmp(cmd, "pico")==0){
-      printf("\nCommands:\n");
-      for (i=1; cmds[i].cmd; i++){
-        printf("  %10s -- %s\n", cmds[i].cmd, cmds[i].text);
-      }
-    }
+    if (strcmp(cmd, "pico")==0) cmd_list(NULL);
     printf("\n");
     return;
   }
