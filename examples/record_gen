@@ -11,7 +11,7 @@
   chan --channel=A --coupling=DC --enable --range=0.4\
   chan --channel=B --disable\
   gen  --pk2pk=0.35 --cycles=5 --startf=100 --stopf=100 --trig_gen_src=soft\
-  trig --src=A --thresh=10000 --dir=rising\
+  trig --src=ext --thresh=10000 --dir=rising\
   rec  --file=rec.dat --time=0.2 --rate=100000 --trig_gen
 
 

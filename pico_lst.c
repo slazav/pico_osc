@@ -176,7 +176,7 @@ int
 str2coupling(const char *str){
   if (strcasecmp(str, "ac")==0) return PS3000A_AC;
   if (strcasecmp(str, "dc")==0) return PS3000A_DC;
-  printf("error: coupling should be AC or DC\n");
+  printf("error: unknown coupling (should be AC or DC): %s\n", str);
   return -1;
 }
 
@@ -184,8 +184,8 @@ int
 str2chan(const char *str){
   if (strcasecmp(str, "a")==0) return PS3000A_CHANNEL_A;
   if (strcasecmp(str, "b")==0) return PS3000A_CHANNEL_B;
-  if (strcasecmp(str, "ext")) return PS3000A_EXTERNAL;
-  printf("error: coupling should be AC or DC\n");
+  if (strcasecmp(str, "ext")==0) return PS3000A_EXTERNAL;
+  printf("error: unknown channel (should be A B or EXT): %s\n", str);
   return -1;
 }
 

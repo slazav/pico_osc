@@ -21,21 +21,22 @@ dev_close(pico_pars_t *pars){
 }
 
 /********************************************************************/
-/* open log file */
-void
-cmd_log(pico_pars_t *pars){
-  if (pars->file==NULL) pars->file="rec.log";
-  pars->log = fopen(pars->file, "w");
-  if (!pars->log)
-    fprintf(stderr, "Error: can't open file: %s\n", pars->file);
-}
-
-/********************************************************************/
 /* close log file if needed */
 void
 log_close(pico_pars_t *pars){
   if (pars->log) fclose(pars->log);
 }
+/********************************************************************/
+/* open log file */
+void
+cmd_log(pico_pars_t *pars){
+  if (pars->file==NULL) pars->file="rec.log";
+  log_close(pars);
+  pars->log = fopen(pars->file, "w");
+  if (!pars->log)
+    fprintf(stderr, "Error: can't open file: %s\n", pars->file);
+}
+
 
 /********************************************************************/
 /* look for pico devices and print the list */
@@ -128,6 +129,8 @@ cmd_chan(pico_pars_t *pars){
   if (pars->log && pars->enable){
     fprintf(pars->log, "chan%d::range: %s [Vpp]\n",
       pars->channel, range2str(pars->range));
+    fprintf(pars->log, "chan%d::offset: %f [V]\n",
+      pars->channel, pars->offset);
   }
 }
 
@@ -268,7 +271,12 @@ cmd_rec(pico_pars_t *pars){
 
   struct cb_in_t buffers;
 
+  interval = (int)(1e9/pars->rate); /* ns */
+  maxsamp  = (int)(pars->time * pars->rate);
+  presamp  = (int)(pars->pretrig * pars->rate);
+
   dev_open(pars);
+
   /* set data buffers for each channel */
   for (ch=0; ch<MAXCH; ch++){
     buffers.osc_buf[ch] = (int16_t*)malloc(buflen*sizeof(int16_t));
@@ -287,19 +295,15 @@ cmd_rec(pico_pars_t *pars){
   }
 
   /* start streaming mode */
-  interval = (int)(1e9/pars->rate); /* ns */
-  maxsamp  = (int)(pars->time * pars->rate);
-  presamp  = (int)(pars->pretrig * pars->rate);
   res=ps3000aRunStreaming(pars->h, &interval, PS3000A_NS,
     presamp, 0, 0, 1, PS3000A_RATIO_MODE_NONE, buflen);
-
-  /* on output interval containss real set interval - log it */
-  if (pars->log) fprintf(pars->log, "rec::interval: %d [ns]\n", interval);
-
   if (res!=PICO_OK) { print_err(res); free_bufs(&buffers); fclose(fo); return; }
 
-  fprintf(stderr, "start streaming mode, time: %f s,"
-      " rate: %f Hz, interval: %.3e s, samples: %d + %d\n", pars->time, pars->rate, interval/1e9, presamp, maxsamp);
+  /* on output interval contains real set interval - log it */
+  if (pars->log){
+    fprintf(pars->log, "rec::interval: %d [ns]\n", interval);
+    fprintf(pars->log, "rec::start_t: %d [s]\n", time());
+  }
 
   total = 0;
   while (1){
@@ -307,31 +311,36 @@ cmd_rec(pico_pars_t *pars){
     cb_out.ready=0;
 
     res=ps3000aGetStreamingLatestValues(pars->h, &stream_func, &buffers);
-    if (cb_out.ready && cb_out.count == 0) break;
+    if (!cb_out.ready) continue;
+    if (cb_out.count == 0) break; /* no more data */
     if (cb_out.autostop) break;
 
-    if (cb_out.ready && cb_out.count > 0){
-      if (cb_out.trig){
-        printf("Trigger at index %d\n", cb_out.trig_at+total);
-        /* log the trigger position */
-        if (pars->log) fprintf(pars->log, "rec::trig_at: %d [sample]\n", cb_out.trig_at+total);
-        fprintf(fo, "\n");
+    if (cb_out.trig){
+      if (pars->log){ /* log the trigger position */
+        fprintf(pars->log, "rec::trig_s: %d [sample]\n", cb_out.trig_at+total);
+        fprintf(pars->log, "rec::trig_t: %e [s]\n", (cb_out.trig_at+total)*interval*1e-9);
       }
-      for (i=0; i<cb_out.count; i++){
-        if (total+i > maxsamp+presamp) break;
-        for (ch=0; ch<MAXCH;ch++){
-          if (buffers.prg_buf[ch])
-            fprintf(fo, " %5d", buffers.prg_buf[ch][i+cb_out.start]);
-        }
-        fprintf(fo, "\n");
-      }
-      total += cb_out.count;
+      fprintf(fo, "\n");
     }
+
+    for (i=0; i<cb_out.count; i++){
+      if (total+i > maxsamp+presamp) break;
+      for (ch=0; ch<MAXCH;ch++){
+        if (buffers.prg_buf[ch])
+          fprintf(fo, " %5d", buffers.prg_buf[ch][i+cb_out.start]);
+      }
+      fprintf(fo, "\n");
+    }
+    total+=(i+1);
+
     if (total > maxsamp+presamp) break;
     if (total > presamp && pars->trig_gen){ cmd_trig_gen(pars); pars->trig_gen=0;}
   }
   /* log the total number of samples */
-  if (pars->log) fprintf(pars->log, "rec::total: %d [sample]\n", total);
+  if (pars->log){
+    fprintf(pars->log, "rec::total_s: %d [sample]\n", total);
+    fprintf(pars->log, "rec::total_t: %e [s]\n", total*interval*1e-9);
+  }
 
  
   /* close file */
@@ -395,7 +404,7 @@ cmd_int(pico_pars_t *glob_pars){
       get_pars(&argc, &a, cmd, &pars);
       run_cmd(cmd, &pars);
       glob_pars->h=pars.h; /* return device handle to global pars - to use later */
-      glob_pars->log=pars.log;  /* return lof file handle to global pars - to use later */
+      glob_pars->log=pars.log;  /* return log file handle to global pars - to use later */
     }
     if (line) free(line);
   }
