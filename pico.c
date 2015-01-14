@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "pico_lst.c"  /* functions for converting numbers to strings (errors, ranges etc.)*/
 #include "pico_opts.c" /* option handling */

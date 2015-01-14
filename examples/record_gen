@@ -2,16 +2,15 @@
 
 # generator output is connected to A channel
 # recording 5 cycle pulse
-# generator is triggered from the rec command in the beggining of the record
-# Osc trigger event occures from the A channel and recorded
-# into log file
+# generator is triggered from the rec command
+# Osc trigger event occures from the A channel
 
 ../pico\
   log  --file=rec.log\
   chan --channel=A --coupling=DC --enable --range=0.4\
   chan --channel=B --disable\
   gen  --pk2pk=0.35 --cycles=5 --startf=100 --stopf=100 --trig_gen_src=soft\
-  trig --src=ext --thresh=10000 --dir=rising\
-  rec  --file=rec.dat --time=0.2 --rate=100000 --trig_gen
+  trig --src=A --thresh=10000 --dir=rising\
+  rec  --file=rec.dat --time=0.2 --rate=100000 --pretrig=0.1 --trig_gen
 
 

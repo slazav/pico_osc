@@ -26,8 +26,9 @@ dev_close(pico_pars_t *pars){
 void
 log_close(pico_pars_t *pars){
   if (pars->log==NULL) return;
-  res = fclose(pars->log);
-  if (res!=0) printf("Error: can't close log file\n");
+  fflush(pars->log);
+  if (fclose(pars->log)!=0) printf("Error: can't close log file\n");
+  pars->log=NULL;
 }
 /********************************************************************/
 /* open log file */
@@ -318,7 +319,6 @@ cmd_rec(pico_pars_t *pars){
     fprintf(pars->log, "rec::presamp:  %d [s]\n", presamp);
     fprintf(pars->log, "rec::maxsamp:  %d [s]\n", maxsamp);
   }
-
   /* total number of samples written to the pipe, including waiting for trigger */
   total = 0;
   /* trigsamp is t0 - a trigger if presamp>0 and 0 otherwise */
@@ -333,6 +333,8 @@ cmd_rec(pico_pars_t *pars){
     if (!cb_out.ready) continue;
     if (cb_out.count == 0) break; /* no more data */
     if (cb_out.autostop) break;
+
+    //printf(">> %d %d %d\n", cb_out.count, total, cb_out.trig);
 
     /* trigger event */
     if (cb_out.trig){
@@ -384,6 +386,8 @@ cmd_rec(pico_pars_t *pars){
   /* stop streaming mode */
   ps3000aStop(pars->h);
   if (res!=PICO_OK) print_err(res);
+
+
 }
 
 /********************************************************************/
@@ -398,22 +402,21 @@ void
 str2argv(char *line, int *argc, char *argv[], int maxargs){
   int i, n, q1=0, q2=0;
   /* put zeros between arguments */
-  for (i=0; line[i]; i++){
+  n=strlen(line);
+  for (i=0;i<n;i++){
     if (line[i]=='\"' && q2==0) { q1=(q1+1)%2; line[i]='\0'; }
     if (line[i]=='\'' && q1==0) { q2=(q2+1)%2; line[i]='\0'; }
     if ((line[i]==' ' || line[i]=='\t' || line[i]=='\n') && q1==0 && q2==0) line[i]='\0';
   }
-  n=i;
   /* fill argc/argv */
   *argc=0;
   for(i=0;i<n;i++){
     if (line[i] && (i==0 || line[i-1]=='\0')){
       //fprintf(stderr, "<<%s>>\n", line+i);
       argv[(*argc)++] = line+i;
-      if (*argc >=maxargs) break;
+      if (*argc==maxargs) break;
     }
   }
-  argv[*argc]=0;
 }
 
 void
@@ -443,6 +446,7 @@ cmd_int(pico_pars_t *glob_pars){
     }
     if (line) free(line);
   }
+  if (line) free(line);
 }
 
 /********************************************************************/
