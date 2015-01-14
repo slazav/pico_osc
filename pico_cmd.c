@@ -388,6 +388,7 @@ cmd_int(pico_pars_t *glob_pars){
       get_pars(&argc, &a, cmd, &pars);
       run_cmd(cmd, &pars);
       glob_pars->h=pars.h; /* return device handle to global pars - to use later */
+      glob_pars->log=pars.log;  /* return lof file handle to global pars - to use later */
     }
     if (line) free(line);
   }
