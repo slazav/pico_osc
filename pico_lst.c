@@ -172,26 +172,6 @@ print_err(n){
   else  printf("OK\n");
 }
 
-/* ranges */
-const char *
-pico_range(int n){
-  switch(n){
-  case 0:   return "10mV";
-  case 1:   return "20mV";
-  case 2:   return "50mV";
-  case 3:   return "100mV";
-  case 4:   return "200mV";
-  case 5:   return "500mV";
-  case 6:   return "1V";
-  case 7:   return "2V";
-  case 8:   return "5V";
-  case 9:   return "10V";
-  case 10:  return "20V";
-  case 11:  return "50V";
-  case 12:  return "MAX_RANGES";
-  }
-}
-
 int
 str2coupling(const char *str){
   if (strcasecmp(str, "ac")==0) return PS3000A_AC;
@@ -230,6 +210,25 @@ str2range(const char *str){
   }
   printf("error: unknown input range: %s\n", str);
   return -1;
+}
+/* convert sensitivity, Vpp */
+const char *
+range2str(int n){
+  switch (n){
+    case PS3000A_10MV:  return "0.02";
+    case PS3000A_20MV:  return "0.04";
+    case PS3000A_50MV:  return "0.1";
+    case PS3000A_100MV: return "0.2";
+    case PS3000A_200MV: return "0.4";
+    case PS3000A_500MV: return "1";
+    case PS3000A_1V:    return "2";
+    case PS3000A_2V:    return "4";
+    case PS3000A_5V:    return "10";
+    case PS3000A_10V:   return "20";
+    case PS3000A_20V:   return "40";
+    case PS3000A_50V:   return "100";
+  }
+  return "";
 }
 
 /* convert trigger dir */
@@ -291,23 +290,4 @@ str2siggen_dir(const char *str){
 }
 
 
-/* convert sensitivity, Vpp */
-const char *
-range2str(int n){
-  switch (n){
-    case PS3000A_10MV:  return "0.02";
-    case PS3000A_20MV:  return "0.04";
-    case PS3000A_50MV:  return "0.1";
-    case PS3000A_100MV: return "0.2";
-    case PS3000A_200MV: return "0.4";
-    case PS3000A_500MV: return "1";
-    case PS3000A_1V:    return "2";
-    case PS3000A_2V:    return "4";
-    case PS3000A_5V:    return "10";
-    case PS3000A_10V:   return "20";
-    case PS3000A_20V:   return "40";
-    case PS3000A_50V:   return "100";
-  }
-  return "";
-}
 

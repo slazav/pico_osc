@@ -124,6 +124,11 @@ cmd_chan(pico_pars_t *pars){
      pars->range,
      pars->offset);
   if (res!=PICO_OK) print_err(res);
+  /* log parameters*/
+  if (pars->log && pars->enable){
+    fprintf(pars->log, "chan%d::range: %s [Vpp]\n",
+      pars->channel, range2str(pars->range));
+  }
 }
 
 /********************************************************************/
