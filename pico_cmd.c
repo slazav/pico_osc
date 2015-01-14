@@ -336,3 +336,58 @@ cmd_rec(pico_pars_t *pars){
   if (res!=PICO_OK) print_err(res);
 }
 
+/********************************************************************/
+/* interactive mode */
+
+  /* convert a string into argc/argv 
+     problems:
+       - doesn't parse empty quotes '' or ""
+       - needs fixed array for argv with size maxargs
+  */
+void
+str2argv(char *line, int *argc, char *argv[], int maxargs){
+  int i, n, q1=0, q2=0;
+  /* put zeros between arguments */
+  for (i=0; line[i]; i++){
+    if (line[i]=='\"' && q2==0) { q1=(q1+1)%2; line[i]='\0'; }
+    if (line[i]=='\'' && q1==0) { q2=(q2+1)%2; line[i]='\0'; }
+    if ((line[i]==' ' || line[i]=='\t' || line[i]=='\n') && q1==0 && q2==0) line[i]='\0';
+  }
+  n=i;
+  /* fill argc/argv */
+  *argc=0;
+  for(i=0;i<n;i++){
+    if (line[i] && (i==0 || line[i-1]=='\0')){
+      //fprintf(stderr, "<<%s>>\n", line+i);
+      argv[(*argc)++] = line+i;
+      if (*argc >=maxargs) break;
+    }
+  }
+  argv[*argc]=0;
+  //fprintf(stderr, ">>-- %d\n", *argc);
+}
+
+void
+cmd_int(pico_pars_t *glob_pars){
+  char *line;
+  int argc;
+  char *argv[512];
+  char **a = argv;
+  pico_pars_t pars;
+
+  while(1){
+    line=NULL;
+    if (getline(&line,&argc,stdin)==-1 || !line || feof(stdin)) break;
+    str2argv(line, &argc, argv, 512);
+    /* commands - same as in main */
+    while (argc>0) {
+      char *cmd = argv[0];
+      pars = *glob_pars;
+      get_pars(&argc, &a, cmd, &pars);
+      run_cmd(cmd, &pars);
+      glob_pars->h=pars.h; /* return device handle to global pars - to use later */
+    }
+    if (line) free(line);
+  }
+}
+/********************************************************************/

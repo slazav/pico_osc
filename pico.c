@@ -34,6 +34,7 @@ main(int argc, char *argv[]){
     pars = glob_pars;
     get_pars(&argc, &argv, cmd, &pars);
     run_cmd(cmd, &pars);
+    glob_pars.h=pars.h;  /* return device handle to global pars - to use later */
   }
 
   /* close the device if needed */

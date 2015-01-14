@@ -190,6 +190,7 @@ void cmd_rec(pico_pars_t*);
 void cmd_trig_gen(pico_pars_t*);
 void cmd_wait(pico_pars_t*);
 void cmd_log(pico_pars_t*);
+void cmd_int(pico_pars_t*);
 
 struct {
   const char *cmd;
@@ -211,6 +212,7 @@ cmds[] = {
   {"trig_gen",  &cmd_trig_gen,  "trigger the generator"},
   {"wait",      &cmd_wait,      "wait for some time"},
   {"log",       &cmd_log,       "open log file"},
+  {"int",       &cmd_int,       "interactive mode"},
   {NULL,NULL,NULL}
 };
 
