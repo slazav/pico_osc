@@ -1,0 +1,5 @@
+wget -q -O - -S "localhost:8081/set_chan?channel=A&coupling=DC&range=0.4"
+wget -q -O - -S "localhost:8081/set_chan?channel=B&coupling=DC&range=0.4"
+wget -q -O - -S "localhost:8081/set_gen?volt=0.35&f1=30&f2=30&cycles=5&trig_src=soft"
+wget -q -O - -S "localhost:8081/set_trig?src=A&dir=rising&enable=1&thr=100"
+wget -q -O rec.dat -S "localhost:8081/rec_block?rate=3000&pretrig=0.2&time=0.2&triggen"

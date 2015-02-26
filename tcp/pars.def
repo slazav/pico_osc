@@ -1,0 +1,42 @@
+/* This file is included in several places:
+ *  - building the parameter structure
+ *  - initializing the structure
+ *  - filling the structure from string key-value pairs
+ *  - building help messages
+ *  - parsing cmdline parameters
+ * Columns are: (command, type, par, short, cnv_func, default, description)
+ */
+
+CPAR(,         int16_t,  help,     h, str2bool,      0, "print help message for a command")
+
+CPAR(set_chan, int16_t,  channel,  c, str2chan,      A, "select channel number: A,B...")
+CPAR(set_chan, int16_t,  enable,   e, str2bool,      1, "enable channel: 0 or 1")
+CPAR(set_chan, int16_t,  coupling, i, str2coupling, DC, "select input coupling, AC or DC")
+CPAR(set_chan, int16_t,  range,    r, str2range,     1, "set sensitivity, Vpp")
+CPAR(set_chan, float,    offset,   o, atof,          0, "set offset, V")
+
+CPAR(set_trig, int16_t,  enable,   e, str2bool,      0, "enable trigger: 0 or 1")
+CPAR(set_trig, int16_t,  src,      s, str2chan,      A, "source channel: A,B,EXT,..")
+CPAR(set_trig, int16_t,  thr,      t, atoi,          0, "trigger threshold")
+CPAR(set_trig, int16_t,  dir,      d, str2dir,  rising, "direction: above,below,rising,falling,rising_or_falling")
+CPAR(set_trig, uint32_t, del,      w, atoi,          0, "delay, samples")
+CPAR(set_trig, int16_t,  autotrig, a, atoi,          0, "autotrigger after this time, ms, 0 for disabling")
+
+CPAR(set_gen,  int32_t,  offset,   o, atoi,          0, "generator offset")
+CPAR(set_gen,  uint32_t, volt,     u, str2gen_volt,  1, "voltage, Vpp")
+CPAR(set_gen,  uint16_t, wave,     w, str2wave,   sine, "wave type: sine,squere,triangle")
+CPAR(set_gen,  double,   f1,       f, atof,       1000, "start frequency, Hz")
+CPAR(set_gen,  double,   f2,       g, atof,       1000, "stop frequency, Hz")
+CPAR(set_gen,  double,   incr,     i, atof,          0, "frequency increment, Hz")
+CPAR(set_gen,  double,   dwell,    d, atof,          0, "frequncy dwell time")
+CPAR(set_gen,  uint16_t, sweep,    s, str2sweep,    UP, "sweep type: up,down,updown,downup")
+CPAR(set_gen,  uint32_t, cycles,   C, atoi,          0, "number of cicles")
+CPAR(set_gen,  uint32_t, sweeps,   S, atoi,          0, "number of sweeps")
+CPAR(set_gen,  uint16_t, trig_src, T, str2gen_trigsrc, NONE, "generator trigger source: none,scope,ext,soft")
+CPAR(set_gen,  uint16_t, trig_dir, D, str2gen_trigdir, RISING, "generator trigger dir: rising,falling,high,low")
+CPAR(set_gen,  uint16_t, trig_thr, t, atoi,          0, "generator trigger threshold")
+
+CPAR(rec_block, double,  rate,     r, atof,        1e3, "recoding rate, Hz")
+CPAR(rec_block, double,  pretrig,  p, atof,          0, "pretrigger time, s")
+CPAR(rec_block, double,  time,     t, atof,          1, "recoding time, s")
+CPAR(rec_block, double,  triggen,  T, str2bool,      0, "trigger the generator during record")

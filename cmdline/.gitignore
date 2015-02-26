@@ -1,0 +1,4 @@
+*.o
+pico
+*.dat
+*.log
