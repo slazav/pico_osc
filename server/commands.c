@@ -41,6 +41,13 @@ dev_list(){
   return 0;
 }
 
+/* add info into str_pair_t array */
+#define print_kv(ARR, KEY, ...)\
+  { str_pair_t *hh;\
+    for (hh=ARR; hh && hh-ARR < MAXHEADS-1; hh++); \
+    hh->key=KEY; snprintf(hh->val, MAXHVAL, __VA_ARGS__); \
+    hh++; hh->key=NULL; }
+
 /********************************************************************/
 /* run a command */
 void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
@@ -210,6 +217,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
     int64_t ttime;
     PS3000A_TIME_UNITS tunits;
     double ttimed, dt = abs(1e9/cpars->rec_block_rate);
+    str_pair_t *hh;
 
     /* Non-trivial conversion from rate to pico timebase */
     {
@@ -315,19 +323,12 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
 
     /* fill headers */
     opars->status = pico_err(0);
-    opars->headers[0].key = "Overload";
-    snprintf(opars->headers[0].val, MAXHVAL, "%d", overload!=0);
+    print_kv(opars->headers, "Overload", "%d", overload!=0);
+    print_kv(opars->headers, "TrigTime", "%e", ttimed);
+    print_kv(opars->headers, "TrigSamp", "%d", npre);
+    print_kv(opars->headers, "DT",       "%e", dt);
+    print_kv(opars->headers, "Samples",  "%d", num);
 
-    opars->headers[1].key = "TrigTime";
-    snprintf(opars->headers[1].val, MAXHVAL, "%e", ttimed);
-    opars->headers[2].key = "TrigSamp";
-    snprintf(opars->headers[2].val, MAXHVAL, "%d", npre);
-    opars->headers[3].key = "DT";
-    snprintf(opars->headers[3].val, MAXHVAL, "%e", dt);
-    opars->headers[4].key = "Samples";
-    snprintf(opars->headers[4].val, MAXHVAL, "%d", num);
-
-    opars->headers[5].key = NULL;
     return;
   }
 }
