@@ -44,7 +44,7 @@ dev_list(){
 /* add info into str_pair_t array */
 #define print_kv(ARR, KEY, ...)\
   { str_pair_t *hh;\
-    for (hh=ARR; hh && hh-ARR < MAXHEADS-1; hh++); \
+    for (hh=ARR; hh->key && hh-ARR < MAXHEADS-2; hh++); \
     hh->key=KEY; snprintf(hh->val, MAXHVAL, __VA_ARGS__); \
     hh++; hh->key=NULL; }
 
