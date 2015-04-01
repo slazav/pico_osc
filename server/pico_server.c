@@ -13,13 +13,14 @@ int pico_spars_parser(pico_spars_t * pars, int *argc, char ***argv){
 
   /* parse  options */
   while(1){
-    switch (getopt(*argc, *argv, "p:d:lh")){
+    switch (getopt(*argc, *argv, "p:d:lhv")){
       case -1: return 0; /* end*/
       case '?':
       case ':': continue; /* error msg is printed by getopt*/
       case 'p': pars->port = atoi(optarg); break;
       case 'd': pars->dev = optarg; break;
       case 'l': dev_list(); return 1;
+      case 'v': pars->verb = 1; break;
       case 'h':
         printf("pico_server -- server for picoscope device control\n"
                "Usage: pico_serv [options]\n"
@@ -27,6 +28,7 @@ int pico_spars_parser(pico_spars_t * pars, int *argc, char ***argv){
                " -p <port> -- tcp port for connections\n"
                " -d <dev>  -- device serial number (empty for autodetect)\n"
                " -l        -- list all connected devices and exit\n"
+               " -v        -- be verbose\n"
                " -h        -- write this help message and exit\n"
               );
         return 1;

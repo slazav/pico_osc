@@ -4,7 +4,7 @@ LDLIBS=-lpicoipp -lps3000a -lmicrohttpd -lm
 
 all: pico_server
 
-OBJ=pico_server.o commands.o convs.o
+OBJ=pico_server.o commands.o convs.o rec.o
 
 pico_server: $(OBJ)
 $(OBJ): pars.def pico.h
