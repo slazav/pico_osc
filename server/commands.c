@@ -202,32 +202,39 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
   /*********************************************************/
   /* rec_block command */
   if (strcmp(cpars->command, "rec_block")==0){
-    int npre;
-    int nrec;
+
+    int    avrg = cpars->rec_block_avrg;
+    double pretrig = cpars->rec_block_pretrig/100.0;
+    int    nrec = cpars->rec_block_points;
+    int    npre = ceil(nrec * pretrig);
+    double time = cpars->rec_block_time;
+    double rate = nrec/time;
+    double dt   = 1.0/rate;
+
     uint32_t tbase;
     int16_t stat = 0, overload = 0, ch;
-    int32_t num, t_est; /* ms */
+    int32_t t_est; /* ms */
     int64_t ttime;
     PS3000A_TIME_UNITS tunits;
-    double ttimed, dt = fabs(1.0/cpars->rec_block_rate);
+    double ttimed;
     str_pair_t *hh;
     void * buffer;
     int n;
-    int avrg = cpars->rec_block_avrg;
 
+    /* parameters */
     if (avrg<1) avrg=1;
+    if (npre<0) npre=0;
+    if (npre>nrec) npre=nrec;
+
     /* calculate timebase and actual dt */
     res = rec_timebase(spars->h, &dt, &tbase);
     if (res!=PICO_OK){
       opars->status = pico_err(res);
       return;
     }
-    npre = cpars->rec_block_pretrig/dt;
-    nrec = cpars->rec_block_time/dt;
 
     /* prepare data buffers */
-    num = (npre + nrec);
-    opars->dsize=num*MAXCH*sizeof(int16_t);
+    opars->dsize=nrec*MAXCH*sizeof(int16_t);
     /* separate buffer is needed only for averaging */
     buffer=malloc(opars->dsize);
     if (avrg>1)
@@ -244,7 +251,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
     /* show the buffer to the oscilloscope */
     for (ch=0; ch<MAXCH; ch++){
       res=ps3000aSetDataBuffer(spars->h, (PS3000A_CHANNEL)ch,
-        buffer + ch*num*sizeof(int16_t), num*sizeof(int16_t),
+        buffer + ch*nrec*sizeof(int16_t), nrec*sizeof(int16_t),
         0, PS3000A_RATIO_MODE_NONE);
       if (res!=PICO_OK) {
         if (spars->verb)
@@ -265,7 +272,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
     for (n=0; n<avrg; n++){
       /* run the oscilloscope */
       res = ps3000aRunBlock(spars->h,
-        npre, nrec, tbase, 0, &t_est, 0, NULL, NULL);
+        npre, nrec-npre, tbase, 0, &t_est, 0, NULL, NULL);
       if (res) {
         if (spars->verb)
           printf("Error: rec_block: RunBlock: %s\n",
@@ -280,7 +287,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
       /* wait and trigger generator if needed */
       if (cpars->rec_block_triggen){
         usleep(10000);
-        usleep(cpars->rec_block_pretrig * 1e6);
+        usleep(dt*npre);
         res=ps3000aSigGenSoftwareControl(spars->h, PS3000A_SIGGEN_GATE_HIGH);
         if (res) {
           if (spars->verb)
@@ -290,9 +297,9 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
       }
 
       /* wait for data */
-      usleep(cpars->rec_block_time * 1e6);
+      usleep(dt*(nrec-npre));
       for (stat=0; stat==0;){
-        usleep(cpars->rec_block_time * 1e6/10);
+        usleep(dt*(nrec-npre) * 1e6/10);
         res = ps3000aIsReady(spars->h, &stat);
         if (res) {
           if (spars->verb)
@@ -308,7 +315,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
 
 
       /* get values */
-      res = ps3000aGetValues(spars->h, 0, &num,
+      res = ps3000aGetValues(spars->h, 0, &nrec,
          1, PS3000A_RATIO_MODE_NONE, 0, &overload);
       if (res!=PICO_OK) {
         if (spars->verb)
@@ -345,7 +352,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
       /* do averaging */
       if (avrg>1){
         int i;
-        for (i=0; i<num*MAXCH; i++){
+        for (i=0; i<nrec*MAXCH; i++){
           int16_t vn = ((int16_t *)opars->data)[i];
           int16_t v1 = ((int16_t *)buffer)[i];
           ((int16_t *)opars->data)[i] =
@@ -362,7 +369,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
     print_kv(opars->headers, "TrigTime", "%e", ttimed);
     print_kv(opars->headers, "TrigSamp", "%d", npre);
     print_kv(opars->headers, "DT",       "%e", dt);
-    print_kv(opars->headers, "Samples",  "%d", num);
+    print_kv(opars->headers, "Samples",  "%d", nrec);
 
     return;
   }

@@ -115,7 +115,7 @@ proc run {} {
                             -symbol {} -color magenta
     set status "Overload"
   }
-  rec configure -rate [expr "1/$dt"]
+  rec configure -time [expr "$len*$dt"]
 
   # enable Run button
   .p1.run configure -state normal
