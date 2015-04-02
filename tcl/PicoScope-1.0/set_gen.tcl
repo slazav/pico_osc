@@ -1,11 +1,10 @@
-# set_gen widget
+# set_gen widget -- passive widget, no actions
 #   sweeps are not supperted yet
 
 package require Itcl 3
 namespace eval pscope {}
 
 itcl::class pscope::set_gen {
-  inherit pscope::interface
   public variable volt     1
   public variable offset   0
   public variable wave     SINE
@@ -15,6 +14,7 @@ itcl::class pscope::set_gen {
   public variable trig_src NONE
   public variable trig_dir RISING
   public variable trig_thr 0
+  public variable bg       "#F0E0F0"
 
   constructor { root } {
 
@@ -55,10 +55,13 @@ itcl::class pscope::set_gen {
     grid $root.trig_src_l $root.trig_src -sticky we
     grid $root.trig_dir_l $root.trig_dir -sticky we
     grid $root.trig_thr_l $root.trig_thr -sticky we
+
+    foreach ch [winfo children $root] { $ch configure -bg $bg }
+    $root configure -bg $bg
   }
 
-  method apply {} {
-    run_cmd set_gen\
+  method get_cmd {} {
+    return [list set_gen\
       volt=$volt\
       offset=[expr $offset*1e6]\
       wave=$wave\
@@ -69,6 +72,7 @@ itcl::class pscope::set_gen {
       trig_src=$trig_src\
       trig_dir=$trig_dir\
       trig_thr=$trig_thr\
+    ]
   }
 
 }

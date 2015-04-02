@@ -1,16 +1,16 @@
-# set_trig widget
+# set_trig widget -- passive widget, no actions
 
 package require Itcl 3
 namespace eval pscope {}
 
 itcl::class pscope::set_trig {
-  inherit pscope::interface
   public variable src      A
   public variable enable   0
   public variable thr      0
   public variable dir      RISING
   public variable del      0
   public variable autotrig 0
+  public variable bg       "#E0F0F0"
 
   constructor { root } {
 
@@ -41,16 +41,20 @@ itcl::class pscope::set_trig {
     grid $root.thr_l $root.thr -sticky we
     grid $root.del_l $root.del -sticky we
     grid $root.autotrig_l $root.autotrig -sticky we
+
+    foreach ch [winfo children $root] { $ch configure -bg $bg }
+    $root configure -bg $bg
   }
 
-  method apply {} {
-    run_cmd set_trig\
+  method get_cmd {} {
+    return [list set_trig\
       enable=$enable\
       src=$src\
       thr=$thr\
       dir=$dir\
       del=$del\
       autotrig=[expr $autotrig*1000]\
+    ]
   }
 
 }

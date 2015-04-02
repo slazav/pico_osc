@@ -294,9 +294,6 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
       for (stat=0; stat==0;){
         usleep(cpars->rec_block_time * 1e6/10);
         res = ps3000aIsReady(spars->h, &stat);
-
-        printf("stat: %d\n", stat);
-
         if (res) {
           if (spars->verb)
             printf("Error: rec_block: IsReady: %s\n",
