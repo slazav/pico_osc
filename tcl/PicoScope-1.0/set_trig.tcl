@@ -6,8 +6,8 @@ namespace eval pscope {}
 itcl::class pscope::set_trig {
   public variable src      A
   public variable enable   0
-  public variable thr      0
   public variable dir      RISING
+  public variable thr      0
   public variable del      0
   public variable autotrig 0
   public variable bg       "#E0F0F0"

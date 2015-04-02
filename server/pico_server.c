@@ -2,8 +2,8 @@
 #include "pico.h"
 
 /**********************************************************/
-/* parse command line arguments  and fill pico_spars_t structure */
-int pico_spars_parser(pico_spars_t * pars, int *argc, char ***argv){
+/* parse command line arguments  and fill spars_t structure */
+int pico_spars_parser(spars_t * pars, int *argc, char ***argv){
 
   /* default values */
   pars->port = 8081;
@@ -40,7 +40,7 @@ int pico_spars_parser(pico_spars_t * pars, int *argc, char ***argv){
 /**********************************************************/
 /* initialize the command parameters structure */
 void
-pico_cpars_init(pico_cpars_t * pars){
+pico_cpars_init(cpars_t * pars){
 #undef CPAR
 #define CPAR(comm, type, par, short, cnv, def, descr) pars->comm ## _ ## par = cnv(#def);
 #include "pars.def"
@@ -50,7 +50,7 @@ pico_cpars_init(pico_cpars_t * pars){
 /* fill command parameters from key-value pairs,
  * libmicrohttpd callback for parsing GET arguments. */
 int arg_parser(void *cls, enum MHD_ValueKind kind, const char *key, const char *val){
-  pico_cpars_t *pars = (pico_cpars_t * )cls; /* command parameters */
+  cpars_t *pars = (cpars_t * )cls; /* command parameters */
   if (kind != MHD_GET_ARGUMENT_KIND) return MHD_NO; /* parse onlu GET arguments */
   /*printf(">> %s %s\n", key, val);*/
 #undef CPAR
@@ -68,9 +68,9 @@ static int ahc_echo(void * cls, struct MHD_Connection * connection, const char *
   static int dummy;
   struct MHD_Response * response;
   int ret;
-  pico_cpars_t  cpars;                        /* command parameters */
-  pico_opars_t  opars;                        /* output parameters */
-  pico_spars_t *spars = (pico_spars_t *) cls; /* server parameters */
+  cpars_t  cpars;                        /* command parameters */
+  opars_t  opars;                        /* output parameters */
+  spars_t *spars = (spars_t *) cls; /* server parameters */
   str_pair_t *hh;
 
   /* check if the request is valid */
@@ -109,7 +109,7 @@ static int ahc_echo(void * cls, struct MHD_Connection * connection, const char *
 /**********************************************************/
 int main(int argc, char ** argv) {
   struct MHD_Daemon * d;
-  pico_spars_t spars; /* server parameters*/
+  spars_t spars; /* server parameters*/
 
   /* parse server parameters, exit if no server is needed */
   if (pico_spars_parser(&spars, &argc, &argv)) return 0;

@@ -30,10 +30,11 @@ blt::vector create Bdat
 
 
 # process HTTP request and process results
-proc run_cmd {cmdlist} {
+proc run_cmd {w} {
   global status
   # build HTTP adress for the command
   set addr     localhost:8081
+  set cmdlist [$w get_cmd]
   set cmd  [lindex $cmdlist 0]
   set args [lrange $cmdlist 1 end]
   set args [join $args &]
@@ -56,17 +57,18 @@ proc run_cmd {cmdlist} {
 proc run {} {
   global chA chB gen trg rec
   global status plot
-  set pl [plot cget -w]
+  set pl  [plot cget -w]
+  set fft [rec cget -fft]
 
   # disable Run button
   .p1.run configure -state disabled
   set status "Recording the signal"
 
   # apply settings from all widgets:
-  foreach w {chA chB trg gen rec} { run_cmd [$w get_cmd] }
+  foreach w {chA chB trg gen rec} { run_cmd $w }
 
   # we need response from the rec widget
-  set token [ run_cmd [rec get_cmd] ]
+  set token [ run_cmd rec ]
   upvar #1 $token arr
   #puts $arr(meta)
 
@@ -77,15 +79,24 @@ proc run {} {
   set overload  0
   set dt        0
   foreach {tag val} $arr(meta) {
-    if { $tag eq "Content-Length" } { set len [expr {$val/4}] }
+    if { $tag eq "Content-Length" } { set len       $val }
     if { $tag eq "TrigSamp" }       { set trig_samp $val }
     if { $tag eq "TrigTime" }       { set trig_time $val }
     if { $tag eq "Overload" }       { set overload  $val }
     if { $tag eq "DT" }             { set dt        $val }
   }
 
-  # split the HTTP body into A and B arrays
-  binary scan $arr(body) s${len}s${len} a b
+  # Split the HTTP body into A and B arrays.
+  # In fft mode we have 8-byte double values,
+  # otherwise, 2-byte integers.
+  if { $fft } {
+    set len [expr {$len/16}];
+    binary scan $arr(body) d${len}d${len} a b
+  } else {
+    set len [expr {$len/4}];
+    binary scan $arr(body) s${len}s${len} a b
+  }
+
   Adat set $a
   Bdat set $b
   Xdat seq 0 $len 1
@@ -110,7 +121,7 @@ proc run {} {
   if { [$pl element exists Over] } { $pl element delete Over}
   $pl element create Trig -xdata {0 0} -ydata {-1 1} -symbol {} -color black
   if { $overload } {
-    $pl element create Over -xdata {$Xdat(0) $Xdat($len) $Xdat($len) $Xdat(0)}\
+    $pl element create Over -xdata {$Xdat(1) $Xdat($len) $Xdat($len) $Xdat(1)}\
                             -ydata {1 1 -1 -1 }\
                             -symbol {} -color magenta
     set status "Overload"

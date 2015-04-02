@@ -3,12 +3,11 @@
 #include "pico.h"
 
 int16_t res;
-#define MAXCH 2
 
 /********************************************************************/
 /* open device */
 int
-dev_open(pico_spars_t *pars){
+dev_open(spars_t *pars){
   if (pars->h > 0) return 1;
   if (pars->dev && strlen(pars->dev)==0) pars->dev=0;
   res = ps3000aOpenUnit(&(pars->h), pars->dev);
@@ -19,7 +18,7 @@ dev_open(pico_spars_t *pars){
 /********************************************************************/
 /* close device */
 int
-dev_close(pico_spars_t *pars){
+dev_close(spars_t *pars){
   if (pars->h<1) return;
   res = ps3000aCloseUnit(pars->h);
   if (res!=PICO_OK) { printf("error: %s\n", pico_err(res)); return 1;}
@@ -41,17 +40,9 @@ dev_list(){
   return 0;
 }
 
-/* add info into str_pair_t array */
-#define print_kv(ARR, KEY, ...)\
-  { str_pair_t *hh;\
-    for (hh=ARR; hh->key && hh-ARR < MAXHEADS-2; hh++); \
-    hh->key=KEY; snprintf(hh->val, MAXHVAL, __VA_ARGS__); \
-    hh++; hh->key=NULL; }
-
 /********************************************************************/
 /* run a command */
-void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
-                  pico_opars_t *opars){
+void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
 
   /* default values */
   opars->dsize=0;
@@ -59,7 +50,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
   opars->status="UNKNOWN_COMMAND";
   opars->headers[0].key = NULL;
 
-/* print to a buffer */
+/* print to a buffer - for building help messages */
 #define PRINT(...)\
     opars->dsize += snprintf(opars->data + opars->dsize,\
                              bufsize - opars->dsize, __VA_ARGS__);
@@ -120,6 +111,7 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
       return;
     }
 
+/* similat to PRINT macro above, but with ps3000aGetUnitInfo command */
 #define ADD_INFO(inf, title)\
     res=ps3000aGetUnitInfo(spars->h, buf, bufsize, &len, inf);\
     if (res!=PICO_OK) {opars->status = pico_err(res); return;}\
@@ -203,173 +195,64 @@ void pico_command(pico_spars_t *spars, pico_cpars_t *cpars,
   /* rec_block command */
   if (strcmp(cpars->command, "rec_block")==0){
 
-    int    avrg = cpars->rec_block_avrg;
-    double pretrig = cpars->rec_block_pretrig/100.0;
-    int    nrec = cpars->rec_block_points;
-    int    npre = ceil(nrec * pretrig);
-    double time = cpars->rec_block_time;
-    double rate = nrec/time;
-    double dt   = 1.0/rate;
+    /* allocate buffers */
+    /*  -->  [bufs1 (int16)] --> normal
+     *        |   |
+     *        |  [bufs2 (int16)] --> avrg
+     *        |
+     *       [bufd1 (double)] --> fourier
+     *            |
+     *           [bufd2 (double)] --> avrg fourier
+     */
+    int16_t *bufs1=NULL, *bufs2=NULL;
+    double  *bufd1=NULL, *bufd2=NULL;
+    int avrg = cpars->rec_block_avrg;
+    int fft  = cpars->rec_block_fft;
+    int nrec = cpars->rec_block_points;
+    int size_s = nrec*MAXCH*sizeof(int16_t);
+    int size_d = nrec*MAXCH*sizeof(double);
 
-    uint32_t tbase;
-    int16_t stat = 0, overload = 0, ch;
-    int32_t t_est; /* ms */
-    int64_t ttime;
-    PS3000A_TIME_UNITS tunits;
-    double ttimed;
-    str_pair_t *hh;
-    void * buffer;
-    int n;
-
-    /* parameters */
     if (avrg<1) avrg=1;
-    if (npre<0) npre=0;
-    if (npre>nrec) npre=nrec;
-
-    /* calculate timebase and actual dt */
-    res = rec_timebase(spars->h, &dt, &tbase);
-    if (res!=PICO_OK){
-      opars->status = pico_err(res);
-      return;
-    }
 
     /* prepare data buffers */
-    opars->dsize=nrec*MAXCH*sizeof(int16_t);
-    /* separate buffer is needed only for averaging */
-    buffer=malloc(opars->dsize);
-    if (avrg>1)
-      opars->data=malloc(opars->dsize);
-    else
-      opars->data=buffer;
-    if (opars->data==NULL || buffer==NULL){
-      opars->status = "MALLOC_ERROR";
-      opars->data=NULL;
+    bufs1 = malloc(size_s);   /* buffer for the osc output, always exists */
+    if (fft==0){
+      if (avrg==1){
+        opars->dsize = size_s;
+        opars->data  = bufs1;
+      }
+      else{
+        bufs2 = malloc(size_s); /* buffer for averaging */
+        opars->dsize = size_s;
+        opars->data  = bufs2;
+      }
+    }
+    else {/* fft*/
+      bufd1 = malloc(size_d);
+      if (avrg==1){
+        opars->dsize = size_d;
+        opars->data  = bufd1;
+      }
+      else {
+        bufd2 = malloc(size_d); /* buffer for averaging */
+        opars->dsize = size_d;
+        opars->data  = bufd2;
+      }
+    }
+    /*do recording*/
+    res = do_rec_block(spars, cpars, opars, bufs1, bufs2, bufd1, bufd2);
+
+    /* free data buffers, excluding the output buffer */
+    if (bufs1 && bufs1!=opars->data) { free(bufs1); }
+    if (bufs2 && bufs2!=opars->data) { free(bufs2); }
+    if (bufd1 && bufd1!=opars->data) { free(bufd1); }
+    if (bufd2 && bufd2!=opars->data) { free(bufd2); }
+
+    /* free output buffer in case of error */
+    if (res!=0){
+      free(opars->data);
       opars->dsize=0;
-      return;
     }
-
-    /* show the buffer to the oscilloscope */
-    for (ch=0; ch<MAXCH; ch++){
-      res=ps3000aSetDataBuffer(spars->h, (PS3000A_CHANNEL)ch,
-        buffer + ch*nrec*sizeof(int16_t), nrec*sizeof(int16_t),
-        0, PS3000A_RATIO_MODE_NONE);
-      if (res!=PICO_OK) {
-        if (spars->verb)
-          printf("Error: rec_block: SetDataBuffer: %s\n",
-                 pico_err(res));
-        free(opars->data);
-        if (avrg>1) free(buffer);
-        opars->data=NULL;
-        opars->dsize=0;
-        opars->status = pico_err(res);
-        return;
-      }
-    }
-
-
-    /* get and average data*/
-
-    for (n=0; n<avrg; n++){
-      /* run the oscilloscope */
-      res = ps3000aRunBlock(spars->h,
-        npre, nrec-npre, tbase, 0, &t_est, 0, NULL, NULL);
-      if (res) {
-        if (spars->verb)
-          printf("Error: rec_block: RunBlock: %s\n",
-                 pico_err(res));
-        free(opars->data);
-        if (avrg>1) free(buffer);
-        opars->data=NULL;
-        opars->status = pico_err(res);
-        return;
-      }
-
-      /* wait and trigger generator if needed */
-      if (cpars->rec_block_triggen){
-        usleep(10000);
-        usleep(dt*npre);
-        res=ps3000aSigGenSoftwareControl(spars->h, PS3000A_SIGGEN_GATE_HIGH);
-        if (res) {
-          if (spars->verb)
-            printf("Error: rec_block: SigGenSoftwareControl: %s\n",
-                   pico_err(res));
-        }
-      }
-
-      /* wait for data */
-      usleep(dt*(nrec-npre));
-      for (stat=0; stat==0;){
-        usleep(dt*(nrec-npre) * 1e6/10);
-        res = ps3000aIsReady(spars->h, &stat);
-        if (res) {
-          if (spars->verb)
-            printf("Error: rec_block: IsReady: %s\n",
-                   pico_err(res));
-          free(opars->data);
-          if (avrg>1) free(buffer);
-          opars->data=NULL;
-          opars->status = pico_err(res);
-          return;
-        }
-      }
-
-
-      /* get values */
-      res = ps3000aGetValues(spars->h, 0, &nrec,
-         1, PS3000A_RATIO_MODE_NONE, 0, &overload);
-      if (res!=PICO_OK) {
-        if (spars->verb)
-          printf("Error: rec_block: GetValues: %s\n",
-                 pico_err(res));
-        free(opars->data);
-        if (avrg>1) free(buffer);
-        opars->data=NULL;
-        opars->dsize=0;
-        opars->status = pico_err(res);
-        return;
-      }
-
-      /* get trigger position */
-      res = ps3000aGetTriggerTimeOffset64(spars->h,
-        &ttime, &tunits, 0);
-      if (res!=PICO_OK) { ttime=0; tunits=0; }
-      ttimed = time2dbl(ttime, tunits);
-
-      /* stop oscilloscope */
-      res = ps3000aStop(spars->h);
-      if (res!=PICO_OK) {
-        if (spars->verb)
-          printf("Error: rec_block: Stop: %s\n",
-                 pico_err(res));
-        free(opars->data);
-        if (avrg>1) free(buffer);
-        opars->data=NULL;
-        opars->dsize=0;
-        opars->status = pico_err(res);
-        return;
-      }
-
-      /* do averaging */
-      if (avrg>1){
-        int i;
-        for (i=0; i<nrec*MAXCH; i++){
-          int16_t vn = ((int16_t *)opars->data)[i];
-          int16_t v1 = ((int16_t *)buffer)[i];
-          ((int16_t *)opars->data)[i] =
-            ((long long int)vn*n + v1)/(n+1);
-        }
-      }
-    }
-
-    if (avrg>1) free(buffer);
-
-    /* fill headers */
-    opars->status = pico_err(0);
-    print_kv(opars->headers, "Overload", "%d", overload!=0);
-    print_kv(opars->headers, "TrigTime", "%e", ttimed);
-    print_kv(opars->headers, "TrigSamp", "%d", npre);
-    print_kv(opars->headers, "DT",       "%e", dt);
-    print_kv(opars->headers, "Samples",  "%d", nrec);
 
     return;
   }
