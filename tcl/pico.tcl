@@ -88,12 +88,12 @@ proc run {} {
   binary scan $arr(body) s${len}s${len} a b
   Adat set $a
   Bdat set $b
-  Xdat seq -$trig_samp $len 1
+  Xdat seq 0 $len 1
 
   set max 32512.0
   set maxA [expr [ chA cget -range ] / 2.0 ]
   set maxB [expr [ chB cget -range ] / 2.0 ]
-  Xdat expr Xdat*$dt
+  Xdat expr (Xdat-$trig_samp)*$dt+$trig_time
   Adat expr Adat/$max
   Bdat expr Bdat/$max
 #  Adat expr Adat*[expr $maxA/$max]
