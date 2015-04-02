@@ -1,6 +1,6 @@
 CFLAGS=-I/opt/picoscope/include/libps3000a-1.1 -g
 LDFLAGS=-L/opt/picoscope/lib
-LDLIBS=-lpicoipp -lps3000a -lmicrohttpd -lm
+LDLIBS=-lpicoipp -lps3000a -lmicrohttpd -lm -lfftw3
 
 all: pico_server
 

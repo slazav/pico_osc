@@ -228,16 +228,10 @@ void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
       }
     }
     else {/* fft*/
-      bufd1 = malloc(size_d);
-      if (avrg==1){
-        opars->dsize = size_d;
-        opars->data  = bufd1;
-      }
-      else {
-        bufd2 = malloc(size_d); /* buffer for averaging */
-        opars->dsize = size_d;
-        opars->data  = bufd2;
-      }
+      bufd1 = malloc(size_d*2); /* complex buffer for calculation*/
+      bufd2 = malloc(size_d);   /* output buffer */
+      opars->dsize = size_d;
+      opars->data  = bufd2;
     }
     /*do recording*/
     res = do_rec_block(spars, cpars, opars, bufs1, bufs2, bufd1, bufd2);

@@ -1,6 +1,7 @@
 #include <math.h>
 #include <unistd.h>
 #include "pico.h"
+#include <fftw3.h>
 
 /* Non-trivial conversion from rate to pico timebase
  * input:  device handler, desired dt (s)
@@ -59,6 +60,7 @@ do_rec_block(spars_t *spars, cpars_t *cpars, opars_t *opars,
   double rate = nrec/time;
   double dt   = 1.0/rate;
   int16_t res;
+  fftw_plan p;
 
   uint32_t tbase;
   int16_t stat = 0, overload = 0, ch;
@@ -73,6 +75,10 @@ do_rec_block(spars_t *spars, cpars_t *cpars, opars_t *opars,
   if (avrg<1) avrg=1;
   if (npre<0) npre=0;
   if (npre>nrec) npre=nrec;
+
+  /* fftw plan */
+  if (fft) p = fftw_plan_dft_1d(nrec, (fftw_complex *)bufd1, (fftw_complex *)bufd1,
+                                FFTW_FORWARD, FFTW_ESTIMATE);
 
   /* calculate timebase and actual dt */
   res = rec_timebase(spars->h, &dt, &tbase);
@@ -96,7 +102,6 @@ do_rec_block(spars_t *spars, cpars_t *cpars, opars_t *opars,
 
   /* get and average data*/
   for (n=0; n<avrg; n++){
-
     /* run the oscilloscope */
     res = ps3000aRunBlock(spars->h,
         npre, nrec-npre, tbase, 0, &t_est, 0, NULL, NULL);
@@ -160,24 +165,32 @@ do_rec_block(spars_t *spars, cpars_t *cpars, opars_t *opars,
     if (avrg>1 && fft==0){
       int i;
       for (i=0; i<nrec*MAXCH; i++){
-        int16_t vn = bufs2[i];
-        int16_t v1 = bufs1[i];
-        bufs2[i] = ((long long int)vn*n + v1)/(n+1);
+        if (n==0) bufs2[i] = bufs1[i];
+        else      bufs2[i] = ((long long int)(bufs2[i])*n + bufs1[i])/(n+1);
       }
     }
 
     /* do fft */
     if (fft){
       int i;
+      /* copy data to a complex buffer */
       for (i=0; i<nrec*MAXCH; i++){
-        bufd1[i] = (double)(bufs1[i]);
-        if (avrg>1){
-          bufd2[i] = (bufd2[i]*n + bufd1[i])/(n+1);
-        }
+         bufd1[2*i] = (double)(bufs1[i]);
+         bufd1[2*i+1] = 0;
+      }
+      /* do fft*/
+      fftw_execute(p);
+
+      /* move to the output buffer, average */
+      for (i=0; i<nrec*MAXCH; i++){
+        double v = hypot(bufd1[2*i], bufd1[2*i+1]);
+        if (n==0)  bufd2[i] = v;
+        else       bufd2[i] = (bufd2[i]*n + v)/(n+1);
       }
     }
-
   }
+
+  if (fft) fftw_destroy_plan(p);
 
   /* fill headers */
   opars->status = pico_err(0);

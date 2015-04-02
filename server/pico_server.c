@@ -94,7 +94,7 @@ static int ahc_echo(void * cls, struct MHD_Connection * connection, const char *
   pico_command(spars, &cpars, &opars);
 
   response = MHD_create_response_from_buffer(opars.dsize, opars.data, MHD_RESPMEM_MUST_FREE);
-  ret = MHD_add_response_header (response, "Content-Type", "text/plain");
+  ret = MHD_add_response_header (response, "Content-Type", "application/octet-stream");
   ret = MHD_add_response_header (response, "Command",  cpars.command);
   ret = MHD_add_response_header (response, "Status",   opars.status);
 

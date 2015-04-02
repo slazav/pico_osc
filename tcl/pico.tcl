@@ -65,7 +65,7 @@ proc run {} {
   set status "Recording the signal"
 
   # apply settings from all widgets:
-  foreach w {chA chB trg gen rec} { run_cmd $w }
+  foreach w {chA chB trg gen} { run_cmd $w }
 
   # we need response from the rec widget
   set token [ run_cmd rec ]
@@ -78,12 +78,17 @@ proc run {} {
   set trig_time 0
   set overload  0
   set dt        0
+  set len [ string length $arr(body) ]
   foreach {tag val} $arr(meta) {
-    if { $tag eq "Content-Length" } { set len       $val }
+    if { $tag eq "Content-Length" } { set len1      $val }
     if { $tag eq "TrigSamp" }       { set trig_samp $val }
     if { $tag eq "TrigTime" }       { set trig_time $val }
     if { $tag eq "Overload" }       { set overload  $val }
     if { $tag eq "DT" }             { set dt        $val }
+  }
+
+  if { $len != $len1 } {
+     puts "Wrong length: $len != $len1"
   }
 
   # Split the HTTP body into A and B arrays.
@@ -101,10 +106,15 @@ proc run {} {
   Bdat set $b
   Xdat seq 0 $len 1
 
-  set max 32512.0
-  set maxA [expr [ chA cget -range ] / 2.0 ]
-  set maxB [expr [ chB cget -range ] / 2.0 ]
-  Xdat expr (Xdat-$trig_samp)*$dt+$trig_time
+  set max 32768.0
+
+  if ($fft) {
+    Xdat expr Xdat/($dt*$len)
+  } else {
+    Xdat expr (Xdat-$trig_samp)*$dt+$trig_time
+    set maxA [expr [ chA cget -range ] / 2.0 ]
+    set maxB [expr [ chB cget -range ] / 2.0 ]
+  }
   Adat expr Adat/$max
   Bdat expr Bdat/$max
 #  Adat expr Adat*[expr $maxA/$max]
@@ -116,10 +126,12 @@ proc run {} {
   if { ! [$pl element exists B] } {
     $pl element create B -xdata Xdat -ydata Bdat -symbol {} -color blue }
 
-
   if { [$pl element exists Trig] } { $pl element delete Trig}
   if { [$pl element exists Over] } { $pl element delete Over}
-  $pl element create Trig -xdata {0 0} -ydata {-1 1} -symbol {} -color black
+
+  if {$fft==0} {
+    $pl element create Trig -xdata {0 0} -ydata {-1 1} -symbol {} -color black
+  }
   if { $overload } {
     $pl element create Over -xdata {$Xdat(1) $Xdat($len) $Xdat($len) $Xdat(1)}\
                             -ydata {1 1 -1 -1 }\
