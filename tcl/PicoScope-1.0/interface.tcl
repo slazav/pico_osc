@@ -1,6 +1,6 @@
 # osc_interface class
 
-package require Itcl 3
+package require Itcl
 package require http
 namespace eval pscope {}
 

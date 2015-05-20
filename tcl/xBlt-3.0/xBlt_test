@@ -1,4 +1,4 @@
-#!/rota/software/bin/wish
+#!/usr/bin/wish
 
 lappend auto_path /rota/programs/tcl_packages
 
