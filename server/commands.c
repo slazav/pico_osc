@@ -19,7 +19,7 @@ dev_open(spars_t *pars){
 /* close device */
 int
 dev_close(spars_t *pars){
-  if (pars->h<1) return;
+  if (pars->h<1) return 1;
   res = ps3000aCloseUnit(pars->h);
   if (res!=PICO_OK) { printf("error: %s\n", pico_err(res)); return 1;}
   return 0;

@@ -87,4 +87,8 @@ const char * tunits2str(int16_t n);
 
 double time2dbl(int64_t t, PS3000A_TIME_UNITS tu);
 
+/* see rec.c */
+int do_rec_block(spars_t *spars, cpars_t *cpars, opars_t *opars,
+      int16_t *bufs1, int16_t *bufs2, double *bufd1, double *bufd2);
+
 #endif
