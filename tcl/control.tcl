@@ -1,4 +1,3 @@
-#!/rota/software/bin/wish
 #!/usr/bin/wish
 
 # a simple tcl script for controlling the interface

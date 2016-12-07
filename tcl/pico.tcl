@@ -1,5 +1,4 @@
-#!/rota/software/bin/wish
-#!/usr/bin/bltwish
+#!/usr/bin/wish
 
 lappend auto_path .
 package require xBlt 3

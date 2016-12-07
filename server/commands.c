@@ -10,7 +10,7 @@ int
 dev_open(spars_t *pars){
   if (pars->h > 0) return 1;
   if (pars->dev && strlen(pars->dev)==0) pars->dev=0;
-  res = ps3000aOpenUnit(&(pars->h), pars->dev);
+  res = psOpenUnit(&(pars->h), pars->dev);
   if (pars->h < 1){  printf("error: %s\n", pico_err(res)); return 1; }
   return 0;
 }
@@ -20,7 +20,7 @@ dev_open(spars_t *pars){
 int
 dev_close(spars_t *pars){
   if (pars->h<1) return 1;
-  res = ps3000aCloseUnit(pars->h);
+  res = psCloseUnit(pars->h);
   if (res!=PICO_OK) { printf("error: %s\n", pico_err(res)); return 1;}
   return 0;
 }
@@ -33,7 +33,7 @@ dev_list(){
   const int buflen=2048;
   char buf[buflen];
   len=buflen;
-  res=ps3000aEnumerateUnits(&cnt, buf, &len);
+  res=psEnumerateUnits(&cnt, buf, &len);
   if (res!=PICO_OK){ printf("error: %s\n", pico_err(res));  return 1;}
   printf("devices found: %d\n", cnt);
   if (cnt>0) printf("  %s\n", buf);
@@ -94,7 +94,7 @@ void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
   /*********************************************************/
   /* ping command */
   if (strcmp(cpars->command, "ping")==0){
-    res = ps3000aPingUnit(spars->h);
+    res = psPingUnit(spars->h);
     opars->status = pico_err(res);
     return;
   }
@@ -111,9 +111,9 @@ void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
       return;
     }
 
-/* similat to PRINT macro above, but with ps3000aGetUnitInfo command */
+/* similat to PRINT macro above, but with psGetUnitInfo command */
 #define ADD_INFO(inf, title)\
-    res=ps3000aGetUnitInfo(spars->h, buf, bufsize, &len, inf);\
+    res=psGetUnitInfo(spars->h, buf, bufsize, &len, inf);\
     if (res!=PICO_OK) {opars->status = pico_err(res); return;}\
     else opars->dsize += snprintf(opars->data + opars->dsize,\
        bufsize - opars->dsize, "%s %s\n", title, buf);
@@ -133,7 +133,7 @@ void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
   /*********************************************************/
   /* set_chan command */
   if (strcmp(cpars->command, "set_chan")==0){
-    res = ps3000aSetChannel(spars->h,
+    res = psSetChannel(spars->h,
       cpars->set_chan_channel,
       cpars->set_chan_enable,
       cpars->set_chan_coupling,
@@ -147,7 +147,7 @@ void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
   /*********************************************************/
   /* set_trig command */
   if (strcmp(cpars->command, "set_trig")==0){
-    res = ps3000aSetSimpleTrigger(spars->h,
+    res = psSetSimpleTrigger(spars->h,
       cpars->set_trig_enable,
       cpars->set_trig_src,
       cpars->set_trig_thr,
@@ -162,7 +162,7 @@ void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
   /*********************************************************/
   /* set_gen command */
   if (strcmp(cpars->command, "set_gen")==0){
-    res = ps3000aSetSigGenBuiltInV2(spars->h,
+    res = psSetSigGenBuiltInV2(spars->h,
       cpars->set_gen_offset,
       cpars->set_gen_volt,
       cpars->set_gen_wave,
@@ -171,7 +171,7 @@ void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
       cpars->set_gen_incr,
       cpars->set_gen_dwell,
       cpars->set_gen_sweep,
-      PS3000A_ES_OFF,
+      PS_ES_OFF,
       cpars->set_gen_cycles,
       cpars->set_gen_sweeps,
       cpars->set_gen_trig_dir,
@@ -185,7 +185,7 @@ void pico_command(spars_t *spars, cpars_t *cpars, opars_t *opars){
   /*********************************************************/
   /* trig_gen command */
   if (strcmp(cpars->command, "trig_gen")==0){
-    res=ps3000aSigGenSoftwareControl(spars->h, PS3000A_SIGGEN_GATE_HIGH);
+    res=psSigGenSoftwareControl(spars->h, PS3000A_SIGGEN_GATE_HIGH);
     opars->status = pico_err(res);
     return;
   }

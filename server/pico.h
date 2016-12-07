@@ -1,11 +1,62 @@
 #ifndef PICO_H
 #define PICO_H
-
-#include <ps3000aApi.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifdef ps3000a
+  #include <ps3000aApi.h>
+  #define psOpenUnit               ps3000aOpenUnit
+  #define psCloseUnit              ps3000aCloseUnit
+  #define psEnumerateUnits         ps3000aEnumerateUnits
+  #define psPingUnit               ps3000aPingUnit
+  #define psGetUnitInfo            ps3000aGetUnitInfo
+  #define psSetChannel             ps3000aSetChannel
+  #define psSetSimpleTrigger       ps3000aSetSimpleTrigger
+  #define psSetSigGenBuiltInV2     ps3000aSetSigGenBuiltInV2
+  #define psSigGenSoftwareControl  ps3000aSigGenSoftwareControl
+  #define psGetTimebase2           ps3000aGetTimebase2
+  #define psSetDataBuffer          ps3000aSetDataBuffer
+  #define psRunBlock               ps3000aRunBlock
+  #define psSigGenSoftwareControl  ps3000aSigGenSoftwareControl
+  #define psIsReady                ps3000aIsReady
+  #define psGetValues              ps3000aGetValues
+  #define psGetTriggerTimeOffset64 ps3000aGetTriggerTimeOffset64
+  #define psStop                   ps3000aStop
+  #define PS_TIME_UNITS            PS3000A_TIME_UNITS
+  #define PS_ES_OFF                PS3000A_ES_OFF
+  #define PS_AC                    PS3000A_AC
+  #define PS_DC                    PS3000A_DC
+  #define PS_SIGGEN_GATE_HIGH      PS3000A_SIGGEN_GATE_HIGH
+#endif
+#ifdef ps4000
+  #include <ps4000Api.h>
+  #define psOpenUnit               ps4000OpenUnit
+  #define psCloseUnit              ps4000CloseUnit
+  #define psEnumerateUnits         ps4000EnumerateUnits
+  #define psPingUnit               ps4000PingUnit
+  #define psGetUnitInfo            ps4000GetUnitInfo
+  #define psSetChannel             ps4000SetChannel
+  #define psSetSimpleTrigger       ps4000SetSimpleTrigger
+  #define psSetSigGenBuiltInV2     ps4000SetSigGenBuiltInV2
+  #define psSigGenSoftwareControl  ps4000SigGenSoftwareControl
+  #define psGetTimebase2           ps4000GetTimebase2
+  #define psSetDataBuffer          ps4000SetDataBuffer
+  #define psRunBlock               ps4000RunBlock
+  #define psSigGenSoftwareControl  ps4000SigGenSoftwareControl
+  #define psIsReady                ps4000IsReady
+  #define psGetValues              ps4000GetValues
+  #define psGetTriggerTimeOffset64 ps4000GetTriggerTimeOffset64
+  #define psStop                   ps4000Stop
+  #define PS_TIME_UNITS            PS4000_TIME_UNITS
+  #define PS_ES_OFF                PS4000_ES_OFF
+  #define PS_AC                    PS4000_AC
+  #define PS_DC                    PS4000_DC
+  #define PS_SIGGEN_GATE_HIGH      PS4000_SIGGEN_GATE_HIGH
+#endif
+
+
 
 #define MAXCH 2
 
@@ -85,7 +136,7 @@ const char * gen_trigsrc2str(int16_t n);
 const char * gen_trigdir2str(int16_t n);
 const char * tunits2str(int16_t n);
 
-double time2dbl(int64_t t, PS3000A_TIME_UNITS tu);
+double time2dbl(int64_t t, PS_TIME_UNITS tu);
 
 /* see rec.c */
 int do_rec_block(spars_t *spars, cpars_t *cpars, opars_t *opars,
