@@ -79,8 +79,9 @@ do_rec_block(spars_t *spars, cpars_t *cpars, opars_t *opars,
   if (npre>nrec) npre=nrec;
 
   /* fftw plan */
-  if (fft) p = fftw_plan_dft_1d(nrec, (fftw_complex *)bufd1, (fftw_complex *)bufd1,
-                                FFTW_FORWARD, FFTW_ESTIMATE);
+  if (fft) p = fftw_plan_dft_1d(nrec,
+    (fftw_complex *)bufd1, (fftw_complex *)bufd1,
+    FFTW_FORWARD, FFTW_ESTIMATE);
 
   /* calculate timebase and actual dt */
   res = rec_timebase(spars->h, &dt, &tbase);
