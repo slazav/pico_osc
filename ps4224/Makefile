@@ -1,7 +1,7 @@
 LDLIBS = -lm -lps4000
 CC=g++
 
-all: test1 test2 test3 pico4224block pico4224stream
+all: pico4224block pico4224stream unpack_data
 
 pico4224block: pico4224block.o pico_err.o m_getopt.o
 pico4224stream: pico4224stream.o pico_err.o m_getopt.o
