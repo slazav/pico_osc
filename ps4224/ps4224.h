@@ -8,8 +8,9 @@
 #include "err.h"
 #include "buf.h"
 #include "convs.h"
+#include "ps_int.h"
 
-class PS4224{
+class PS4224 : PSInt {
   int16_t h; // device handle
 
   public:
