@@ -4,6 +4,7 @@
 // high-level commands for work with pico-devices
 
 #include <string>
+#include <sstream>
 #include <stdint.h>
 #include <unistd.h> // usleep
 #include <cmath>
@@ -12,7 +13,7 @@
 #include "buf.h"
 #include "pico_int.h"
 
-// input parameters for high-level record function
+// input parameters for high-level record functions
 struct InPars{
   bool  use_a, use_b;
   float rng_a, rng_b;       // V
@@ -24,6 +25,7 @@ struct InPars{
   float dt;      // time step, s
   uint32_t nrec; // total number of samples
   uint32_t npre; // pretrigger samples
+  float tbuf;    // length of buffer in seconds
 
   // defaults
   InPars(){
@@ -36,46 +38,36 @@ struct InPars{
     dt    = 1e-3;
     nrec  = 1024;
     npre  = 0;
+    tbuf  = 0.1;
   }
 };
 
-// output parameters for high-level record function
-struct OutPars{
-  Buf<int16_t> bufa, bufb;    // data buffers
-  float t0, dt;     // tstart, tstep
-  float sc_a, sc_b; // data scale
-  bool overflow_a, overflow_b;
-  // defaults
-  OutPars(){
-    t0=dt=0;
-    sc_a=sc_b=1;
-    overflow_a=overflow_b=false;
-  }
-};
 
+/********************************************************************/
 // high-level record function
-OutPars record_block(PicoInt & osc, const InPars & pi){
-  OutPars po;
+void record_block(PicoInt & osc, const InPars & pi){
+
+  Buf<int16_t> bufa,bufb;
 
   // set chan A
   if (pi.use_a){
     osc.chan_set("A", pi.cpl_a.c_str(), pi.rng_a);
-    po.bufa = Buf<int16_t>(pi.nrec);
-    osc.set_buf("A", po.bufa);
+    bufa = Buf<int16_t>(pi.nrec);
+    osc.set_buf("A", bufa);
   }
   else osc.chan_disable("A");
 
   // set chan B
   if (pi.use_b){
     osc.chan_set("B", pi.cpl_b.c_str(), pi.rng_b);
-    po.bufb = Buf<int16_t>(pi.nrec);
-    osc.set_buf("B", po.bufb);
+    bufb = Buf<int16_t>(pi.nrec);
+    osc.set_buf("B", bufb);
   }
   else osc.chan_disable("B");
 
   // calculate actual dt to find correct trigger delay
-  po.dt = osc.tbase2dt( osc.dt2tbase(pi.dt) );
-  uint32_t ndel = round(pi.trig_del/po.dt); // trig delay (samples)
+  float dt = osc.tbase2dt( osc.dt2tbase(pi.dt) );
+  uint32_t ndel = round(pi.trig_del/dt); // trig delay (samples)
 
   // set trigger
   if (pi.trig_src=="A" || pi.trig_src=="B"){
@@ -89,23 +81,134 @@ OutPars record_block(PicoInt & osc, const InPars & pi){
   }
   else osc.trig_disable();
 
-  po.dt = pi.dt;
-  osc.run_block(pi.nrec, pi.npre, &po.dt);
-  usleep(pi.nrec*po.dt*1e6);
-  while (!osc.is_ready()) usleep(pi.nrec*po.dt*1e6/100);
+  osc.run_block(pi.nrec, pi.npre, &dt);
+  usleep(pi.nrec*dt*1e6);
+  while (!osc.is_ready()) usleep(pi.nrec*dt*1e6/100);
 
   int16_t o;
-  uint32_t n = pi.nrec;
-  osc.get_data(0, &n, &o);
-  po.overflow_a = (bool)(o&1);
-  po.overflow_b = (bool)(o&2);
+  uint32_t nrec = pi.nrec;
+  osc.get_data(0, &nrec, &o);
+  bool overflow_a = (bool)(o&1);
+  bool overflow_b = (bool)(o&2);
 
-  po.t0 = osc.get_trig() - pi.npre*po.dt + ndel*po.dt;
-  po.sc_a = pi.rng_a/osc.get_max_val();
-  po.sc_b = pi.rng_b/osc.get_max_val();
+  double t0 = osc.get_trig() - pi.npre*dt + ndel*dt;
+  double sc_a = pi.rng_a/osc.get_max_val();
+  double sc_b = pi.rng_b/osc.get_max_val();
 
-  return po;
+  // dump results
+  std::cout << std::scientific
+       << "use_a: " << pi.use_a << "\n"
+       << "rng_a: " << pi.rng_a << "\n"
+       << "cpl_a: " << pi.cpl_a << "\n"
+       << "use_b: " << pi.use_b << "\n"
+       << "rng_b: " << pi.rng_b << "\n"
+       << "cpl_b: " << pi.cpl_b << "\n"
+       << "trig_src: " << pi.trig_src << "\n"
+       << "trig_lvl: " << pi.trig_lvl << "\n"
+       << "trig_del: " << pi.trig_del << "\n"
+       << "trig_dir: " << pi.trig_dir << "\n"
+       << "in_dt: " << pi.dt << "\n"
+       << "nrec: "  << pi.nrec << "\n"
+       << "npre: "  << pi.npre << "\n";
+
+  std::cout << std::scientific
+       << "t0: "   << t0 << "\n"
+       << "dt: "   << dt << "\n"
+       << "sc_a: " << sc_a << "\n"
+       << "sc_b: " << sc_b << "\n"
+       << "overflow_a: " << overflow_a << "\n"
+       << "overflow_b: " << overflow_b << "\n";
+  std::cout << "\n";
+
+  int n = std::max(bufa.size, bufb.size);
+  for (int i = 0; i<n; i++){
+    if (bufa.size == n){
+      int16_t *d = bufa.data + i;
+      std::cout.write((const char*)d, sizeof(int16_t));
+    }
+    if (bufb.size == n){
+      int16_t *d = bufb.data + i;
+      std::cout.write((const char*)d, sizeof(int16_t));
+    }
+  }
 }
+
+/********************************************************************/
+// calback
+void stream_cb(int16_t h, int32_t num, uint32_t start,
+                               int16_t over, uint32_t trigpos, int16_t trig,
+                               int16_t autostop, void *par){
+  Buf<int16_t> *b1 = ((Buf<int16_t> **)par)[0];
+  Buf<int16_t> *b2 = ((Buf<int16_t> **)par)[1];
+  int n = std::max(b1->size, b2->size);
+  if (n<num+start) return;
+  for (int i=0; i<num; i++){
+    if (b1->size == n){
+      int16_t *d1 = b1->data + start + i;
+      std::cout.write((const char*)d1, sizeof(int16_t));
+    }
+    if (b2->size == n){
+      int16_t *d2 = b2->data + start + i;
+      std::cout.write((const char*)d2, sizeof(int16_t));
+    }
+  }
+}
+
+
+// high-level stream function
+void stream(PicoInt & osc, const InPars & pi){
+
+  int len = ceil(2*pi.tbuf/pi.dt);
+  Buf<int16_t> bufa, bufb;
+  // set chan A
+  if (pi.use_a){
+    osc.chan_set("A", pi.cpl_a.c_str(), pi.rng_a);
+    bufa = Buf<int16_t>(len);
+    osc.set_buf("A", bufa);
+  }
+  else osc.chan_disable("A");
+
+  // set chan B
+  if (pi.use_b){
+    osc.chan_set("B", pi.cpl_b.c_str(), pi.rng_b);
+    bufb = Buf<int16_t>(len);
+    osc.set_buf("B", bufb);
+  }
+  else osc.chan_disable("B");
+
+  // disable trigger
+  osc.trig_disable();
+  Buf<int16_t> *par[2] = {&bufa, &bufb};
+
+  float dt = pi.dt;
+  double sc_a = pi.rng_a/osc.get_max_val();
+  double sc_b = pi.rng_b/osc.get_max_val();
+  osc.run_stream(&dt, len);
+
+  // dump results
+  std::cout << std::scientific
+       << "use_a: " << pi.use_a << "\n"
+       << "rng_a: " << pi.rng_a << "\n"
+       << "cpl_a: " << pi.cpl_a << "\n"
+       << "use_b: " << pi.use_b << "\n"
+       << "rng_b: " << pi.rng_b << "\n"
+       << "cpl_b: " << pi.cpl_b << "\n"
+       << "in_dt: " << pi.dt << "\n"
+       << "tbuf: "  << pi.tbuf << "\n";
+
+  std::cout << std::scientific
+       << "dt: "   << dt << "\n"
+       << "sc_a: " << sc_a << "\n"
+       << "sc_b: " << sc_b << "\n";
+  std::cout << "\n";
+
+  while(1){
+    usleep(pi.tbuf*1e6);
+    osc.get_stream(stream_cb, (void *)par);
+  }
+  osc.stop();
+}
+
 
 #endif
 

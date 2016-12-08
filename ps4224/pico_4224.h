@@ -125,7 +125,7 @@ class Pico4224 : public PicoInt {
     }
     throw Err() << "error: unknown time units: " << n;
   }
-  double time2dbl(int64_t t, PS4000_TIME_UNITS tu){
+  double time2dbl(uint32_t t, PS4000_TIME_UNITS tu){
     switch (tu){
       case PS4000_FS: return (double)t * 1e-15;
       case PS4000_PS: return (double)t * 1e-12;
@@ -135,6 +135,15 @@ class Pico4224 : public PicoInt {
       case PS4000_S:  return (double)t;
     }
     throw Err() << "error: unknown time units: %i\n" << tu;
+  }
+  // for streaming mode: convert double time into uint32_t + TIME_UNITS
+  uint32_t dbl2time(double t, PS4000_TIME_UNITS *tu){
+//    if (t<1e-6) { *tu=PS4000_FS; return round(t*1e15); }
+//    if (t<1e-3) { *tu=PS4000_PS; return round(t*1e12); }
+    if (t<1)    { *tu=PS4000_NS; return round(t*1e9); }
+    if (t<1e3)  { *tu=PS4000_US; return round(t*1e6); }
+    if (t<1e6)  { *tu=PS4000_MS; return round(t*1e3); }
+    *tu=PS4000_S;  return round(t);
   }
 
   /**********************************************************/
@@ -240,6 +249,22 @@ class Pico4224 : public PicoInt {
           npre, nrec-npre, tb, os, NULL, 0, NULL, NULL);
     if (res!=PICO_OK) throw Err() << "RunBlock error:" << pico_err(res);
     *dt = tbase2dt(tb);
+  }
+
+  // run streaming mode, return actual time step: run_stream(dt);
+  void run_stream(float *dt, uint32_t bufsize){
+    // convert dt to integer time and time units
+    PS4000_TIME_UNITS tu;
+    uint32_t ti = dbl2time(*dt, &tu);
+    int16_t res = ps4000RunStreaming(h, &ti, tu, 0,0,0,1, bufsize);
+    if (res!=PICO_OK) throw Err() << "RunStreaming error:" << pico_err(res);
+    *dt = time2dbl(ti,tu);
+  }
+
+  // get stream values
+  void get_stream(ps4000StreamingReady cb, void *par){
+    int16_t res = ps4000GetStreamingLatestValues(h, cb, par);
+    if (res!=PICO_OK) throw Err() << "GetStreamingLatestValues error: " << pico_err(res);
   }
 
   // is device ready?

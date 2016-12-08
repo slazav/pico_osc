@@ -6,6 +6,9 @@
 #include <string>
 #include <stdint.h>
 
+typedef void (StreamingReadyCB)(int16_t, int32_t, uint32_t, int16_t, uint32_t, int16_t, int16_t, void*);
+
+
 class PicoInt{
   public:
 
@@ -53,6 +56,11 @@ class PicoInt{
   virtual int16_t get_max_val() const = 0;
   virtual int16_t get_min_val() const = 0;
 
+  // run streaming mode, return actual time step: run_stream(dt);
+  virtual void run_stream(float *dt, uint32_t bufsize) = 0;
+
+  // get stream values
+  virtual void get_stream(StreamingReadyCB cb, void *par) =0 ;
 };
 
 
