@@ -1,0 +1,8 @@
+# example for recording free decay signal from fork
+# A is genegator output: burst mode 32764Hz, 10V, 100 cycles
+# B is fork output
+
+./ps4224block -A 1 -B 1 -T A\
+              --rng_a 10 --rng_b 0.05 --cpl_a=AC --cpl_b=AC\
+              --trig_lvl 1 --trig_del 3.1e-3\
+              --nrec 400000 --dt 1e-5 > a1.txt

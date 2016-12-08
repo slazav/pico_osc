@@ -32,6 +32,8 @@ class PS4224{
     if (name && strlen(name)) res = ps4000OpenUnitEx(&h, (int8_t *)name);
     else  res = ps4000OpenUnit(&h);
     if (res!=PICO_OK) throw Err() << "OpenUnit error: " << pico_err(res);
+    res = ps4000Stop(h);
+    if (res!=PICO_OK) throw Err() << "Stop error: " << pico_err(res);
   }
 
   // destructor: close device
@@ -151,11 +153,11 @@ class PS4224{
   // input parameters for high-level record function
   struct InPars{
     bool  use_a, use_b;
-    float range_a, range_b;       // V
-    std::string coupl_a, coupl_b; // "DC", "AC"
+    float rng_a, rng_b;       // V
+    std::string cpl_a, cpl_b; // "DC", "AC"
     std::string trig_src;         // "", "A", "B"
     float trig_del;               // s
-    float trig_level;             // V
+    float trig_lvl;             // V
     std::string trig_dir;         // "RISING", "FALLING"
     float dt;      // time step, s
     uint32_t nrec; // total number of samples
@@ -164,10 +166,10 @@ class PS4224{
     // defaults
     InPars(){
       use_a = use_b = true;
-      range_a = range_b = 1;
-      coupl_a = coupl_b = "DC";
+      rng_a = rng_b = 1;
+      cpl_a = cpl_b = "DC";
       trig_src = ""; // none
-      trig_level = 0;
+      trig_lvl = 0;
       trig_dir = "RISING";
       dt    = 1e-3;
       nrec  = 1024;
@@ -195,7 +197,7 @@ class PS4224{
 
     // set chan A
     if (pi.use_a){
-      chan_set("A", pi.coupl_a.c_str(), pi.range_a);
+      chan_set("A", pi.cpl_a.c_str(), pi.rng_a);
       po.bufa = Buf<int16_t>(pi.nrec);
       set_buf("A", po.bufa);
     }
@@ -203,7 +205,7 @@ class PS4224{
 
     // set chan B
     if (pi.use_b){
-      chan_set("B", pi.coupl_b.c_str(), pi.range_b);
+      chan_set("B", pi.cpl_b.c_str(), pi.rng_b);
       po.bufb = Buf<int16_t>(pi.nrec);
       set_buf("B", po.bufb);
     }
@@ -214,13 +216,13 @@ class PS4224{
     uint ndel = round(pi.trig_del/po.dt); // trig delay (samples)
 
     // set trigger
-    if (pi.trig_src!=""){
-      int32_t trig_level=0;
+    if (pi.trig_src=="A" || pi.trig_src=="B"){
+      int32_t trig_lvl=0;
       if (pi.trig_src=="A")
-        trig_level = pi.trig_level/pi.range_a*PS4000_MAX_VALUE;
+        trig_lvl = pi.trig_lvl/pi.rng_a*PS4000_MAX_VALUE;
       if (pi.trig_src=="B")
-        trig_level = pi.trig_level/pi.range_b*PS4000_MAX_VALUE;
-      trig_set(pi.trig_src.c_str(), trig_level,
+        trig_lvl = pi.trig_lvl/pi.rng_b*PS4000_MAX_VALUE;
+      trig_set(pi.trig_src.c_str(), trig_lvl,
                pi.trig_dir.c_str(), ndel, 0);
     }
     else trig_disable();
@@ -237,8 +239,8 @@ class PS4224{
     po.overflow_b = (bool)(o&2);
 
     po.t0 = get_trig() - pi.npre*po.dt + ndel*po.dt;
-    po.sc_a = pi.range_a/get_max_val();
-    po.sc_b = pi.range_b/get_max_val();
+    po.sc_a = pi.rng_a/get_max_val();
+    po.sc_b = pi.rng_b/get_max_val();
 
     return po;
   }

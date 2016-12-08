@@ -10,13 +10,16 @@ main(){
     PS4224 osc;
     PS4224::InPars pi;
 
-    pi.range_a = 5.0;
-    pi.range_b = 5.0;
-    pi.dt = 2e-5;
-    pi.nrec = 1024;
+    pi.rng_a = 2;
+    pi.rng_b = 0.05;
+    pi.cpl_a = "DC";
+    pi.cpl_b = "AC";
+    pi.dt = 1e-5;
+    pi.nrec = 300*1024;
     pi.npre = 0;
     pi.trig_src = "A";
-    pi.trig_level = 1.2;
+    pi.trig_lvl = 0.005;
+    pi.trig_del = 0.0032;
 
     PS4224::OutPars po = osc.record(pi);
 
