@@ -1,15 +1,17 @@
-#include "ps4224.h"
+#include "pico_4224.h"
 #include "err.h"
 #include <unistd.h>
+
+// example of low-level operations with PS4224
 
 int
 main(){
   try {
   std::cerr << "list available devices:\n";
-  std::cerr << PS4224::dev_list() << "\n";
+  std::cerr << Pico4224::dev_list() << "\n";
 
 
-  PS4224 osc;
+  Pico4224 osc;
 
   std::cerr << "channel ranges:\n";
   std::cerr << " A: " << osc.chan_get_ranges("A") << "\n";

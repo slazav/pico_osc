@@ -1,5 +1,5 @@
-#include "ps4224.h"
-#include "ps_cmd.h"
+#include "pico_4224.h"
+#include "pico_cmd.h"
 #include "err.h"
 #include "m_getopt.h"
 #include <unistd.h>
@@ -43,8 +43,8 @@ static struct ext_option options[] = {
 // show help message and exit
 void usage(bool pod=false){
   string head = pod? "\n=head1 ":"\n";
-  const char * fname = "ps4224block";
-  cerr << fname << " -- read data block from the ps4224 oscilloscope\n"
+  const char * fname = "pico4224block";
+  cerr << fname << " -- read data block from the Picoscope 4224\n"
        << head << "Usage:\n"
        << "\t"<< fname << " <options>\n";
   cerr << head << "General options:\n";
@@ -56,12 +56,12 @@ void usage(bool pod=false){
 
 // show device list and exit
 void list(){
-  std::cout << PS4224::dev_list() << "\n";
+  std::cout << Pico4224::dev_list() << "\n";
   exit(1);
 }
 
 void ranges(const char *dev){
-  PS4224 osc(dev);
+  Pico4224 osc(dev);
   std::cout << osc.chan_get_ranges("A") << "\n";
   exit(1);
 }
@@ -82,7 +82,7 @@ main(int argc, char *argv[]){
     if (O["ranges"]!="") ranges(O["device"].c_str());
 
     // open the device
-    PS4224 osc(O["device"].c_str());
+    Pico4224 osc(O["device"].c_str());
 
     // input parameters for the measurement
     InPars pi;

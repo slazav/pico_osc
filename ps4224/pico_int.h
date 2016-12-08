@@ -1,12 +1,12 @@
-#ifndef PS_INT_H
-#define PS_INT_H
+#ifndef PICO_INT_H
+#define PICO_INT_H
 
-// device-independent picoscope interface
+// device-independent PicoScope interface
 
 #include <string>
 #include <stdint.h>
 
-class PSInterface{
+class PicoInt{
   public:
 
   // get avaiable ranges: chan_get_ranges("A");

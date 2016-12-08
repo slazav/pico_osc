@@ -1,18 +1,143 @@
-#ifndef PS4224_H
-#define PS4224_H
+#ifndef PICO_4224_H
+#define PICO_4224_H
 
+#include <pico/ps4000Api.h>
 #include <string>
 #include <stdint.h>
 #include <unistd.h> // usleep
+#include <cstring>  // strcasecmp
 #include <cmath>
 #include "err.h"
 #include "buf.h"
-#include "convs.h"
-#include "ps_int.h"
+#include "pico_err.h"
+#include "pico_int.h"
 
-class PS4224 : public PSInterface {
+class Pico4224 : public PicoInt {
   int16_t h; // device handle
 
+  /**********************************************************/
+
+  // convert coupling AC,DC
+  int16_t str2coupl(const char *str){
+    if (strcasecmp(str, "AC")==0) return 0;
+    if (strcasecmp(str, "DC")==0) return 1;
+    throw Err() << "error: unknown coupling (should be AC or DC): " << str;
+  }
+  const char * coupl2str(int16_t n){
+    return n? "DC":"AC";
+  }
+
+  // convert channel (A,B,C,D,EXT)
+  PS4000_CHANNEL str2chan(const char *str){
+    if (strcasecmp(str, "A")==0) return PS4000_CHANNEL_A;
+    if (strcasecmp(str, "B")==0) return PS4000_CHANNEL_B;
+    if (strcasecmp(str, "C")==0) return PS4000_CHANNEL_C;
+    if (strcasecmp(str, "D")==0) return PS4000_CHANNEL_D;
+    if (strcasecmp(str, "EXT")==0) return PS4000_EXTERNAL;
+      throw Err() << "error: unknown channel (should be A,B,C,D or EXT): " << str;
+  }
+  const char * chan2str(int16_t n){
+    if (n == PS4000_CHANNEL_A) return "A";
+    if (n == PS4000_CHANNEL_B) return "B";
+    if (n == PS4000_CHANNEL_C) return "C";
+    if (n == PS4000_CHANNEL_D) return "D";
+    if (n == PS4000_EXTERNAL) return "EXT";
+    throw Err() << "error: unknown channel: " << n;
+  }
+
+  // convert voltage range
+  PS4000_RANGE volt2range(float v){
+    int range = (int)(1000*v);
+    switch (range){
+      case    10: return PS4000_10MV;
+      case    20: return PS4000_20MV;
+      case    50: return PS4000_50MV;
+      case   100: return PS4000_100MV;
+      case   200: return PS4000_200MV;
+      case   500: return PS4000_500MV;
+      case  1000: return PS4000_1V;
+      case  2000: return PS4000_2V;
+      case  5000: return PS4000_5V;
+      case 10000: return PS4000_10V;
+      case 20000: return PS4000_20V;
+      case 50000: return PS4000_50V;
+      case 100000: return PS4000_100V;
+    }
+    throw Err() << "error: unknown input range: " << v;
+  }
+  const char * range2str(PS4000_RANGE n){
+      switch (n){
+      case PS4000_10MV:  return "0.01";
+      case PS4000_20MV:  return "0.02";
+      case PS4000_50MV:  return "0.05";
+      case PS4000_100MV: return "0.1";
+      case PS4000_200MV: return "0.2";
+      case PS4000_500MV: return "0.5";
+      case PS4000_1V:    return "1";
+      case PS4000_2V:    return "2";
+      case PS4000_5V:    return "5";
+      case PS4000_10V:   return "10";
+      case PS4000_20V:   return "20";
+      case PS4000_50V:   return "50";
+      case PS4000_100V:  return "100";
+    }
+    throw Err() << "error: unknown input range: " << n;
+  }
+
+  // convert trigger direction
+  THRESHOLD_DIRECTION str2dir(const char *str){
+    if (strcasecmp(str, "above")==0)   return ABOVE;
+    if (strcasecmp(str, "below")==0)   return BELOW;
+    if (strcasecmp(str, "rising")==0)  return RISING;
+    if (strcasecmp(str, "falling")==0) return FALLING;
+    if (strcasecmp(str, "rising_or_falling")==0) return RISING_OR_FALLING;
+    throw Err() << "error: unknown trigger dir: " << str;
+  }
+  const char * dir2str(THRESHOLD_DIRECTION n){
+    switch (n){
+      case ABOVE:   return "ABOVE";
+      case BELOW:   return "BELOW";
+      case RISING:  return "RISING";
+      case FALLING: return "FALLING";
+      case RISING_OR_FALLING: return "RISING_OR_FALLING";
+    }
+    throw Err() << "error: unknown trigger dir: " << n;
+  }
+
+  // convert time units
+  PS4000_TIME_UNITS str2tunits(const char *str){
+    if (strcasecmp(str, "fs")==0)    return PS4000_FS;
+    if (strcasecmp(str, "ps")==0)    return PS4000_PS;
+    if (strcasecmp(str, "ns")==0)    return PS4000_NS;
+    if (strcasecmp(str, "us")==0)    return PS4000_US;
+    if (strcasecmp(str, "ms")==0)    return PS4000_MS;
+    if (strcasecmp(str, "s")==0)    return PS4000_S;
+    throw Err() << "error: unknown time units: " << str;
+  }
+  const char * tunits2str(PS4000_TIME_UNITS n){
+    switch (n){
+      case PS4000_FS: return "fs";
+      case PS4000_PS: return "ps";
+      case PS4000_NS: return "ns";
+      case PS4000_US: return "us";
+      case PS4000_MS: return "ms";
+      case PS4000_S:  return "s";
+    }
+    throw Err() << "error: unknown time units: " << n;
+  }
+  double time2dbl(int64_t t, PS4000_TIME_UNITS tu){
+    switch (tu){
+      case PS4000_FS: return (double)t * 1e-15;
+      case PS4000_PS: return (double)t * 1e-12;
+      case PS4000_NS: return (double)t * 1e-9;
+      case PS4000_US: return (double)t * 1e-6;
+      case PS4000_MS: return (double)t * 1e-3;
+      case PS4000_S:  return (double)t;
+    }
+    throw Err() << "error: unknown time units: %i\n" << tu;
+  }
+
+  /**********************************************************/
   public:
 
   // detect all pico devices and print result to stdout.
@@ -28,7 +153,7 @@ class PS4224 : public PSInterface {
   }
 
   // constructor: open pico device
-  PS4224(const char *name = NULL){
+  Pico4224(const char *name = NULL){
     int16_t res;
     if (name && strlen(name)) res = ps4000OpenUnitEx(&h, (int8_t *)name);
     else  res = ps4000OpenUnit(&h);
@@ -38,7 +163,7 @@ class PS4224 : public PSInterface {
   }
 
   // destructor: close device
-  ~PS4224(){
+  ~Pico4224(){
     int16_t res = ps4000CloseUnit(h);
     if (res!=PICO_OK) throw Err() << "CloseUnit error: " << pico_err(res);
   }

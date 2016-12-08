@@ -1,5 +1,5 @@
-#include "ps4224.h"
-#include "ps_cmd.h"
+#include "pico_4224.h"
+#include "pico_cmd.h"
 #include "err.h"
 #include <unistd.h>
 
@@ -8,7 +8,7 @@ int
 main(){
   try {
 
-    PS4224 osc;
+    Pico4224 osc;
     InPars pi;
 
     pi.rng_a = 2;

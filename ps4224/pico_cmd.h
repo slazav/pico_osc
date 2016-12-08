@@ -1,5 +1,5 @@
-#ifndef PS_CMD_H
-#define PS_CMD_H
+#ifndef PICO_CMD_H
+#define PICO_CMD_H
 
 // high-level commands for work with pico-devices
 
@@ -7,10 +7,10 @@
 #include <stdint.h>
 #include <unistd.h> // usleep
 #include <cmath>
+#include <cstdlib>
 #include "err.h"
 #include "buf.h"
-#include "convs.h"
-#include "ps_int.h"
+#include "pico_int.h"
 
 // input parameters for high-level record function
 struct InPars{
@@ -54,7 +54,7 @@ struct OutPars{
 };
 
 // high-level record function
-OutPars record_block(PSInterface & osc, const InPars & pi){
+OutPars record_block(PicoInt & osc, const InPars & pi){
   OutPars po;
 
   // set chan A
@@ -75,7 +75,7 @@ OutPars record_block(PSInterface & osc, const InPars & pi){
 
   // calculate actual dt to find correct trigger delay
   po.dt = osc.tbase2dt( osc.dt2tbase(pi.dt) );
-  uint ndel = round(pi.trig_del/po.dt); // trig delay (samples)
+  uint32_t ndel = round(pi.trig_del/po.dt); // trig delay (samples)
 
   // set trigger
   if (pi.trig_src=="A" || pi.trig_src=="B"){
