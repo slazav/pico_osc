@@ -139,9 +139,13 @@ class PS4224{
 
   // stop oscilloscope
   void stop(){
-    int64_t res = ps4000Stop(h);
+    int16_t res = ps4000Stop(h);
     if (res!=PICO_OK) throw Err() << "Stop error: " << pico_err(res);
   }
+
+  // get max and min values
+  int16_t get_max_val() const { return PS4000_MAX_VALUE; }
+  int16_t get_min_val() const { return PS4000_MIN_VALUE; }
 
   /********************************************************************/
   // input parameters for high-level record function
@@ -150,6 +154,7 @@ class PS4224{
     float range_a, range_b;       // V
     std::string coupl_a, coupl_b; // "DC", "AC"
     std::string trig_src;         // "", "A", "B"
+    float trig_del;               // s
     float trig_level;             // V
     std::string trig_dir;         // "RISING", "FALLING"
     float dt;      // time step, s
@@ -188,6 +193,7 @@ class PS4224{
   OutPars record(const InPars & pi){
     OutPars po;
 
+    // set chan A
     if (pi.use_a){
       chan_set("A", pi.coupl_a.c_str(), pi.range_a);
       po.bufa = Buf<int16_t>(pi.nrec);
@@ -195,6 +201,7 @@ class PS4224{
     }
     else chan_disable("A");
 
+    // set chan B
     if (pi.use_b){
       chan_set("B", pi.coupl_b.c_str(), pi.range_b);
       po.bufb = Buf<int16_t>(pi.nrec);
@@ -202,13 +209,19 @@ class PS4224{
     }
     else chan_disable("B");
 
+    // calculate actual dt to find correct trigger delay
+    po.dt = tbase2dt( dt2tbase(pi.dt) );
+    uint ndel = round(pi.trig_del/po.dt); // trig delay (samples)
+
+    // set trigger
     if (pi.trig_src!=""){
       int32_t trig_level=0;
       if (pi.trig_src=="A")
         trig_level = pi.trig_level/pi.range_a*PS4000_MAX_VALUE;
       if (pi.trig_src=="B")
         trig_level = pi.trig_level/pi.range_b*PS4000_MAX_VALUE;
-      trig_set(pi.trig_src.c_str(), trig_level, pi.trig_dir.c_str(),0,0);
+      trig_set(pi.trig_src.c_str(), trig_level,
+               pi.trig_dir.c_str(), ndel, 0);
     }
     else trig_disable();
 
@@ -223,9 +236,9 @@ class PS4224{
     po.overflow_a = (bool)(o&1);
     po.overflow_b = (bool)(o&2);
 
-    po.t0 = get_trig() - pi.npre*po.dt;
-    po.sc_a = pi.range_a/PS4000_MAX_VALUE;
-    po.sc_b = pi.range_a/PS4000_MAX_VALUE;
+    po.t0 = get_trig() - pi.npre*po.dt + ndel*po.dt;
+    po.sc_a = pi.range_a/get_max_val();
+    po.sc_b = pi.range_b/get_max_val();
 
     return po;
   }
