@@ -1,4 +1,5 @@
 #include "ps4224.h"
+#include "ps_cmd.h"
 #include "err.h"
 #include <unistd.h>
 
@@ -8,7 +9,7 @@ main(){
   try {
 
     PS4224 osc;
-    PS4224::InPars pi;
+    InPars pi;
 
     pi.rng_a = 2;
     pi.rng_b = 0.05;
@@ -21,7 +22,7 @@ main(){
     pi.trig_lvl = 0.005;
     pi.trig_del = 0.0032;
 
-    PS4224::OutPars po = osc.record(pi);
+    OutPars po = record_block(osc, pi);
 
     for (int i = 0; i<po.bufa.size; i++){
       double x = po.t0 + po.dt*i;

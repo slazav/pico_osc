@@ -1,4 +1,5 @@
 #include "ps4224.h"
+#include "ps_cmd.h"
 #include "err.h"
 #include "m_getopt.h"
 #include <unistd.h>
@@ -84,7 +85,7 @@ main(int argc, char *argv[]){
     PS4224 osc(O["device"].c_str());
 
     // input parameters for the measurement
-    PS4224::InPars pi;
+    InPars pi;
     if (O["use_a"]!="") pi.use_a = atoi(O["use_a"].c_str());
     if (O["use_b"]!="") pi.use_b = atoi(O["use_b"].c_str());
     if (O["rng_a"]!="") pi.rng_a = atof(O["rng_a"].c_str());
@@ -102,7 +103,7 @@ main(int argc, char *argv[]){
     if (O["npre"]!="") pi.npre = atoi(O["npre"].c_str());
 
     // record the signal
-    PS4224::OutPars po = osc.record(pi);
+    OutPars po = record_block(osc, pi);
 
     // dump results
     for (int i = 0; i<po.bufa.size; i++){

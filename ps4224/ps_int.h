@@ -6,14 +6,8 @@
 #include <string>
 #include <stdint.h>
 
-class PSInt{
+class PSInterface{
   public:
-
-  // constructor: open pico device
-  PSInt(const char *name = NULL){};
-
-  // destructor: close device
-  ~PSInt(){};
 
   // get avaiable ranges: chan_get_ranges("A");
   virtual std::string chan_get_ranges(const char * chan) = 0;
