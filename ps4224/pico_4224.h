@@ -252,11 +252,11 @@ class Pico4224 : public PicoInt {
   }
 
   // run streaming mode, return actual time step: run_stream(dt);
-  void run_stream(float *dt, uint32_t bufsize){
+  void run_stream(uint32_t nrec, uint32_t npre, float *dt, uint32_t bufsize){
     // convert dt to integer time and time units
     PS4000_TIME_UNITS tu;
     uint32_t ti = dbl2time(*dt, &tu);
-    int16_t res = ps4000RunStreaming(h, &ti, tu, 0,0,0,1, bufsize);
+    int16_t res = ps4000RunStreaming(h, &ti, tu, npre,nrec-npre,0,1, bufsize);
     if (res!=PICO_OK) throw Err() << "RunStreaming error: " << pico_err(res);
     *dt = time2dbl(ti,tu);
   }
@@ -276,7 +276,7 @@ class Pico4224 : public PicoInt {
   }
 
   // get data, return number of points and overflow flag
-  void get_data(uint32_t start, uint32_t *n, int16_t *overflow){
+  void get_block(uint32_t start, uint32_t *n, int16_t *overflow){
     int16_t res = ps4000GetValues(h, start, n, 1, RATIO_MODE_NONE, 0, overflow);
     if (res!=PICO_OK) throw Err() << "GetValues error: " <<  pico_err(res);
   }

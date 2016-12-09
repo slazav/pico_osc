@@ -88,7 +88,7 @@ void record_block(PicoInt & osc, const InPars & pi){
 
   int16_t o;
   uint32_t nrec = pi.nrec;
-  osc.get_data(0, &nrec, &o);
+  osc.get_block(0, &nrec, &o);
   bool overflow_a = (bool)(o&1);
   bool overflow_b = (bool)(o&2);
 
@@ -136,22 +136,31 @@ void record_block(PicoInt & osc, const InPars & pi){
 }
 
 /********************************************************************/
+// parameter structure for the callback
+struct CBPar{
+  bool use_a, use_b;
+  Buf<int16_t> *bufa;
+  Buf<int16_t> *bufb;
+};
+
+/********************************************************************/
 // calback
 void stream_cb(int16_t h, int32_t num, uint32_t start,
                                int16_t over, uint32_t trigpos, int16_t trig,
                                int16_t autostop, void *par){
-  Buf<int16_t> *b1 = ((Buf<int16_t> **)par)[0];
-  Buf<int16_t> *b2 = ((Buf<int16_t> **)par)[1];
-  int n = std::max(b1->size, b2->size);
+  CBPar *pars = (CBPar *)par;
+
+  int n = std::max(pars->bufa->size, pars->bufb->size);
 //std::cerr << "stream_cb " << num << "\n";
+//if (trig) std::cerr << "trig_pos " << trigpos << "\n";
   if (n<num+start) return;
   for (int i=0; i<num; i++){
-    if (b1->size == n){
-      int16_t *d1 = b1->data + start + i;
+    if (pars->use_a){
+      int16_t *d1 = pars->bufa->data + start + i;
       std::cout.write((const char*)d1, sizeof(int16_t));
     }
-    if (b2->size == n){
-      int16_t *d2 = b2->data + start + i;
+    if (pars->use_b){
+      int16_t *d2 = pars->bufb->data + start + i;
       std::cout.write((const char*)d2, sizeof(int16_t));
     }
   }
@@ -179,11 +188,29 @@ void stream(PicoInt & osc, const InPars & pi){
   }
   else osc.chan_disable("B");
 
-  // disable trigger
-  osc.trig_disable();
-  Buf<int16_t> *par[2] = {&bufa, &bufb};
+  // calculate actual dt to find correct trigger delay
+  float dt = osc.tbase2dt( osc.dt2tbase(pi.dt) );
+  uint32_t ndel = round(pi.trig_del/dt); // trig delay (samples)
 
-  float dt = pi.dt;
+  // set trigger
+  if (pi.trig_src=="A" || pi.trig_src=="B"){
+    int32_t trig_lvl=0;
+    if (pi.trig_src=="A")
+      trig_lvl = pi.trig_lvl/pi.rng_a*PS4000_MAX_VALUE;
+    if (pi.trig_src=="B")
+      trig_lvl = pi.trig_lvl/pi.rng_b*PS4000_MAX_VALUE;
+    osc.trig_set(pi.trig_src.c_str(), trig_lvl,
+                 pi.trig_dir.c_str(), ndel, 0);
+  }
+  else osc.trig_disable();
+
+  // parameter structure for the callback
+  CBPar pars;
+  pars.use_a = pi.use_a;
+  pars.use_b = pi.use_b;
+  pars.bufa = &bufa;
+  pars.bufb = &bufb;
+
   double sc_a = pi.rng_a/osc.get_max_val();
   double sc_b = pi.rng_b/osc.get_max_val();
 
@@ -195,7 +222,13 @@ void stream(PicoInt & osc, const InPars & pi){
        << "use_b: " << pi.use_b << "\n"
        << "rng_b: " << pi.rng_b << "\n"
        << "cpl_b: " << pi.cpl_b << "\n"
+       << "trig_src: " << pi.trig_src << "\n"
+       << "trig_lvl: " << pi.trig_lvl << "\n"
+       << "trig_del: " << pi.trig_del << "\n"
+       << "trig_dir: " << pi.trig_dir << "\n"
        << "in_dt: " << pi.dt << "\n"
+       << "nrec: "  << pi.nrec << "\n"
+       << "npre: "  << pi.npre << "\n"
        << "tbuf:  " << pi.tbuf << "\n"
        << "nchan: " << int(pi.use_a) + int(pi.use_b) << "\n";
 
@@ -207,11 +240,11 @@ void stream(PicoInt & osc, const InPars & pi){
 
   // run streaming
   std::cerr << "Start collecting data\n";
-  osc.run_stream(&dt, len);
+  osc.run_stream(pi.nrec,pi.npre, &dt, len);
 
   while(1){
     usleep(pi.tbuf*1e6);
-    osc.get_stream(stream_cb, (void *)par);
+    osc.get_stream(stream_cb, (void *)&pars);
   }
   osc.stop();
 }

@@ -28,7 +28,14 @@ static struct ext_option options[] = {
   {"cpl_a",    1,0,   OPT2, "coupling for channel A: DC, AC (default DC)\n"},
   {"cpl_b",    1,0,   OPT2, "coupling for channel B: DC, AC (default DC)\n"},
 
+  {"trig_src", 1,'T', OPT2, "trigger source: NONE,A,B (default NONE)\n"},
+  {"trig_dir", 1,0,   OPT2, "trigger direction: ABOVE, BELOW, RISING, FALLING (default RISING)\n"},
+  {"trig_lvl", 1,0,   OPT2, "trigger level, V (default 0)\n"},
+  {"trig_del", 1,0,   OPT2, "trigger delay, s (default 0)\n"},
+
   {"dt",       1,'t',   OPT2, "time step, s (default 1e-3)\n"},
+  {"nrec",     1,'n',   OPT2, "total number of points (default 1024)\n"},
+  {"npre",     1,'p',   OPT2, "number of pretrigger points (default 0)\n"},
   {"tbuf",     1,'n',   OPT2, "bufsize (default 0.1s)\n"},
 
   {0,0,0,0}
@@ -92,7 +99,14 @@ main(int argc, char *argv[]){
     if (O["cpl_a"]!="") pi.cpl_a = O["cpl_a"];
     if (O["cpl_b"]!="") pi.cpl_b = O["cpl_b"];
 
+    if (O["trig_src"]!="") pi.trig_src = O["trig_src"];
+    if (O["trig_lvl"]!="") pi.trig_lvl = atof(O["trig_lvl"].c_str());
+    if (O["trig_del"]!="") pi.trig_del = atof(O["trig_del"].c_str());
+    if (O["trig_dir"]!="") pi.trig_dir = O["trig_dir"];
+
     if (O["dt"]!="")   pi.dt   = atof(O["dt"].c_str());
+    if (O["nrec"]!="") pi.nrec = atoi(O["nrec"].c_str());
+    if (O["npre"]!="") pi.npre = atoi(O["npre"].c_str());
     if (O["tbuf"]!="") pi.tbuf = atoi(O["tbuf"].c_str());
 
     // record the signal
