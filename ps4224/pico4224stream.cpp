@@ -36,7 +36,7 @@ static struct ext_option options[] = {
   {"dt",       1,'t',   OPT2, "time step, s (default 1e-3)\n"},
   {"nrec",     1,'n',   OPT2, "total number of points (default 1024)\n"},
   {"npre",     1,'p',   OPT2, "number of pretrigger points (default 0)\n"},
-  {"tbuf",     1,'n',   OPT2, "bufsize (default 0.1s)\n"},
+  {"tbuf",     1,0,     OPT2, "bufsize (default 0.1s)\n"},
 
   {0,0,0,0}
 };
