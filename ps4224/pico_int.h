@@ -35,7 +35,7 @@ class PicoInt{
   virtual uint32_t dt2tbase(float dt) = 0;
 
   // show data buffer to oscilloscope: set_buff("A",buf);
-  virtual void set_buf(const char * chan, Buf<int16_t> buf) = 0;
+  virtual void set_buf(const char * chan, int16_t *buf, uint32_t bufsize) = 0;
 
   // run block mode, return actual time step: run_block(nrec,npre,dt);
   virtual void run_block(uint32_t nrec, uint32_t npre, float *dt) = 0;

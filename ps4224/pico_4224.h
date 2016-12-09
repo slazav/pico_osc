@@ -8,7 +8,6 @@
 #include <cstring>  // strcasecmp
 #include <cmath>
 #include "err.h"
-#include "buf.h"
 #include "pico_err.h"
 #include "pico_int.h"
 
@@ -236,8 +235,8 @@ class Pico4224 : public PicoInt {
   }
 
   // show data buffer to oscilloscope: set_buff("A",buf);
-  void set_buf(const char * chan, Buf<int16_t> buf){
-    int16_t res = ps4000SetDataBuffer(h, str2chan(chan), buf.data, buf.size);
+  void set_buf(const char * chan, int16_t *buf, uint32_t bufsize){
+    int16_t res = ps4000SetDataBuffer(h, str2chan(chan), buf, bufsize);
     if (res!=PICO_OK) throw Err() << "SetDataBuffer error: " << pico_err(res);
   }
 

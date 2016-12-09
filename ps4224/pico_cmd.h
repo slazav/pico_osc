@@ -53,7 +53,7 @@ void record_block(PicoInt & osc, const InPars & pi){
   if (pi.use_a){
     osc.chan_set("A", pi.cpl_a.c_str(), pi.rng_a);
     bufa = Buf<int16_t>(pi.nrec);
-    osc.set_buf("A", bufa);
+    osc.set_buf("A", bufa.data, bufa.size);
   }
   else osc.chan_disable("A");
 
@@ -61,7 +61,7 @@ void record_block(PicoInt & osc, const InPars & pi){
   if (pi.use_b){
     osc.chan_set("B", pi.cpl_b.c_str(), pi.rng_b);
     bufb = Buf<int16_t>(pi.nrec);
-    osc.set_buf("B", bufb);
+    osc.set_buf("B", bufb.data, bufb.size);
   }
   else osc.chan_disable("B");
 
@@ -81,7 +81,7 @@ void record_block(PicoInt & osc, const InPars & pi){
   }
   else osc.trig_disable();
 
-  std::cerr << "Start collecting data\n";
+  std::cerr << "Block mode: start collecting data\n";
   osc.run_block(pi.nrec, pi.npre, &dt);
   usleep(pi.nrec*dt*1e6);
   while (!osc.is_ready()) usleep(pi.nrec*dt*1e6/100);
@@ -141,6 +141,7 @@ struct CBPar{
   bool use_a, use_b;
   Buf<int16_t> *bufa;
   Buf<int16_t> *bufb;
+  int cnt, trg;
 };
 
 /********************************************************************/
@@ -149,6 +150,8 @@ void stream_cb(int16_t h, int32_t num, uint32_t start,
                                int16_t over, uint32_t trigpos, int16_t trig,
                                int16_t autostop, void *par){
   CBPar *pars = (CBPar *)par;
+  if (trig) pars->trg = pars->cnt + trigpos;
+  pars->cnt += num;
 
   int n = std::max(pars->bufa->size, pars->bufb->size);
 std::cerr << "stream_cb " << num << "\n";
@@ -170,13 +173,15 @@ if (trig) std::cerr << "trig_pos " << trigpos << "\n";
 // high-level stream function
 void stream(PicoInt & osc, const InPars & pi){
 
+//  double tbuf = min(100*dt, 0.1);
   int len = ceil(2*pi.tbuf/pi.dt);
+
   Buf<int16_t> bufa, bufb;
   // set chan A
   if (pi.use_a){
     osc.chan_set("A", pi.cpl_a.c_str(), pi.rng_a);
     bufa = Buf<int16_t>(len);
-    osc.set_buf("A", bufa);
+    osc.set_buf("A", bufa.data, bufa.size);
   }
   else osc.chan_disable("A");
 
@@ -184,7 +189,7 @@ void stream(PicoInt & osc, const InPars & pi){
   if (pi.use_b){
     osc.chan_set("B", pi.cpl_b.c_str(), pi.rng_b);
     bufb = Buf<int16_t>(len);
-    osc.set_buf("B", bufb);
+    osc.set_buf("B", bufb.data, bufb.size);
   }
   else osc.chan_disable("B");
 
@@ -210,6 +215,8 @@ void stream(PicoInt & osc, const InPars & pi){
   pars.use_b = pi.use_b;
   pars.bufa = &bufa;
   pars.bufb = &bufb;
+  pars.cnt = 0;
+  pars.trg = 0;
 
   double sc_a = pi.rng_a/osc.get_max_val();
   double sc_b = pi.rng_b/osc.get_max_val();
@@ -239,7 +246,7 @@ void stream(PicoInt & osc, const InPars & pi){
   std::cout << "\n";
 
   // run streaming
-  std::cerr << "Start collecting data\n";
+  std::cerr << "Streaming mode: start collecting data\n";
   osc.run_stream(pi.nrec, pi.npre, &dt, len);
 
   while(1){
