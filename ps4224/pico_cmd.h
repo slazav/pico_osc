@@ -151,8 +151,8 @@ void stream_cb(int16_t h, int32_t num, uint32_t start,
   CBPar *pars = (CBPar *)par;
 
   int n = std::max(pars->bufa->size, pars->bufb->size);
-//std::cerr << "stream_cb " << num << "\n";
-//if (trig) std::cerr << "trig_pos " << trigpos << "\n";
+std::cerr << "stream_cb " << num << "\n";
+if (trig) std::cerr << "trig_pos " << trigpos << "\n";
   if (n<num+start) return;
   for (int i=0; i<num; i++){
     if (pars->use_a){
@@ -240,7 +240,7 @@ void stream(PicoInt & osc, const InPars & pi){
 
   // run streaming
   std::cerr << "Start collecting data\n";
-  osc.run_stream(pi.nrec,pi.npre, &dt, len);
+  osc.run_stream(pi.nrec, pi.npre, &dt, len);
 
   while(1){
     usleep(pi.tbuf*1e6);

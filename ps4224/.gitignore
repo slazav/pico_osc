@@ -1,6 +1,5 @@
 *.o
-pico4224block
-pico4224stream
+pico4224
 unpack_data
 fft_filter
 *.dat

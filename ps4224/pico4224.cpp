@@ -4,7 +4,7 @@
 #include "m_getopt.h"
 #include <unistd.h>
 
-/* stream data to stdout, no trigger */
+/* read data block from the oscilloscope */
 
 #define OPT1  1  //
 #define OPT2  2  //
@@ -36,7 +36,8 @@ static struct ext_option options[] = {
   {"dt",       1,'t',   OPT2, "time step, s (default 1e-3)\n"},
   {"nrec",     1,'n',   OPT2, "total number of points (default 1024)\n"},
   {"npre",     1,'p',   OPT2, "number of pretrigger points (default 0)\n"},
-  {"tbuf",     1,0,     OPT2, "bufsize (default 0.1s)\n"},
+
+  {"mode",     1,'M',   OPT2, "recording mode: BLOCK, STREAM (default BLOCK)\n"},
 
   {0,0,0,0}
 };
@@ -107,10 +108,19 @@ main(int argc, char *argv[]){
     if (O["dt"]!="")   pi.dt   = atof(O["dt"].c_str());
     if (O["nrec"]!="") pi.nrec = atoi(O["nrec"].c_str());
     if (O["npre"]!="") pi.npre = atoi(O["npre"].c_str());
-    if (O["tbuf"]!="") pi.tbuf = atoi(O["tbuf"].c_str());
 
-    // record the signal
-    stream(osc, pi);
+    if (O["mode"]=="") O["mode"] = "block";
+    if (strcasecmp(O["mode"].c_str(), "block")==0){
+      std::cerr << "Block mode\n";
+      record_block(osc, pi);
+    }
+
+    else if (strcasecmp(O["mode"].c_str(), "stream")==0){
+      std::cerr << "Stream mode\n";
+      stream(osc, pi);
+    }
+    else throw Err() << "unknown mode setting: " << O["mode"];
+
 
   }
   catch (Err E){
