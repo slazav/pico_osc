@@ -1,4 +1,4 @@
-LDLIBS = -lm -lps4000
+LDLIBS = -lm -lps4000 -lfftw3
 CC=g++
 
 all: pico4224block pico4224stream unpack_data

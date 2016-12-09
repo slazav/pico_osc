@@ -81,6 +81,7 @@ void record_block(PicoInt & osc, const InPars & pi){
   }
   else osc.trig_disable();
 
+  std::cerr << "Start collecting data\n";
   osc.run_block(pi.nrec, pi.npre, &dt);
   usleep(pi.nrec*dt*1e6);
   while (!osc.is_ready()) usleep(pi.nrec*dt*1e6/100);
@@ -109,7 +110,8 @@ void record_block(PicoInt & osc, const InPars & pi){
        << "trig_dir: " << pi.trig_dir << "\n"
        << "in_dt: " << pi.dt << "\n"
        << "nrec: "  << pi.nrec << "\n"
-       << "npre: "  << pi.npre << "\n";
+       << "npre: "  << pi.npre << "\n"
+       << "nchan: " << int(pi.use_a) + int(pi.use_b) << "\n";
 
   std::cout << std::scientific
        << "t0: "   << t0 << "\n"
@@ -141,6 +143,7 @@ void stream_cb(int16_t h, int32_t num, uint32_t start,
   Buf<int16_t> *b1 = ((Buf<int16_t> **)par)[0];
   Buf<int16_t> *b2 = ((Buf<int16_t> **)par)[1];
   int n = std::max(b1->size, b2->size);
+//std::cerr << "stream_cb " << num << "\n";
   if (n<num+start) return;
   for (int i=0; i<num; i++){
     if (b1->size == n){
@@ -183,9 +186,8 @@ void stream(PicoInt & osc, const InPars & pi){
   float dt = pi.dt;
   double sc_a = pi.rng_a/osc.get_max_val();
   double sc_b = pi.rng_b/osc.get_max_val();
-  osc.run_stream(&dt, len);
 
-  // dump results
+  // write header
   std::cout << std::scientific
        << "use_a: " << pi.use_a << "\n"
        << "rng_a: " << pi.rng_a << "\n"
@@ -194,13 +196,18 @@ void stream(PicoInt & osc, const InPars & pi){
        << "rng_b: " << pi.rng_b << "\n"
        << "cpl_b: " << pi.cpl_b << "\n"
        << "in_dt: " << pi.dt << "\n"
-       << "tbuf: "  << pi.tbuf << "\n";
+       << "tbuf:  " << pi.tbuf << "\n"
+       << "nchan: " << int(pi.use_a) + int(pi.use_b) << "\n";
 
   std::cout << std::scientific
        << "dt: "   << dt << "\n"
        << "sc_a: " << sc_a << "\n"
        << "sc_b: " << sc_b << "\n";
   std::cout << "\n";
+
+  // run streaming
+  std::cerr << "Start collecting data\n";
+  osc.run_stream(&dt, len);
 
   while(1){
     usleep(pi.tbuf*1e6);

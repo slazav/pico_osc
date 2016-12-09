@@ -247,7 +247,7 @@ class Pico4224 : public PicoInt {
     uint16_t os = 1; // I can't see any effect
     int16_t res = ps4000RunBlock(h,
           npre, nrec-npre, tb, os, NULL, 0, NULL, NULL);
-    if (res!=PICO_OK) throw Err() << "RunBlock error:" << pico_err(res);
+    if (res!=PICO_OK) throw Err() << "RunBlock error: " << pico_err(res);
     *dt = tbase2dt(tb);
   }
 
@@ -257,7 +257,7 @@ class Pico4224 : public PicoInt {
     PS4000_TIME_UNITS tu;
     uint32_t ti = dbl2time(*dt, &tu);
     int16_t res = ps4000RunStreaming(h, &ti, tu, 0,0,0,1, bufsize);
-    if (res!=PICO_OK) throw Err() << "RunStreaming error:" << pico_err(res);
+    if (res!=PICO_OK) throw Err() << "RunStreaming error: " << pico_err(res);
     *dt = time2dbl(ti,tu);
   }
 
