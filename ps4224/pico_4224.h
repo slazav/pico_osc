@@ -200,14 +200,17 @@ class Pico4224 : public PicoInt {
   }
 
   // set trigger: trig_set("A", 125, "RISING", 0, 0);
+  // if src == "", "OFF", "NONE" then disable trigger
   void trig_set(const char * src, int16_t th, const char * dir, uint32_t del, int16_t auto_del){
-    int16_t res = ps4000SetSimpleTrigger(h, 1, str2chan(src), th, str2dir(dir), del, auto_del);
-    if (res!=PICO_OK)  throw Err() << "SetSimpleTrigger error: " << pico_err(res);
-  }
-
-  // disable trigger: trig_disable();
-  void trig_disable(){
-    int16_t res = ps4000SetSimpleTrigger(h, 0, PS4000_CHANNEL_A, 0, RISING, 0, 0);
+    PS4000_CHANNEL s;
+    int16_t e;
+    if (strcasecmp(src,"")==0 ||
+        strcasecmp(src,"OFF")==0 ||
+        strcasecmp(src,"NONE")==0 ){
+      s = PS4000_CHANNEL_A; e = 0;
+    }
+    else { s = str2chan(src); e = 1; }
+    int16_t res = ps4000SetSimpleTrigger(h, e, s, th, str2dir(dir), del, auto_del);
     if (res!=PICO_OK)  throw Err() << "SetSimpleTrigger error: " << pico_err(res);
   }
 
@@ -235,11 +238,11 @@ class Pico4224 : public PicoInt {
   }
 
   // run block mode, return actual time step: run_block(nrec,npre,dt);
-  void run_block(uint32_t nrec, uint32_t npre, float *dt){
+  void run_block(uint32_t npre, uint32_t npost, float *dt){
     uint32_t tb = dt2tbase(*dt);
     uint16_t os = 1; // I can't see any effect
     int16_t res = ps4000RunBlock(h,
-          npre, nrec-npre, tb, os, NULL, 0, NULL, NULL);
+          npre, npost, tb, os, NULL, 0, NULL, NULL);
     if (res!=PICO_OK) throw Err() << "RunBlock error: " << pico_err(res);
     *dt = tbase2dt(tb);
   }
@@ -259,11 +262,11 @@ class Pico4224 : public PicoInt {
   }
 
   // run streaming mode, return actual time step: run_stream(dt);
-  void run_stream(uint32_t nrec, uint32_t npre, float *dt, uint32_t bufsize){
+  void run_stream(uint32_t npre, uint32_t npost, float *dt, uint32_t bufsize){
     // convert dt to integer time and time units
     PS4000_TIME_UNITS tu;
     uint32_t ti = dbl2time(*dt, &tu);
-    int16_t res = ps4000RunStreaming(h, &ti, tu, npre,nrec-npre,0,1, bufsize);
+    int16_t res = ps4000RunStreaming(h, &ti, tu, npre, npost,0,1, bufsize);
     if (res!=PICO_OK) throw Err() << "RunStreaming error: " << pico_err(res);
     *dt = time2dbl(ti,tu);
   }

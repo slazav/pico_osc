@@ -1,6 +1,7 @@
 #ifndef OSCSIG_H
 #define OSCSIG_H
 
+#include <fstream>
 #include <iostream>
 #include <complex>
 #include <cassert>
@@ -195,6 +196,36 @@ class OscSig{
     return l2;
   }
 
+  // load from file
+  void load(const char *file, int ch=0){
+    ifstream ff(file);
+
+    // read metadata <name>:<value>
+    double sc_a=1, sc_b=1, t0=0, dt=1;
+    bool use_a=true, use_b=true;
+    while (!ff.eof()){
+      string l;
+      getline(cin, l);
+
+      if (l=="") break;
+      // extract values for conversion
+      size_t i = l.find(":");
+      if (i!=string::npos){
+        string key = l.substr(0,i);
+        string val = l.substr(i+1);
+        if (key=="sc_a") sc_a = atof(val.c_str());
+        if (key=="sc_b") sc_b = atof(val.c_str());
+        if (key=="t0") t0 = atof(val.c_str());
+        if (key=="dt") dt = atof(val.c_str());
+        if (key=="use_a") use_a = atoi(val.c_str());
+        if (key=="use_b") use_b = atoi(val.c_str());
+      }
+    }
+    int nchan = (int)use_a + (int)use_b;
+
+    long int pos = 
+
+  }
 
 };
 

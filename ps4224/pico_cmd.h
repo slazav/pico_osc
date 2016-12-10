@@ -110,18 +110,10 @@ CBPars set_osc(PicoInt & osc, const InPars & pi, uint32_t buflen){
   uint32_t ndel = round(pi.trig_del/ret.dt); // trig delay (samples)
 
   // set trigger
-  if (pi.trig_src=="A"){
-    int32_t trig_lvl = pi.trig_lvl/pi.rng_a*osc.get_max_val();
-    osc.trig_set("A", trig_lvl, pi.trig_dir.c_str(), ndel, 0);
-  }
-  else if (pi.trig_src=="B"){
-    int32_t trig_lvl = pi.trig_lvl/pi.rng_b*osc.get_max_val();
-    osc.trig_set("B", trig_lvl, pi.trig_dir.c_str(), ndel, 0);
-  }
-  else if (pi.trig_src=="" || pi.trig_src=="NONE" || pi.trig_src=="OFF"){
-    osc.trig_disable();
-  }
-  else throw Err() << "unknown trigger setting: " << pi.trig_src;
+  int32_t trig_lvl = 0;
+  if (pi.trig_src=="A") trig_lvl = pi.trig_lvl/pi.rng_a*osc.get_max_val();
+  if (pi.trig_src=="B") trig_lvl = pi.trig_lvl/pi.rng_b*osc.get_max_val();
+  osc.trig_set(pi.trig_src.c_str(), trig_lvl, pi.trig_dir.c_str(), ndel, 0);
   return ret;
 }
 
@@ -132,7 +124,7 @@ void record_block(PicoInt & osc, const InPars & pi){
   CBPars pars = set_osc(osc, pi, pi.nrec);
 
   std::cerr << "Block mode: start collecting data\n";
-  osc.run_block(pi.nrec, pi.npre, &pars.dt);
+  osc.run_block(pi.npre, pi.nrec-pi.npre, &pars.dt);
   usleep(pi.nrec*pars.dt*1e6);
   while (!osc.is_ready()) usleep(pi.nrec*pars.dt*1e6/100);
 
@@ -180,8 +172,7 @@ void stream_cb(int16_t h, int32_t num, uint32_t start,
   if (trig) pars->trg = pars->cnt + trigpos;
   pars->cnt += num;
 
-std::cerr << "stream_cb " << pars->cnt << "\n";
-std::cerr << "autostop " << autostop << "\n";
+std::cerr << "stream_cb " << num << "\n";
 if (trig) std::cerr << "trig_pos " << trigpos << "\n";
 
   if (pars->nch<1 || pars->bufs[pars->nch-1].size() < start+num) return;
@@ -207,7 +198,7 @@ void stream(PicoInt & osc, const InPars & pi){
 
   // run streaming
   std::cerr << "Streaming mode: start collecting data\n";
-  osc.run_stream(pi.nrec, pi.npre, &pars.dt, len);
+  osc.run_stream(pi.npre, pi.nrec-pi.npre, &pars.dt, len);
 
   std::cout << std::scientific
        << "### Signal parameters:\n"
@@ -223,8 +214,8 @@ void stream(PicoInt & osc, const InPars & pi){
 
 
   while(1){
-    usleep(tbuf*1e6);
     osc.get_stream(stream_cb, (void *)&pars);
+    usleep(tbuf*1e6);
   }
   osc.stop();
 }
