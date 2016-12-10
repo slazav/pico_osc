@@ -5,6 +5,7 @@
 
 #include <string>
 #include <stdint.h>
+#define MAXCH 4
 
 typedef void (StreamingReadyCB)(int16_t, int32_t, uint32_t, int16_t, uint32_t, int16_t, int16_t, void*);
 

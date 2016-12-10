@@ -111,12 +111,10 @@ main(int argc, char *argv[]){
 
     if (O["mode"]=="") O["mode"] = "block";
     if (strcasecmp(O["mode"].c_str(), "block")==0){
-      std::cerr << "Block mode\n";
       record_block(osc, pi);
     }
 
     else if (strcasecmp(O["mode"].c_str(), "stream")==0){
-      std::cerr << "Stream mode\n";
       stream(osc, pi);
     }
     else throw Err() << "unknown mode setting: " << O["mode"];

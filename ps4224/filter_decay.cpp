@@ -5,7 +5,7 @@
 #include <cmath>
 #include <fftw3.h>
 
-// unpack data written by pico4224block/pico4224stream and apply sliding fft
+// unpack data written by pico4224, do fft and find decay time
 #define MAXCH 4
 
 using namespace std;
@@ -41,7 +41,12 @@ main(){
 
   const double minf = 32000;
   const double maxf = 34000;
-  const int len = 32/(maxf-minf)/dt;
+  const double t1 = 32864*102;
+  const double t2 = inf;
+
+
+
+  const int len = 128/(maxf-minf)/dt;
 
   double df = 1/dt/len;
 
