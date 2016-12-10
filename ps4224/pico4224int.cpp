@@ -1,8 +1,9 @@
+#include "pico_int.h"
 #include "pico_4224.h"
-#include "pico_cmd.h"
 #include "err.h"
 #include "m_getopt.h"
 #include <unistd.h>
+#include <cstdlib> // exit
 
 /* working with Pico oscilloscope in interactive mode */
 

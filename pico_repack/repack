@@ -29,7 +29,7 @@ for arch in $arches; do
     echo Processing: ${name}_${ver}-${rel}_${arch}
     ### download packages.
     ### check for new versions!
-    # wget http://labs.picotech.com/debfix/pool/main/${dir}/${name}/${fname}
+     wget http://labs.picotech.com/debfix/pool/main/${dir}/${name}/${fname}
 
     rm -rf -- ${dname}
     alien --to-rpm -g ${fname}

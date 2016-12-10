@@ -1,5 +1,5 @@
 *.o
-pico4224
+pico4224int
 unpack_data
 fft_filter
 *.dat
