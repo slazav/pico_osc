@@ -6,9 +6,8 @@
 #include <map>
 #include <string>
 
-/* This is code from mapsoft my project */
+/* This is code from my project mapsoft */
 typedef std::map<std::string,std::string> Options;
-
 
 // Parse cmdline options up to the first non-option argument.
 // For the long_options structure see getopt_long (3).
