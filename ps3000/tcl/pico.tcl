@@ -1,8 +1,9 @@
-#!/rota/software/bin/wish
+#!/usr/bin/wish
 
 lappend auto_path .
 package require xBlt 3
 package require PicoScope 1
+package require MatFile 1.0
 
 frame .p0
 frame .p1
@@ -13,14 +14,15 @@ pscope::set_chan chA .p1.chA A
 pscope::set_chan chB .p1.chB B
 pscope::set_rec  rec .p1.rec
 pscope::set_trig trg .p2.trg
-pscope::set_gen  gen .p2.gen
+pscope::set_gen  gen  .p2.gen
+pscope::save     save .p2.save
 
 entry  .p0.stat -textvariable status
 button .p1.run  -text "Run" -command {run}
 
 pack .p0.plot .p0.stat               -fill both -expand 1
 pack .p1.chA .p1.chB .p1.rec .p1.run -fill both -expand 1
-pack .p2.trg .p2.gen                 -fill both -expand 1
+pack .p2.trg .p2.gen .p2.save        -fill both -expand 1
 
 grid .p0 .p1 .p2 -sticky ns
 
@@ -55,7 +57,7 @@ proc run_cmd {w} {
 
 ## run button proc
 proc run {} {
-  global chA chB gen trg rec
+  global chA chB gen trg rec save
   global status plot
   set pl  [plot cget -w]
   set fft [rec cget -fft]
@@ -96,29 +98,35 @@ proc run {} {
   # otherwise, 2-byte integers.
   if { $fft } {
     set len [expr {$len/16}];
-    binary scan $arr(body) d${len}d${len} a b
+    binary scan $arr(body) d${len}d${len} Araw Braw
   } else {
     set len [expr {$len/4}];
-    binary scan $arr(body) s${len}s${len} a b
+    binary scan $arr(body) s${len}s${len} Araw Braw
   }
 
-  Adat set $a
-  Bdat set $b
+  Adat set $Araw
+  Bdat set $Braw
   Xdat seq 0 $len 1
 
   set max 32768.0
 
+  # rescale values
+  set Amax [expr [ chA cget -range ]/2.0 ]
+  set Bmax [expr [ chB cget -range ]/2.0 ]
+  set Ascale [ expr $Amax/$max]
+  set Bscale [ expr $Bmax/$max]
+
   if ($fft) {
-    Xdat expr Xdat/($dt*$len)
+    set Xshift 0
+    set Xscale [ expr {$dt*$len}]
   } else {
-    Xdat expr (Xdat-$trig_samp)*$dt+$trig_time
-    set maxA [expr [ chA cget -range ] / 2.0 ]
-    set maxB [expr [ chB cget -range ] / 2.0 ]
+    set Xshift [ expr { -$trig_samp*$dt + $trig_time } ]
+    set Xscale $dt
   }
-  Adat expr Adat/$max
-  Bdat expr Bdat/$max
-#  Adat expr Adat*[expr $maxA/$max]
-#  Bdat expr Bdat*[expr $maxB/$max]
+
+  Adat expr Adat*$Ascale
+  Bdat expr Bdat*$Bscale
+  Xdat expr Xdat*$Xscale+$Xshift
 
   # refresh the plot
   if { ! [$pl element exists A] } {
@@ -130,17 +138,38 @@ proc run {} {
   if { [$pl element exists Over] } { $pl element delete Over}
 
   if {$fft==0} {
-    $pl element create Trig -xdata {0 0} -ydata {-1 1} -symbol {} -color black
+    $pl element create Trig -xdata {0 0} -ydata {-$Amax $Amax} -symbol {} -color black
   }
-  if { $overload } {
-    $pl element create Over -xdata {$Xdat(1) $Xdat($len) $Xdat($len) $Xdat(1)}\
-                            -ydata {1 1 -1 -1 }\
-                            -symbol {} -color magenta
-    set status "Overload"
-  }
+#  if { $overload } {
+#    $pl element create Over -xdata {$Xdat(1) $Xdat($len) $Xdat($len) $Xdat(1)}\
+#                            -ydata {1 1 -1 -1 }\
+#                            -symbol {} -color magenta
+#    set status "Overload"
+#  }
   rec configure -time [expr "$len*$dt"]
 
   # enable Run button
   .p1.run configure -state normal
-}
 
+  # save data
+  if { [save cget -enable] } {
+    set dir   [save cget -dir]
+    set fname [save cget -fname]
+    set dest "$dir/$fname"
+
+    matfile::save $dest "
+    int32  len       $len
+    int32  fft       $fft
+    int16  overload  $overload
+    double dt        $dt
+    int32  trig_samp $trig_samp
+    double trig_time $trig_time
+    int16  Araw      {$Araw}
+    int16  Braw      {$Braw}
+    double Ascale    $Ascale
+    double Bscale    $Bscale
+    double Tscale    $Xscale
+    double Tshift    $Xshift
+    "
+  }
+}

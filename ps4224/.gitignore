@@ -1,0 +1,5 @@
+*.o
+pico4224
+unpack_data
+fft_filter
+*.dat

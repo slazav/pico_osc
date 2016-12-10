@@ -12,13 +12,15 @@ rec_timebase(uint16_t h, double * dt, uint32_t * tbase){
   float    dt1,dt2;
   int16_t  res;
   uint32_t tb;
+
+
   if (*dt <= 16e-9){
     /* what is timebase 0? */
     res = ps3000aGetTimebase2(h,
-              0, 1, &dt1, 0, NULL, 0);
+              1, 1, &dt1, 0, NULL, 0);
     if (res!=PICO_OK) return res;
 
-    tb = round(log(*dt*1e9/dt1)/log(2.0));
+    tb = ceil(log(*dt*1e9/dt1)/log(2.0));
   }
   else {
     /* what is timebase 4 and 5*/
@@ -30,7 +32,7 @@ rec_timebase(uint16_t h, double * dt, uint32_t * tbase){
               5, 1, &dt2, 0, NULL, 0);
     if (res!=PICO_OK) return res;
 
-    tb = round((*dt*1e9-dt1)/(dt2-dt1))+4;
+    tb = ceil((*dt*1e9-dt1)/(dt2-dt1))+4;
   }
   /* final calculation */
   res = ps3000aGetTimebase2(h,
@@ -77,8 +79,9 @@ do_rec_block(spars_t *spars, cpars_t *cpars, opars_t *opars,
   if (npre>nrec) npre=nrec;
 
   /* fftw plan */
-  if (fft) p = fftw_plan_dft_1d(nrec, (fftw_complex *)bufd1, (fftw_complex *)bufd1,
-                                FFTW_FORWARD, FFTW_ESTIMATE);
+  if (fft) p = fftw_plan_dft_1d(nrec,
+    (fftw_complex *)bufd1, (fftw_complex *)bufd1,
+    FFTW_FORWARD, FFTW_ESTIMATE);
 
   /* calculate timebase and actual dt */
   res = rec_timebase(spars->h, &dt, &tbase);

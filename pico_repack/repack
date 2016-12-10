@@ -1,0 +1,64 @@
+#!/bin/sh
+
+# repack pico libraries into ringle altlinux RPM
+
+info='\
+libp libpicoipp 1.1.2 4r56
+libp libps4000  1.2.6 2r07
+'
+#arches="amd64 i386"
+arches="amd64"
+
+for arch in $arches; do
+
+  dest="$HOME/tmp/libpico-buildroot"
+  rm -rf -- ${dest}
+
+  libdir=/usr/lib
+  [ "$arch" -ne "amd64" ] || libdir=/usr/lib64
+  incdir=/usr/include/pico
+  docdir=/usr/share/doc/pico
+  mkdir -p -- $dest/$libdir $dest/$incdir $dest/$docdir
+
+  echo "$info" |
+  while read dir name ver rel; do
+    [ -n "$name" ] || continue
+    fname=${name}_${ver}-${rel}_${arch}.deb
+    dname=${name}-${ver}
+
+    echo Processing: ${name}_${ver}-${rel}_${arch}
+    ### download packages.
+    ### check for new versions!
+    # wget http://labs.picotech.com/debfix/pool/main/${dir}/${name}/${fname}
+
+    rm -rf -- ${dname}
+    alien --to-rpm -g ${fname}
+    mv ${dname}/opt/picoscope/lib/*               ${dest}/$libdir
+    mv ${dname}/opt/picoscope/include/*/*         ${dest}/$incdir
+    mv ${dname}/opt/picoscope/share/doc/${name}/* ${dest}/$docdir
+    mv ${dname}/usr/share/doc/${name}/*           ${dest}/$docdir
+    rm -rf -- ${dname}
+  done
+
+  cat > libpico.spec <<EOF
+Name: libpico
+Version: 1.0
+Release: 0
+License: non-free
+Summary: PicoScope libraries
+Group: Converted/libs
+%description
+Picoscope libraries
+
+%files
+%dir $incdir
+%dir $docdir
+$libdir/*
+$incdir/*
+$docdir/*
+EOF
+
+  rpmbuild -bb libpico.spec
+  mv -f /home/sla/RPM/RPMS/x86_64/libpico-1.0-0.x86_64.rpm libpico-1.0-0.$arch.rpm
+  rm -rf -- ${dest} libpico.spec
+done

@@ -1,4 +1,4 @@
-#include <ps3000aApi.h>
+#include "pico.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h> /*atof!*/
@@ -187,15 +187,15 @@ str2bool(const char *str){
 /* coupling AC/DC */
 int16_t
 str2coupling(const char *str){
-  if (strcasecmp(str, "AC")==0) return PS3000A_AC;
-  if (strcasecmp(str, "DC")==0) return PS3000A_DC;
+  if (strcasecmp(str, "AC")==0) return PS_AC;
+  if (strcasecmp(str, "DC")==0) return PS_DC;
   printf("error: unknown coupling (should be AC or DC): %s\n", str);
   return -1;
 }
 const char *
 coupling2str(int16_t n){
-  if (n == PS3000A_AC) return "AC";
-  if (n == PS3000A_DC) return "DC";
+  if (n == PS_AC) return "AC";
+  if (n == PS_DC) return "DC";
   printf("error: unknown coupling: %i\n", n);
   return "";
 }

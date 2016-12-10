@@ -7,7 +7,7 @@ itcl::class pscope::set_chan {
   public variable chan     A
   public variable enable   1
   public variable coupling DC
-  public variable range    40
+  public variable range    1
   public variable offset   0
   public variable bg       "#F0E0E0"
 
