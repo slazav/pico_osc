@@ -137,27 +137,26 @@ PicoInt::cmd(const vector<string> & args){
     ofstream ff(fname);
 
     // channel and trigger settings
-    ff << "## Oscilloscope settings:\n";
+    ff << "# " << ctime(&t0abs) << "\n";
+    ff << "# Oscilloscope settings:\n";
     ff << scientific;
     for (ic = chconf.begin(); ic!= chconf.end(); ic++){
       char ch = ic->first;
       ChConf C = ic->second;
-      ff << "chan_" << ch << "_en:  " << C.en  << "\n"
-         << "chan_" << ch << "_rng: " << C.rng << "\n"
-         << "chan_" << ch << "_cpl: " << C.cpl << "\n";
+      ff << "  chan_set: " << ch << " " << C.en << " " << C.cpl << " " << C.rng << "\n";
     }
-    ff << "trig_src: " << T.src << "\n"
-       << "trig_lvl: " << T.lvl << "\n"
-       << "trig_dir: " << T.dir << "\n"
-       << "trig_del: " << T.del << "\n";
+    ff << "  trig_set: " << T.src << " " << T.lvl << " " << T.dir << " " << T.del << "\n";
+    ff << "  block:    " << args[1] << " " << args[2] << " " << args[3] << " "
+                       << args[4] << " " << args[5] << "\n";
 
-    ff << "## Signal parameters:\n";
-    ff << "num_chan: " << chans.size() << "  # number of channels in the file\n"
-       << "channels: " << chans << "  # correspondance between osc channels and file\n"
-       << "points:   " << N  << "  # number of points\n"
-       << "dt:       " << dt << "  # time step\n"
-       << "t0:       " << t0 << "  # relative time of the first sample\n"
-       << "t0abs:    " << t0abs << "  # system time of trigger position\n";
+    ff << "# Signal parameters:\n";
+    ff << "  points:   " << N  << "  # number of points\n"
+       << "  dt:       " << dt << "  # time step\n"
+       << "  t0:       " << t0 << "  # relative time of the first sample\n"
+       << "  t0abs:    " << t0abs << "  # system time of trigger position\n";
+
+    ff << "# Data channels (number, osc channel, scale factor, overload):\n";
+    ff << "  data_num: " << chans.size() << "\n";
     for (int j=0; j<chans.size(); j++){
       char ch = chans[j];
       ic = chconf.find(ch);
@@ -167,8 +166,7 @@ PicoInt::cmd(const vector<string> & args){
       if (ch=='b' || ch=='B') o = (bool)(ov&2);
       if (ch=='c' || ch=='C') o = (bool)(ov&4);
       if (ch=='d' || ch=='D') o = (bool)(ov&8);
-      ff << "chan_" << j << "_sc: " << sc << "  # vertical scale factor\n"
-         << "chan_" << j << "_ov: " << o  << "  # overload flag\n";
+      ff << "  data: " << j << " " << ch << " " << sc << " " << o << "\n";
     }
 
     ff << "\n";
