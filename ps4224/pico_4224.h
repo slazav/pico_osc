@@ -250,22 +250,6 @@ class Pico4224 : public PicoInt {
     *dt = tbase2dt(tb);
   }
 
-  // run streaming mode, return actual time step: run_stream(dt);
-  void run_stream(uint32_t nrec, uint32_t npre, float *dt, uint32_t bufsize){
-    // convert dt to integer time and time units
-    PS4000_TIME_UNITS tu;
-    uint32_t ti = dbl2time(*dt, &tu);
-    int16_t res = ps4000RunStreaming(h, &ti, tu, npre,nrec-npre,0,1, bufsize);
-    if (res!=PICO_OK) throw Err() << "RunStreaming error: " << pico_err(res);
-    *dt = time2dbl(ti,tu);
-  }
-
-  // get stream values
-  void get_stream(ps4000StreamingReady cb, void *par){
-    int16_t res = ps4000GetStreamingLatestValues(h, cb, par);
-    if (res!=PICO_OK) throw Err() << "GetStreamingLatestValues error: " << pico_err(res);
-  }
-
   // is device ready?
   bool is_ready(){
     int16_t stat;
@@ -278,6 +262,30 @@ class Pico4224 : public PicoInt {
   void get_block(uint32_t start, uint32_t *n, int16_t *overflow){
     int16_t res = ps4000GetValues(h, start, n, 1, RATIO_MODE_NONE, 0, overflow);
     if (res!=PICO_OK) throw Err() << "GetValues error: " <<  pico_err(res);
+  }
+
+  // run streaming mode, return actual time step: run_stream(dt);
+  void run_stream(uint32_t nrec, uint32_t npre, float *dt, uint32_t bufsize){
+    // convert dt to integer time and time units
+    PS4000_TIME_UNITS tu;
+    uint32_t ti = dbl2time(*dt, &tu);
+    int16_t res = ps4000RunStreaming(h, &ti, tu, npre,nrec-npre,0,1, bufsize);
+    if (res!=PICO_OK) throw Err() << "RunStreaming error: " << pico_err(res);
+    *dt = time2dbl(ti,tu);
+  }
+
+  // get number of collected values in streaming mode
+  uint32_t get_stream_n(){
+    uint32_t ret;
+    int16_t res = ps4000NoOfStreamingValues(h, &ret);
+    if (res!=PICO_OK) throw Err() << "NoOfStreamigValues error: " << pico_err(res);
+    return ret;
+  }
+
+  // get stream values
+  void get_stream(ps4000StreamingReady cb, void *par){
+    int16_t res = ps4000GetStreamingLatestValues(h, cb, par);
+    if (res!=PICO_OK) throw Err() << "GetStreamingLatestValues error: " << pico_err(res);
   }
 
   // get trigger position

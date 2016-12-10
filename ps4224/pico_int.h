@@ -41,17 +41,20 @@ class PicoInt{
   // run block mode, return actual time step: run_block(nrec,npre,dt);
   virtual void run_block(uint32_t nrec, uint32_t npre, float *dt) = 0;
 
-  // run streaming mode, return actual time step: run_stream(dt);
-  virtual void run_stream(uint32_t nrec, uint32_t npre, float *dt, uint32_t bufsize) = 0;
-
-  // get stream values
-  virtual void get_stream(StreamingReadyCB cb, void *par) =0 ;
-
   // is device ready?
   virtual bool is_ready() = 0;
 
   // get data, return number of points and overflow flag
   virtual void get_block(uint32_t start, uint32_t *n, int16_t *overflow) = 0;
+
+  // run streaming mode, return actual time step: run_stream(dt);
+  virtual void run_stream(uint32_t nrec, uint32_t npre, float *dt, uint32_t bufsize) = 0;
+
+  // get number of collected values in streaming mode
+  virtual uint32_t get_stream_n() = 0;
+
+  // get stream values
+  virtual void get_stream(StreamingReadyCB cb, void *par) =0 ;
 
   // get trigger position
   virtual double get_trig() = 0;

@@ -180,8 +180,8 @@ void stream_cb(int16_t h, int32_t num, uint32_t start,
   if (trig) pars->trg = pars->cnt + trigpos;
   pars->cnt += num;
 
-
-std::cerr << "stream_cb " << num << "\n";
+std::cerr << "stream_cb " << pars->cnt << "\n";
+std::cerr << "autostop " << autostop << "\n";
 if (trig) std::cerr << "trig_pos " << trigpos << "\n";
 
   if (pars->nch<1 || pars->bufs[pars->nch-1].size < start+num) return;
@@ -197,7 +197,7 @@ if (trig) std::cerr << "trig_pos " << trigpos << "\n";
 // high-level stream function
 void stream(PicoInt & osc, const InPars & pi){
 
-  double tbuf = std::min(100*pi.dt, (float)0.1);
+  double tbuf = 0.1;
   int len = ceil(2*tbuf/pi.dt);
 
   CBPars pars = set_osc(osc, pi, len);
