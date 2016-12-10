@@ -193,15 +193,9 @@ class Pico4224 : public PicoInt {
   }
 
   // set channel:  chan_set("A", "DC", 0.05);
-  void chan_set(const char * chan, const char * coupl, float rng){
-    int16_t res = ps4000SetChannel(h, str2chan(chan), 1,
+  void chan_set(const char * chan, bool enable, const char * coupl, float rng){
+    int16_t res = ps4000SetChannel(h, str2chan(chan), enable,
                                    str2coupl(coupl), volt2range(rng));
-    if (res!=PICO_OK) throw Err() << "SetChannel error: " << pico_err(res);
-  }
-
-  // disable channel: chan_disable("B");
-  void chan_disable(const char * chan){
-    int16_t res = ps4000SetChannel(h, str2chan(chan), 0, 0, PS4000_1V);
     if (res!=PICO_OK) throw Err() << "SetChannel error: " << pico_err(res);
   }
 

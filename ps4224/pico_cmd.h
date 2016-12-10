@@ -85,25 +85,25 @@ CBPars set_osc(PicoInt & osc, const InPars & pi, uint32_t buflen){
 
   // set chan A
   if (pi.use_a){
-    osc.chan_set("A", pi.cpl_a.c_str(), pi.rng_a);
+    osc.chan_set("A", true, pi.cpl_a.c_str(), pi.rng_a);
     ret.bufs[ret.nch] = Buf<int16_t>(buflen);
     ret.sc[ret.nch]   = pi.rng_a/osc.get_max_val();
     ret.ov[ret.nch]   = false;
     osc.set_buf("A", ret.bufs[ret.nch].data, buflen);
     ret.nch++;
   }
-  else osc.chan_disable("A");
+  else osc.chan_set("A", false, pi.cpl_a.c_str(), pi.rng_a);
 
   // set chan B
   if (pi.use_b){
-    osc.chan_set("B", pi.cpl_b.c_str(), pi.rng_b);
+    osc.chan_set("B", true, pi.cpl_b.c_str(), pi.rng_b);
     ret.bufs[ret.nch] = Buf<int16_t>(buflen);
     ret.sc[ret.nch]   = pi.rng_b/osc.get_max_val();
     ret.ov[ret.nch]   = false;
     osc.set_buf("B", ret.bufs[ret.nch].data, buflen);
     ret.nch++;
   }
-  else osc.chan_disable("B");
+  else osc.chan_set("B", false, pi.cpl_b.c_str(), pi.rng_b);
 
   // calculate actual dt to find correct trigger delay
   ret.dt = osc.tbase2dt( osc.dt2tbase(pi.dt) );

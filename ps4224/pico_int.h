@@ -17,10 +17,7 @@ class PicoInt{
   virtual std::string chan_get_ranges(const char * chan) = 0;
 
   // set channel:  chan_set("A", "DC", 0.05);
-  virtual void chan_set(const char * chan, const char * coupl, float rng) = 0;
-
-  // disable channel: chan_disable("B");
-  virtual void chan_disable(const char * chan) = 0;
+  virtual void chan_set(const char * chan, bool enable, const char * coupl, float rng) = 0;
 
   // set trigger: trig_set("A", 125, "RISING", 0, 0);
   virtual void trig_set(const char * src, int16_t th, const char * dir,
