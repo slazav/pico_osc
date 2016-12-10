@@ -1,7 +1,7 @@
-# run widget -- controls other widgets
+# see: www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf
 
 namespace eval matfile {}
-#package require zlib
+package require zlib
 
 proc matfile::save { matfile lst} {
   # header:
@@ -41,20 +41,20 @@ proc matfile::save { matfile lst} {
 
     # format array data
     set len [expr $dlen*$ww]; # byte length
-    set d_d [ binary format i1i1$ff$dlen $tt $len $data]
+    set dat [ binary format i1i1$ff$dlen $tt $len $data]
 
     # wrap in a matrix
-    set len [expr {[string bytelength $d_f]\
-                 + [string bytelength $d_x]\
-                 + [string bytelength $d_n]\
-                 + [string bytelength $d_d]} ]
+    set dat "$d_f$d_x$d_n$dat"
+    set len [string bytelength $dat]
     set d0 [ binary format i1i1 14 $len ]
 
-    puts -nonewline $out $d0
-    puts -nonewline $out $d_f
-    puts -nonewline $out $d_x
-    puts -nonewline $out $d_n
-    puts -nonewline $out $d_d
+    # gzip
+    if {$dlen > 1} {
+      set dat [ zlib compress "$d0$dat" ]
+      set len [string bytelength $dat]
+      set d0 [ binary format i1i1 15 $len ]
+    }
+    puts -nonewline $out "$d0$dat"
   }
   close $out
 
