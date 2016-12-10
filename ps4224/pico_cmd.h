@@ -5,12 +5,12 @@
 
 #include <string>
 #include <sstream>
+#include <vector>
 #include <stdint.h>
 #include <unistd.h> // usleep
 #include <cmath>
 #include <cstdlib>
 #include "err.h"
-#include "buf.h"
 #include "pico_int.h"
 
 // input parameters for high-level record functions
@@ -63,7 +63,7 @@ struct InPars{
 // parameter structure for the callback
 struct CBPars{
   int nch; // number of active channels
-  Buf<int16_t> bufs[MAXCH]; // array of buffers (only nch are used)
+  std::vector<int16_t> bufs[MAXCH]; // array of buffers (only nch are used)
   double sc[MAXCH];         // array of channel scales (only nch are used)
   bool   ov[MAXCH];         // array of overflow flags (only nch are used)
   float dt,t0;             // time scale and relative time of the first point
@@ -86,10 +86,10 @@ CBPars set_osc(PicoInt & osc, const InPars & pi, uint32_t buflen){
   // set chan A
   if (pi.use_a){
     osc.chan_set("A", true, pi.cpl_a.c_str(), pi.rng_a);
-    ret.bufs[ret.nch] = Buf<int16_t>(buflen);
+    ret.bufs[ret.nch] = std::vector<int16_t>(buflen);
     ret.sc[ret.nch]   = pi.rng_a/osc.get_max_val();
     ret.ov[ret.nch]   = false;
-    osc.set_buf("A", ret.bufs[ret.nch].data, buflen);
+    osc.set_buf("A", ret.bufs[ret.nch].data(), buflen);
     ret.nch++;
   }
   else osc.chan_set("A", false, pi.cpl_a.c_str(), pi.rng_a);
@@ -97,10 +97,10 @@ CBPars set_osc(PicoInt & osc, const InPars & pi, uint32_t buflen){
   // set chan B
   if (pi.use_b){
     osc.chan_set("B", true, pi.cpl_b.c_str(), pi.rng_b);
-    ret.bufs[ret.nch] = Buf<int16_t>(buflen);
+    ret.bufs[ret.nch] = std::vector<int16_t>(buflen);
     ret.sc[ret.nch]   = pi.rng_b/osc.get_max_val();
     ret.ov[ret.nch]   = false;
-    osc.set_buf("B", ret.bufs[ret.nch].data, buflen);
+    osc.set_buf("B", ret.bufs[ret.nch].data(), buflen);
     ret.nch++;
   }
   else osc.chan_set("B", false, pi.cpl_b.c_str(), pi.rng_b);
@@ -162,9 +162,9 @@ void record_block(PicoInt & osc, const InPars & pi){
   std::cout << "\n";
 
 
-  for (int i = 0; i<pars.bufs[0].size; i++){
+  for (int i = 0; i<pars.bufs[0].size(); i++){
     for (int ch = 0; ch < pars.nch; ch++){
-      int16_t *d = pars.bufs[ch].data + i;
+      int16_t *d = pars.bufs[ch].data() + i;
       std::cout.write((const char*)d, sizeof(int16_t));
     }
   }
@@ -184,10 +184,10 @@ std::cerr << "stream_cb " << pars->cnt << "\n";
 std::cerr << "autostop " << autostop << "\n";
 if (trig) std::cerr << "trig_pos " << trigpos << "\n";
 
-  if (pars->nch<1 || pars->bufs[pars->nch-1].size < start+num) return;
+  if (pars->nch<1 || pars->bufs[pars->nch-1].size() < start+num) return;
   for (int i=0; i<num; i++){
     for (int c = 0; c<pars->nch; c++){
-      int16_t *d1 = pars->bufs[c].data + start + i;
+      int16_t *d1 = pars->bufs[c].data() + start + i;
       std::cout.write((const char*)d1, sizeof(int16_t));
     }
   }
