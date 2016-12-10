@@ -138,7 +138,7 @@ PicoInt::cmd(const vector<string> & args){
 
     // channel and trigger settings
     ff << "# " << ctime(&t0abs) << "\n";
-    ff << "# Oscilloscope settings:\n";
+    ff << "\n# Oscilloscope settings:\n";
     ff << scientific;
     for (ic = chconf.begin(); ic!= chconf.end(); ic++){
       char ch = ic->first;
@@ -149,13 +149,13 @@ PicoInt::cmd(const vector<string> & args){
     ff << "  block:    " << args[1] << " " << args[2] << " " << args[3] << " "
                        << args[4] << " " << args[5] << "\n";
 
-    ff << "# Signal parameters:\n";
+    ff << "\n# Signal parameters:\n";
     ff << "  points:   " << N  << "  # number of points\n"
        << "  dt:       " << dt << "  # time step\n"
        << "  t0:       " << t0 << "  # relative time of the first sample\n"
        << "  t0abs:    " << t0abs << "  # system time of trigger position\n";
 
-    ff << "# Data channels (number, osc channel, scale factor, overload):\n";
+    ff << "\n# Data channels (number, osc channel, scale factor, overload):\n";
     ff << "  data_num: " << chans.size() << "\n";
     for (int j=0; j<chans.size(); j++){
       char ch = chans[j];
@@ -169,7 +169,7 @@ PicoInt::cmd(const vector<string> & args){
       ff << "  data: " << j << " " << ch << " " << sc << " " << o << "\n";
     }
 
-    ff << "\n";
+    ff << "\n*\n";
     for (int i = 0; i<N; i++){
       for (int j=0; j<chans.size(); j++){
         ic = chconf.find(chans[j]);
