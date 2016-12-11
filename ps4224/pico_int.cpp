@@ -125,7 +125,6 @@ PicoInt::cmd(const vector<string> & args){
     usleep(npost*dt*1e6);
     while (!is_ready()) usleep(1000);
     time_t t0abs = time(NULL); // system time of last record
-    cout << "Done\n" << flush;
 
     int16_t ov;
     get_block(0, &N, &ov);
@@ -178,6 +177,7 @@ PicoInt::cmd(const vector<string> & args){
         ff.write((const char*)(ic->second.buf.data()+i), sizeof(int16_t));
       }
     }
+    cout << "Done\n" << flush;
     return;
   }
   throw Err() << "Unknown command: " << args[0];
