@@ -19,8 +19,10 @@ class Data{
   // constructor -- read one data channel from a file
   Data(const char *fname, int n);
 
+  // print a simple text table
   void print_txt() const;
 
+  // make image with a raw signal
   void print_pnm(int w, int h, int color=0) const;
 
   void print_fft_txt(double fmin, double fmax, double tmin, double tmax) const;
@@ -32,7 +34,7 @@ class Data{
 
   void print_sfft_pnm1(double fmin, double fmax, double tmin, double tmax) const;
 
-
+  // fit fork signal (exponential decay, constant frequency)
   void fit_fork(double fmin, double fmax, double tmin, double tmax) const;
 
 };
