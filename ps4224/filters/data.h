@@ -17,26 +17,36 @@ class Data{
   time_t t0abs;
   std::vector<int16_t> data;
 
+  int i1t,i2t,i1f,i2f,lent,lenf;
+  double df;
+
   // constructor -- read one data channel from a file
   Data(const char *fname, int n);
 
-  // print a simple text table
+  // check ranges and update signal indices
+  void set_sig_ind(double &fmin, double &fmax, double &tmin, double &tmax, int win=0);
+
+
+  // print a simple x-y text table
   void print_txt() const;
 
   // make image with a raw signal
   void print_pnm(int w, int h, int color=0) const;
 
-  void print_fft_txt(double fmin, double fmax, double tmin, double tmax) const;
+  // fft of the whole signal, txt table. Rectangular window
+  void print_fft_txt(double fmin, double fmax, double tmin, double tmax);
 
-  // text table with sliding fft
-  void print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win) const;
+  // Text table with sliding fft. Blackman window.
+  void print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win);
 
-  void print_sfft_pnm(double fmin, double fmax, double tmin, double tmax) const;
+  // PNM with sliding fft. Blackman window.
+  void print_sfft_pnm(double fmin, double fmax, double tmin, double tmax, int win, int w, int h);
 
-  void print_sfft_pnm1(double fmin, double fmax, double tmin, double tmax) const;
+  // Adaptive window, no smoothing. Blackman window.
+  void print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int w, int h);
 
   // fit fork signal (exponential decay, constant frequency)
-  void fit_fork(double fmin, double fmax, double tmin, double tmax) const;
+  void fit_fork(double fmin, double fmax, double tmin, double tmax);
 
 };
 

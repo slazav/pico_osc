@@ -8,8 +8,75 @@
 #include <fftw3.h>
 #include "../err.h"
 #include "data.h"
+#include "rainbow.h"
 
 using namespace std;
+
+/******************************************************************/
+// strange double image
+class Image:vector<double> {
+  public:
+  int w,h;
+  Image(int w_, int h_, double v):w(w_),h(h_),vector(w_*h_,v){}
+
+  double get(int x, int y) const {return (*this)[w*y+x];}
+  void   set(int x, int y, double v) { (*this)[w*y+x] = v;}
+
+  void print_pnm(){
+    // find data range
+    double cmax=0;
+    for (int y=0; y<h; y++){
+      for (int x=0; x<w; x++){
+        if (get(x,y) > cmax) cmax = get(x,y);
+      }
+    }
+    simple_rainbow sr(0, cmax, RAINBOW_BURNING1);
+    // print data
+    cout << "P6\n" << w << " " << h << "\n255\n";
+    for (int y=0; y<h; y++){
+      for (int x=0; x<w; x++){
+        int32_t c = sr.get(get(x,y));
+        cout.write((char *)&c, 3);
+      }
+    }
+  }
+};
+
+/******************************************************************/
+// fft wrapper
+class FFT{
+  // blackman window parameters
+  const static double a0=0.42659, a1=0.49656, a2=0.076849;
+
+  fftw_complex  *cbuf;
+  fftw_plan     plan;
+  int           len;
+  public:
+
+  FFT(int len_): len(len_){
+    cbuf = fftw_alloc_complex(len);
+    plan = fftw_plan_dft_1d(len, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
+  }
+  ~FFT(){
+    fftw_destroy_plan(plan);
+    fftw_free(cbuf);
+  }
+  double real(int i) const {return cbuf[i][0];}
+  double imag(int i) const {return cbuf[i][1];}
+  double abs(int i) const {return hypot(cbuf[i][0],cbuf[i][1]);}
+
+  void run(const int16_t *dbuf, double sc, bool use_blackman=false){
+    // fill complex buffers
+    for (int i=0; i<len; i++){
+      cbuf[i][0] = sc*dbuf[i];
+      cbuf[i][1] = 0;
+      if (use_blackman) cbuf[i][0] *= a0-a1*cos(2*M_PI*i/(len-1))+a2*cos(4*M_PI*i/(len-1));
+    }
+    // do fft
+    fftw_execute(plan);
+  }
+
+};
 
 
 /******************************************************************/
@@ -91,15 +158,44 @@ Data::Data(const char *fname, int n){
     cnt+=len;
   }
 
+  //set ind
+  i1t=0; i2t=lent=data.size();
+  i1f=0; i2f=lenf=data.size();
+  df = 1/dt/data.size();
+}
+
+/******************************************************************/
+// check ranges and update signal indices
+void
+Data::set_sig_ind(double &fmin, double &fmax, double &tmin, double &tmax, int win){
+  // adjust tmin/tmax/fmin/fmax
+  if (tmax<tmin) swap(tmax, tmin);
+  if (tmax > t0+data.size()*dt) tmax = t0+data.size()*dt;
+  if (tmin < t0)   tmin = t0;
+  if (fmax<fmin) swap(fmax, fmin);
+  if (fmax > 1/dt) fmax = 1/dt;
+  if (fmin > 1/dt) fmin = 1/dt;
+  if (fmin < 0)    fmin = 0;
+  // select time indices
+  i1t = max(0.0, floor((tmin-t0)/dt));
+  i2t = min(1.0*data.size(), ceil((tmax-t0)/dt));
+  lent = i2t-i1t;
+  if (lent<1) throw Err() << "Error: too small time range: " << tmin << " - " << tmax;
+  // select frequency indices
+  if (win==0) win = lent;
+  df = 1/dt/win;
+  i1f = max(0.0, floor(fmin/df));
+  i2f = min(1.0*win, ceil(fmax/df));
+  lenf = i2f-i1f;
+  if (lent<1) throw Err() << "Error: too small frequency range: " << fmin << " - " << fmax;
 }
 
 /******************************************************************/
 void
 Data::print_txt() const{
   cout << scientific;
-  for (int i=0; i<data.size(); i++){
+  for (int i=0; i<data.size(); i++)
     cout << t0+dt*i << "\t" << sc*data[i] << "\n";
-  }
 }
 
 /******************************************************************/
@@ -135,281 +231,163 @@ Data::print_pnm(int w, int h, int color) const{
 
 /******************************************************************/
 void
-Data::print_fft_txt(double fmin, double fmax, double tmin, double tmax) const{
+Data::print_fft_txt(double fmin, double fmax, double tmin, double tmax){
 
-  // select time indices
-  size_t i1 = max(0.0, floor((tmin-t0)/dt));
-  size_t i2 = min(1.0*data.size(), ceil((tmax-t0)/dt));
-
-  size_t len = i2-i1;
-
-  fftw_complex  *cbuf;
-  fftw_plan     plan;
-  cbuf = fftw_alloc_complex(len);
-  plan = fftw_plan_dft_1d(len, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
-  double df = 1/dt/len;
-
-  // fill complex buffers
-  for (int i=i1; i<i2; i++){
-    cbuf[i-i1][0] = sc*data[i];
-    cbuf[i-i1][1] = 0;
-  }
-  // do fft
-  fftw_execute(plan);
+  set_sig_ind(fmin,fmax,tmin,tmax);
+  FFT fft(lent);
+  fft.run(data.data()+i1t, sc);
 
   // print selected frequency range
-  i1 = floor(fmin/df);
-  i2 = ceil(fmax/df);
   cout << scientific;
-  for (int i=max((size_t)0,i1); i < min(i2,len); i++){
-    cout << i*df << "\t" << cbuf[i][0] << "\t" << cbuf[i][1] << "\n";
-  }
-
-  fftw_destroy_plan(plan);
-  fftw_free(cbuf);
+  for (int i=i1f; i<i2f; i++)
+    cout << i*df << "\t" << fft.real(i) << "\t" << fft.imag(i) << "\n";
 }
 
 /******************************************************************/
 void
-Data::print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win) const{
+Data::print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win) {
 
-  // adjust tmin/tmax/fmin/fmax
-  if (tmax<tmin) swap(tmax, tmin);
-  if (tmax > t0+data.size()*dt) tmax = t0+data.size()*dt;
-  if (tmin < t0) tmin = t0;
-  if (fmax<fmin) swap(fmax, fmin);
-  if (fmax > 1/dt) fmax = 1/dt;
-  if (fmin > 1/dt) fmin = 1/dt;
-  if (fmin < 0)    fmin = 0;
+  set_sig_ind(fmin,fmax,tmin,tmax, win);
+  FFT fft(win);
 
-  // select time indices
-  size_t i1 = max(0.0, floor((tmin-t0)/dt));
-  size_t i2 = min(1.0*data.size(), ceil((tmax-t0)/dt));
-  size_t len = i2-i1;
-
-  // select frequency indices
-  double df = 1/dt/win;
-  size_t i1f = max(0.0, floor(fmin/df));
-  size_t i2f = min(1.0*win, ceil(fmax/df));
-
-  fftw_complex  *cbuf;
-  fftw_plan     plan;
-  cbuf = fftw_alloc_complex(win);
-  plan = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
-
-  for (int iw=i1; iw<i2-win; iw+=win){
-    // fill array and do fft
-    for (int i=0; i<win; i++){
-      cbuf[i][0] = sc*data[iw+i];
-      cbuf[i][1] = 0;
-    }
-    fftw_execute(plan);
+  for (int iw=i1t; iw<i2t-win; iw+=win){
+    fft.run(data.data()+iw, sc, true);
 
     // print selected frequency range
     cout << scientific;
     for (int i=i1f; i<i2f; i++){
       cout << t0+dt*(iw+win/2) << "\t" << i*df << "\t"
-                << cbuf[i][0] << "\t" << cbuf[i][1] << "\n";
+                << fft.real(i) << "\t" << fft.imag(i) << "\n";
     }
     cout << "\n";
   }
-  fftw_destroy_plan(plan);
-  fftw_free(cbuf);
 }
-
 
 /******************************************************************/
 void
-Data::print_sfft_pnm(double fmin, double fmax, double tmin, double tmax) const{
+Data::print_sfft_pnm(double fmin, double fmax, double tmin, double tmax, int win, int w, int h) {
 
+  set_sig_ind(fmin,fmax,tmin,tmax, win);
+  FFT fft(win);
+  Image pic(w,h,0);
 
-  // adjust tmin/tmax/fmin/fmax
-  if (tmax<tmin) swap(tmax, tmin);
-  if (tmax > t0+data.size()*dt) tmax = t0+data.size()*dt;
-  if (tmin < t0) tmin = t0;
-  if (fmax<fmin) swap(fmax, fmin);
-  if (fmax > 1/dt) fmax = 1/dt;
-  if (fmin > 1/dt) fmin = 1/dt;
-  if (fmin < 0)    fmin = 0;
-
-  // min window: we have NM points in fmin:fmax range
-  // max window: we have NM points in tmin:tmax range
-  int NM = 10;
-  int wmin = floor(NM/(fmax-fmin)/dt);
-  int wmax = ceil((tmax-tmin)/NM/dt);
-
-  // select time indices
-  size_t i1 = max(0.0, floor((tmin-t0)/dt));
-  size_t i2 = min(1.0*data.size(), ceil((tmax-t0)/dt));
-  size_t len = i2-i1;
-
-  vector<int> start; // start points for the full calculation
-
-  // first pass
-  {
-    int win = wmin;
-    fftw_complex  *cbuf;
-    fftw_plan     plan;
-    cbuf = fftw_alloc_complex(win);
-    plan = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
-    double df = 1/dt/win;
-
-    // frequency range
-    size_t i1f = max(0.0, floor(fmin/df));
-    size_t i2f = min(1.0*win, ceil(fmax/df));
-    size_t lenf = i2f-i1f;
-    vector<double> vp(lenf,0); // previous step data
-
-    // for each x point
-    for (int iw=i1; iw<i2-win; iw+=win){
-      // fill array and do fft
-      for (int i=0; i<win; i++){
-        cbuf[i][0] = sc*data[iw+i];
-        cbuf[i][1] = 0;
-      }
-      fftw_execute(plan);
-
-      // calculate normalized distance from previous point
-      double d0=0, d1=0;
-      vector<double> vn(lenf,0); // new data
-      for (int i=i1f; i<i2f; i++){
-        vn[i-i1f] = hypot(cbuf[i][0], cbuf[i][1]);
-        d1 += pow(vn[i-i1f]-vp[i-i1f], 2);
-        d0 += fabs(vn[i-i1f]+vp[i-i1f]);
-      }
-      bool change = sqrt(d1)/d0>0.14;
-      bool longwin = start.size() && (iw+win-start[start.size()-1] > wmax);
-      if (change || longwin){
-        vp.swap(vn);
-        start.push_back(iw);
-        cerr << iw << " " << sqrt(d1)/d0 << "\n";
-      }
-    }
-    fftw_destroy_plan(plan);
-    fftw_free(cbuf);
-    start[start.size()-1] = i2;
-  }
-
-  // second pass
-  int w = 1024, h = 768;
-  vector<double> pic(w*h,0);
-  for (int is = 0; is<start.size()-1; is++){
-    int win = start[is+1]-start[is];
-
-    fftw_complex  *cbuf;
-    fftw_plan     plan;
-    cbuf = fftw_alloc_complex(win);
-    plan = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
-    double df = 1/dt/win;
-
-    // frequency range
-    size_t i1f = max(0.0, floor(fmin/df));
-    size_t i2f = min(1.0*win, ceil(fmax/df));
-    size_t lenf = i2f-i1f;
-
-    // fill array and do fft
-    for (int i=0; i<win; i++){
-      cbuf[i][0] = sc*data[start[is]+i];
-      cbuf[i][1] = 0;
-    }
-    fftw_execute(plan);
-
-    size_t x1 = (start[is]*w)/len;
-    size_t x2 = (start[is+1]*w)/len;
+  for (int x = 0; x<w; x++){
+    int il = i1t + ((lent-win)*x)/w;
+    fft.run(data.data()+il, sc, true);
     for (int y = 0; y<h; y++){
       // convert y -> f
       double f = fmin + ((fmax-fmin)*(h-1-y))/h;
       int fi = floor(f/df);
       if (fi<0) fi=0;
       if (fi>win-2) fi=win-2;
-      double v1 = hypot(cbuf[fi][0], cbuf[fi][1]);
-      double v2 = hypot(cbuf[fi+1][0], cbuf[fi+1][1]);
+      double v1 = fft.abs(fi);
+      double v2 = fft.abs(fi+1);
       double v = (v1 + (f/df-fi)*(v2-v1))/win;
-      for (int x=x1; x<x2; x++) pic[y*w+x] = v;
-    }
-  fftw_destroy_plan(plan);
-  fftw_free(cbuf);
-  }
-
-
-
-  // find data range
-  double cmax=0;
-  for (int y=0; y<h; y++){
-    for (int x=0; x<w; x++){
-      if (pic[y*w+x] > cmax) cmax = pic[y*w+x];
+      pic.set(x,y,v);
     }
   }
-
-  // print data
-  cout << "P6\n" << w << " " << h << "\n255\n";
-  for (int y=0; y<h; y++){
-    for (int x=0; x<w; x++){
-       unsigned char c = 0xFF*(pic[y*w+x]/cmax);
-      cout.write((char *)&c, 1);
-      cout.write((char *)&c, 1);
-      cout.write((char *)&c, 1);
-    }
-  }
+  pic.print_pnm();
 
 }
 
 /******************************************************************/
 void
-Data::fit_fork(double fmin, double fmax, double tmin, double tmax) const{
+Data::print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int w, int h) {
 
-  // adjust tmin/tmax/fmin/fmax
-  if (tmax<tmin) swap(tmax, tmin);
-  if (tmax > t0+data.size()*dt) tmax = t0+data.size()*dt;
-  if (tmin < t0) tmin = t0;
-  if (fmax<fmin) swap(fmax, fmin);
-  if (fmax > 1/dt) fmax = 1/dt;
-  if (fmin > 1/dt) fmin = 1/dt;
-  if (fmin < 0)    fmin = 0;
+  set_sig_ind(fmin,fmax,tmin,tmax);
 
-  // select time indices
-  size_t i1 = max(0.0, floor((tmin-t0)/dt));
-  size_t i2 = min(1.0*data.size(), ceil((tmax-t0)/dt));
-  size_t len = i2-i1;
+  // min window: we have NM points in fmin:fmax range
+  // max window: we have NM points in tmin:tmax range
+  int NM = 5;
+  int wmin = floor(NM/(fmax-fmin)/dt);
+  int wmax = ceil((tmax-tmin)/NM/dt);
 
-  if (len<1) throw Err() << "Error: too small time range: " << tmin << " - " << tmax;
 
-  // select frequency indices
-  double df = 1/dt/len;
-  size_t i1f = max(0.0, floor(fmin/df));
-  size_t i2f = min(1.0*len, ceil(fmax/df));
-  size_t lenf = i2f-i1f;
+  // first pass
+  vector<int> start; // start points for the full calculation
+  {
+    int win=wmin;
+    set_sig_ind(fmin,fmax,tmin,tmax, win);
+    FFT fft(win);
+    vector<double> vp(lenf,0); // previous step data
 
-  if (lenf<1) throw Err() << "Error: too small frequency range: " << fmin << " - " << fmax;
+    // for each x point
+    for (int iw=i1t; iw<i2t-win; iw+=win){
+      fft.run(data.data()+iw, sc, true);
 
-  fftw_complex  *cbuf;
-  fftw_plan     plan;
-  cbuf = fftw_alloc_complex(len);
-  plan = fftw_plan_dft_1d(len, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
-
-  // fill array and do fft
-  for (int i=0; i<len; i++){
-    cbuf[i][0] = sc*data[i];
-    cbuf[i][1] = 0;
+      // calculate normalized distance from previous point
+      double d0=0, d1=0;
+      vector<double> vn(lenf,0); // new data
+      for (int i=i1f; i<i2f; i++){
+        vn[i-i1f] = fft.abs(i);
+        d1 += pow(vn[i-i1f]-vp[i-i1f], 2);
+        d0 += fabs(vn[i-i1f]+vp[i-i1f]);
+      }
+      bool change = sqrt(d1)/d0>0.06;
+      bool longwin = start.size() && (iw+win-start[start.size()-1] > wmax);
+      if (change || longwin){
+        vp.swap(vn);
+        start.push_back(iw);
+      }
+    }
+    // move last point to the data end
+    start[start.size()-1] = i2t;
   }
-  fftw_execute(plan);
+
+  // second pass
+  Image pic(w,h,0);
+  for (int is = 0; is<start.size()-1; is++){
+    int win = start[is+1]-start[is];
+    set_sig_ind(fmin,fmax,tmin,tmax, win);
+    FFT fft(win);
+    fft.run(data.data()+start[is], sc, true);
+
+    size_t x1 = (start[is]*w)/lent;
+    size_t x2 = (start[is+1]*w)/lent;
+    for (int y = 0; y<h; y++){
+      // convert y -> f
+      double f = fmin + ((fmax-fmin)*(h-1-y))/h;
+      int fi = floor(f/df);
+      if (fi<0) fi=0;
+      if (fi>win-2) fi=win-2;
+      double v1 = fft.abs(fi);
+      double v2 = fft.abs(fi+1);
+      double v = (v1 + (f/df-fi)*(v2-v1))/win;
+      for (int x=x1; x<x2; x++) pic.set(x,y,v);
+    }
+  }
+
+  pic.print_pnm();
+
+}
+
+
+/******************************************************************/
+void
+Data::fit_fork(double fmin, double fmax, double tmin, double tmax) {
+
+  set_sig_ind(fmin,fmax,tmin,tmax);
+  FFT fft(lent);
+  fft.run(data.data()+i1t, sc, true);
+
+
   // find maximum
   if (i2f-i1f<1) throw Err() << "Too small frequency range";
-  double vm = hypot(cbuf[i1f][0],cbuf[i1f][1]);
+  double vm = fft.abs(i1f);
   int im = i1f;
   for (int i = i1f; i<i2f; i++){
-    double v = hypot(cbuf[i][0],cbuf[i][1]);
+    double v = fft.abs(i);
     if (v>vm) {vm=v; im=i;}
   }
 
   // 3-point fit
-  if (im<i1+1 || im>=i2-1) throw Err() << "Maximum on the edge of the frequency range";
+  if (im<i1t+1 || im>=i2t-1) throw Err() << "Maximum on the edge of the frequency range";
   double x1 = df*(im-1);
   double x2 = df*im;
   double x3 = df*(im+1);
-  double y1 = hypot(cbuf[im-1][0], cbuf[im-1][1]);
-  double y2 = hypot(cbuf[im][0],   cbuf[im][1]);
-  double y3 = hypot(cbuf[im+1][0], cbuf[im+1][1]);
+  double y1 = fft.abs(im-1);
+  double y2 = fft.abs(im);
+  double y3 = fft.abs(im+1);
   double A = ((y1-y2)/(x1-x2) - (y2-y3)/(x2-x3))/(x1-x3);
   double B = (y1-y2)/(x1-x2) - A*(x1+x2);
   double C = y1 - A*x1*x1 - B*x1;
@@ -423,19 +401,14 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) const{
   // secons pass
   double dff = M_PI/tau;
 
-  // update frequency indices
-  i1f = max(0.0, floor((fre-dff)/df));
-  i2f = min(1.0*len, ceil((fre+dff)/df));
-  lenf = i2f-i1f;
-
   double sx2=0, sx1=0, sx0=0;
   complex<double> sxy(0,0), sy(0,0);
   for (int i = i1f; i<i2f; i++){
     double x = df*i-fre;
-    double Re = cbuf[i][0];
-    double Im = cbuf[i][1];
+    double Re = fft.real(i);
+    double Im = fft.imag(i);
     complex<double> y = Max/complex<double>(Re,Im);
-    double w = pow(hypot(Re,Im), 4.0);
+    double w = pow(fft.abs(i), 4.0);
     sx2 += x*x*w;
     sx1 += x*w;
     sx0 += w;
@@ -449,7 +422,7 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) const{
   double AmpR =  2*M_PI*(1.0/AA).imag()*Max;
   double AmpI =  2*M_PI*(1.0/AA).real()*Max;
   // this amplitude corresponds to the original signal (volts an t=0)
-  double Amp =  hypot(AmpR, AmpI)*2*(tmax-tmin)/len;
+  double Amp =  hypot(AmpR, AmpI)*2*(tmax-tmin)/lent;
   fre = fre - (BB/AA).real();
   tau = -1/(2*M_PI*(BB/AA).imag());
   cout << t0abs << " "
@@ -457,6 +430,4 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) const{
        << setprecision(12) << fre << " "
        << setprecision(6)  << tau << "\n";
 
-  fftw_destroy_plan(plan);
-  fftw_free(cbuf);
 }
