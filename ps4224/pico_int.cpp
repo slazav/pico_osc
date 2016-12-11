@@ -2,6 +2,7 @@
 #include <cstdlib> // atoi
 #include <unistd.h> // usleep
 #include <fstream>
+#include <cmath>
 #include "pico_int.h"
 #include "err.h"
 
@@ -129,8 +130,9 @@ PicoInt::cmd(const vector<string> & args){
     int16_t ov;
     get_block(0, &N, &ov);
 
+
     double t0 = get_trig() - npre*dt + T.del*dt;
-    t0abs += (time_t)(-N*dt+t0); // system time of trigger position
+    t0abs += round(-dt*(double)N+t0); // system time of trigger position
 
     // write data to the file
     ofstream ff(fname);
