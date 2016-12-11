@@ -14,6 +14,7 @@ class Data{
 
   double t0,dt,sc; // time shift, time step, data scale
   int num;         // number of data columns in the file
+  time_t t0abs;
   std::vector<int16_t> data;
 
   // constructor -- read one data channel from a file

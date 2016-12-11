@@ -72,7 +72,7 @@ main(int argc, char *argv[]){
     cout << "Picoscope device is opened. Type help to see command list.\n";
     while (cin.good()){
       try { osc.cmd(read_cmd()); }
-      catch (Err e){ cout << e.str() << "\n"; }
+      catch (Err e){ cout << e.str() << "\n" << flush; }
     }
 
   }

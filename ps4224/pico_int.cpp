@@ -2,6 +2,7 @@
 #include <cstdlib> // atoi
 #include <unistd.h> // usleep
 #include <fstream>
+#include <cmath>
 #include "pico_int.h"
 #include "err.h"
 
@@ -68,7 +69,7 @@ PicoInt::cmd(const vector<string> & args){
     C.rng = atof(args[4].c_str());
     chan_set(ch, C.en, C.cpl.c_str(), C.rng);
     chconf[chc] = C; // save channel configuration
-    cout << "OK\n";
+    cout << "OK\n" << flush;
     return;
   }
 
@@ -85,7 +86,7 @@ PicoInt::cmd(const vector<string> & args){
     // save trigger configuration
     trconf.clear();
     trconf.push_back(T);
-    cout << "OK\n";
+    cout << "OK\n" << flush;
     return;
   }
 
@@ -121,17 +122,17 @@ PicoInt::cmd(const vector<string> & args){
     // start collecting data
     run_block(npre, npost, &dt);
     usleep(npre*dt*1e6);
-    cout << "Ready\n";
+    cout << "Ready\n" << flush;
     usleep(npost*dt*1e6);
     while (!is_ready()) usleep(1000);
     time_t t0abs = time(NULL); // system time of last record
-    cout << "Done\n";
 
     int16_t ov;
     get_block(0, &N, &ov);
 
+
     double t0 = get_trig() - npre*dt + T.del*dt;
-    t0abs += (time_t)(-N*dt+t0); // system time of trigger position
+    t0abs += round(-dt*(double)N+t0); // system time of trigger position
 
     // write data to the file
     ofstream ff(fname);
@@ -178,6 +179,7 @@ PicoInt::cmd(const vector<string> & args){
         ff.write((const char*)(ic->second.buf.data()+i), sizeof(int16_t));
       }
     }
+    cout << "Done\n" << flush;
     return;
   }
   throw Err() << "Unknown command: " << args[0];
