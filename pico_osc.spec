@@ -26,3 +26,6 @@ pico_rec - record signals with Picoscope PS4224 and process them
 %_bindir/*
 
 %changelog
+* Sun Dec 11 2016 Vladislav Zavjalov <slazav@altlinux.org> 1.0-alt1
+- v1.0
+
