@@ -62,6 +62,10 @@ Data::Data(const char *fname, int n){
       if (valw.size()<1) throw Err() << "Broken file: " << line;
       t0 = atof(valw[0].c_str());
     }
+    if (key == "t0abs"){
+      if (valw.size()<1) throw Err() << "Broken file: " << line;
+      t0abs = atoi(valw[0].c_str());
+    }
     if (key == "data"){
       if (valw.size()<3) throw Err() << "Broken file: " << line;
       if (atoi(valw[0].c_str())==n) sc = atof(valw[2].c_str());
@@ -442,7 +446,8 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) const{
   double Amp =  hypot(AmpR, AmpI)*2*(tmax-tmin)/len;
   fre = fre - (BB/AA).real();
   tau = -1/(2*M_PI*(BB/AA).imag());
-  cout << setprecision(6)  << Amp << " "
+  cout << t0abs << " "
+       << setprecision(6)  << Amp << " "
        << setprecision(12) << fre << " "
        << setprecision(6)  << tau << "\n";
 
