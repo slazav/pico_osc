@@ -45,6 +45,9 @@ class Data{
   // Adaptive window, no smoothing. Blackman window.
   void print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int w, int h);
 
+  // Print t-a-f table. Adaptive window, no smoothing. Blackman window.
+  void taf_ad(double fmin, double fmax, double tmin, double tmax);
+
   // fit fork signal (exponential decay, constant frequency)
   void fit_fork(double fmin, double fmax, double tmin, double tmax);
 

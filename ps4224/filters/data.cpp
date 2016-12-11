@@ -22,7 +22,7 @@ class Image:vector<double> {
   double get(int x, int y) const {return (*this)[w*y+x];}
   void   set(int x, int y, double v) { (*this)[w*y+x] = v;}
 
-  void print_pnm(){
+  void print_pnm() const{
     // find data range
     double cmax=0;
     for (int y=0; y<h; y++){
@@ -40,6 +40,7 @@ class Image:vector<double> {
       }
     }
   }
+
 };
 
 /******************************************************************/
@@ -76,7 +77,35 @@ class FFT{
     fftw_execute(plan);
   }
 
+  // find absolute maxinmum
+  int find_max(int i1f, int i2f) const{
+    // find maximum
+    double vm = abs(i1f);
+    int im = i1f;
+    for (int i = i1f; i<i2f; i++){
+      double v = abs(i);
+      if (v>=vm) {vm=v; im=i;}
+    }
+    return im;
+  }
+
+  // find parabolic fit near maximum
+  void find_max_par(int i1f, int i2f, double df, double &A, double &B, double &C) const {
+    int im = find_max(i1f, i2f);
+    if (im<i1f+1 || im>=i2f-1) throw Err() << "Maximum on the edge of the frequency range";
+    double x1 = df*(im-1);
+    double x2 = df*im;
+    double x3 = df*(im+1);
+    double y1 = abs(im-1);
+    double y2 = abs(im);
+    double y3 = abs(im+1);
+    A = ((y1-y2)/(x1-x2) - (y2-y3)/(x2-x3))/(x1-x3);
+    B = (y1-y2)/(x1-x2) - A*(x1+x2);
+    C = y1 - A*x1*x1 - B*x1;
+  }
+
 };
+
 
 
 /******************************************************************/
@@ -323,7 +352,7 @@ Data::print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int 
         d1 += pow(vn[i-i1f]-vp[i-i1f], 2);
         d0 += fabs(vn[i-i1f]+vp[i-i1f]);
       }
-      bool change = sqrt(d1)/d0>0.06;
+      bool change = sqrt(d1)/d0>0.05;
       bool longwin = start.size() && (iw+win-start[start.size()-1] > wmax);
       if (change || longwin){
         vp.swap(vn);
@@ -356,11 +385,75 @@ Data::print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int 
       for (int x=x1; x<x2; x++) pic.set(x,y,v);
     }
   }
-
   pic.print_pnm();
-
 }
 
+/******************************************************************/
+void
+Data::taf_ad(double fmin, double fmax, double tmin, double tmax) {
+
+  set_sig_ind(fmin,fmax,tmin,tmax);
+
+  // min window: we have NM points in fmin:fmax range
+  // max window: we have NM points in tmin:tmax range
+  int NM = 5;
+  int wmin = floor(NM/(fmax-fmin)/dt);
+  int wmax = ceil((tmax-tmin)/NM/dt);
+
+  // first pass with minimal window
+  vector<int> start; // start points for the full calculation
+  {
+    int win=wmin;
+    set_sig_ind(fmin,fmax,tmin,tmax, win);
+    FFT fft(win);
+    vector<double> vp(lenf,0); // previous step data
+
+    // for each x point
+    for (int iw=i1t; iw<i2t-win; iw+=win){
+      fft.run(data.data()+iw, sc, true);
+
+      // calculate normalized distance from previous point
+      double d0=0, d1=0;
+      vector<double> vn(lenf,0); // new data
+      for (int i=i1f; i<i2f; i++){
+        vn[i-i1f] = fft.abs(i);
+        d1 += pow(vn[i-i1f]-vp[i-i1f], 2);
+        d0 += fabs(vn[i-i1f]+vp[i-i1f]);
+      }
+      bool change = sqrt(d1)/d0>0.05;
+      bool longwin = start.size() && (iw+win-start[start.size()-1] > wmax);
+      if (change || longwin){
+        vp.swap(vn);
+        start.push_back(iw);
+      }
+    }
+    // move last point to the data end
+    start[start.size()-1] = i2t;
+  }
+
+  // second pass
+  for (int is = 0; is<start.size()-1; is++){
+    int win = start[is+1]-start[is];
+    set_sig_ind(fmin,fmax,tmin,tmax, win);
+    FFT fft(win);
+    fft.run(data.data()+start[is], sc, true);
+
+    // print point: time, amplitude, frequency
+    double t = t0 + dt*(start[is]+start[is+1])/2;
+    double amp=0;
+    for (int i=i1f; i<i2f; i++) amp+=pow(fft.abs(i),2);
+    amp = sqrt(amp)/lenf/11;
+
+    double A,B,C;
+    fft.find_max_par(i1f,i2f,df, A,B,C);
+    double fre = -B/(2*A);
+
+    cout << setprecision(6)  << t << " "
+         << setprecision(6)  << amp << " "
+         << setprecision(12) << fre << "\n";
+
+  }
+}
 
 /******************************************************************/
 void
@@ -371,26 +464,8 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) {
   fft.run(data.data()+i1t, sc, true);
 
 
-  // find maximum
-  if (i2f-i1f<1) throw Err() << "Too small frequency range";
-  double vm = fft.abs(i1f);
-  int im = i1f;
-  for (int i = i1f; i<i2f; i++){
-    double v = fft.abs(i);
-    if (v>vm) {vm=v; im=i;}
-  }
-
-  // 3-point fit
-  if (im<i1t+1 || im>=i2t-1) throw Err() << "Maximum on the edge of the frequency range";
-  double x1 = df*(im-1);
-  double x2 = df*im;
-  double x3 = df*(im+1);
-  double y1 = fft.abs(im-1);
-  double y2 = fft.abs(im);
-  double y3 = fft.abs(im+1);
-  double A = ((y1-y2)/(x1-x2) - (y2-y3)/(x2-x3))/(x1-x3);
-  double B = (y1-y2)/(x1-x2) - A*(x1+x2);
-  double C = y1 - A*x1*x1 - B*x1;
+  double A,B,C;
+  fft.find_max_par(i1f,i2f,df, A,B,C);
   double Max = -B*B/(4*A) + C;
 
   // fre - parabola maximum

@@ -14,7 +14,8 @@ test: pico_filter testsig
 	  ./pico_filter -f sfft_txt -F32000 -G34500 -T 3.05e-3 -w 4096 tests/$$i.dat > tests/$${i}_sfft.txt; \
 	  ./pico_filter -f sfft_pnm -F32000 -G34500 -T 3.05e-3 -w 4096 tests/$$i.dat | pnmtopng > tests/$${i}_sfft.png; \
 	  ./pico_filter -f sfft_pnm_ad -F32000 -G34500 tests/$$i.dat | pnmtopng > tests/$${i}_sfft_ad.png; \
-	  ./pico_filter -f fork     -F32000 -G34500 tests/$$i.dat > tests/$${i}_fork.txt; \
+	  ./pico_filter -f fork     -T 3.05e-3 -F32000 -G34500 tests/$$i.dat > tests/$${i}_fork.txt; \
+	  ./pico_filter -f taf      -T 0 -F32000 -G34500 tests/$$i.dat > tests/$${i}_taf.txt; \
 	done
 
 #	./pico_filter -f pnm test.dat | pnmtopng > test_raw.png

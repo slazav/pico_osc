@@ -22,6 +22,7 @@ void help(){
           "              sfft_txt -- Text table with sliding fft. Blackman window.\n"
           "              sfft_pnm -- PNM with sliding fft. Blackman window.\n"
           "              sfft_pnm_ad -- Adaptive window, no smoothing. Blackman window.\n"
+          "              taf         -- time-amp-fre table with adaptive window.\n"
           "              fit_fork    -- Fit fork signal (exponential decay, constant frequency).\n"
           " -W <num>  -- image width\n"
           " -H <num>  -- image height\n"
@@ -90,6 +91,9 @@ main(int argc, char *argv[]){
     }
     else if (strcasecmp(f, "sfft_pnm_ad")==0){
        D.print_sfft_pnm_ad(32000,34000, tmin, tmax, W,H);
+    }
+    else if (strcasecmp(f, "taf")==0){
+      D.taf_ad(fmin,fmax, tmin, tmax);
     }
     else if (strcasecmp(f, "fork")==0){
       D.fit_fork(fmin,fmax, tmin, tmax);
