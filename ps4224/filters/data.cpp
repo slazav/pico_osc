@@ -173,13 +173,14 @@ Data::print_fft_txt(double fmin, double fmax, double tmin, double tmax) const{
 void
 Data::print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win) const{
 
+  // adjust tmin/tmax/fmin/fmax
   if (tmax<tmin) swap(tmax, tmin);
-  if (fmax<fmin) swap(fmax, fmin);
   if (tmax > t0+data.size()*dt) tmax = t0+data.size()*dt;
   if (tmin < t0) tmin = t0;
-
+  if (fmax<fmin) swap(fmax, fmin);
   if (fmax > 1/dt) fmax = 1/dt;
-  if (tmin < 0)    fmin = 0;
+  if (fmin > 1/dt) fmin = 1/dt;
+  if (fmin < 0)    fmin = 0;
 
   // select time indices
   size_t i1 = max(0.0, floor((tmin-t0)/dt));
@@ -228,6 +229,7 @@ Data::print_sfft_pnm(double fmin, double fmax, double tmin, double tmax) const{
   if (tmin < t0) tmin = t0;
   if (fmax<fmin) swap(fmax, fmin);
   if (fmax > 1/dt) fmax = 1/dt;
+  if (fmin > 1/dt) fmin = 1/dt;
   if (fmin < 0)    fmin = 0;
 
   // min window: we have NM points in fmin:fmax range
@@ -362,6 +364,7 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) const{
   if (tmin < t0) tmin = t0;
   if (fmax<fmin) swap(fmax, fmin);
   if (fmax > 1/dt) fmax = 1/dt;
+  if (fmin > 1/dt) fmin = 1/dt;
   if (fmin < 0)    fmin = 0;
 
   // select time indices
@@ -369,11 +372,15 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) const{
   size_t i2 = min(1.0*data.size(), ceil((tmax-t0)/dt));
   size_t len = i2-i1;
 
+  if (len<1) throw Err() << "Error: too small time range: " << tmin << " - " << tmax;
+
   // select frequency indices
   double df = 1/dt/len;
   size_t i1f = max(0.0, floor(fmin/df));
   size_t i2f = min(1.0*len, ceil(fmax/df));
   size_t lenf = i2f-i1f;
+
+  if (lenf<1) throw Err() << "Error: too small frequency range: " << fmin << " - " << fmax;
 
   fftw_complex  *cbuf;
   fftw_plan     plan;
@@ -386,7 +393,6 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) const{
     cbuf[i][1] = 0;
   }
   fftw_execute(plan);
-
   // find maximum
   if (i2f-i1f<1) throw Err() << "Too small frequency range";
   double vm = hypot(cbuf[i1f][0],cbuf[i1f][1]);
