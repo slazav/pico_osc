@@ -1,7 +1,6 @@
 #include "pico_int.h"
 #include "pico_4224.h"
 #include "err.h"
-#include "m_getopt.h"
 #include <unistd.h>
 
 /* record signals using Picoscope */

@@ -1,5 +1,3 @@
 *.o
 pico_rec
-unpack_data
-fft_filter
 *.dat

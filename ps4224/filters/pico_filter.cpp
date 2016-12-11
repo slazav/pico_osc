@@ -40,7 +40,6 @@ main(int argc, char *argv[]){
       int c = getopt(argc, argv, "hn:f:W:H:");
       if (c==-1) break;
       switch (c){
-        case -1: return 0; /* end*/
         case '?':
         case ':': continue; /* error msg is printed by getopt*/
         case 'n': n = atoi(optarg); break;
