@@ -1,7 +1,6 @@
 #include "pico_int.h"
 #include "pico_4224.h"
 #include "err.h"
-#include "m_getopt.h"
 #include <unistd.h>
 
 /* record signals using Picoscope */
@@ -73,7 +72,7 @@ main(int argc, char *argv[]){
     cout << "Picoscope device is opened. Type help to see command list.\n";
     while (cin.good()){
       try { osc.cmd(read_cmd()); }
-      catch (Err e){ cout << e.str() << "\n"; }
+      catch (Err e){ cout << e.str() << "\n" << flush; }
     }
 
   }

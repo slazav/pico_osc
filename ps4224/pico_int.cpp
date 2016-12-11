@@ -68,7 +68,7 @@ PicoInt::cmd(const vector<string> & args){
     C.rng = atof(args[4].c_str());
     chan_set(ch, C.en, C.cpl.c_str(), C.rng);
     chconf[chc] = C; // save channel configuration
-    cout << "OK\n";
+    cout << "OK\n" << flush;
     return;
   }
 
@@ -85,7 +85,7 @@ PicoInt::cmd(const vector<string> & args){
     // save trigger configuration
     trconf.clear();
     trconf.push_back(T);
-    cout << "OK\n";
+    cout << "OK\n" << flush;
     return;
   }
 
@@ -121,11 +121,11 @@ PicoInt::cmd(const vector<string> & args){
     // start collecting data
     run_block(npre, npost, &dt);
     usleep(npre*dt*1e6);
-    cout << "Ready\n";
+    cout << "Ready\n" << flush;
     usleep(npost*dt*1e6);
     while (!is_ready()) usleep(1000);
     time_t t0abs = time(NULL); // system time of last record
-    cout << "Done\n";
+    cout << "Done\n" << flush;
 
     int16_t ov;
     get_block(0, &N, &ov);
