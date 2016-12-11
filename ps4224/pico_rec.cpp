@@ -49,8 +49,9 @@ main(int argc, char *argv[]){
 
     /* parse  options */
     while(1){
-      switch (getopt(argc, argv, "hld:")){
-        case -1: return 0; /* end*/
+      int c = getopt(argc, argv, "hld:");
+      if (c==-1) break;
+      switch (c){
         case '?':
         case ':': continue; /* error msg is printed by getopt*/
         case 'd': dev = optarg; break;

@@ -1,0 +1,7 @@
+*.o
+pico_filter
+testsig
+*.dat
+*.txt
+*.pnm
+*.png
