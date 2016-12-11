@@ -19,6 +19,8 @@ void help(){
           " -T <num>  -- signal decay time, s (default: 0.325)\n"
           " -A <num>  -- signal amplitude,  V (default: 0.582) (full scale=1V)\n"
           " -n <num>  -- noise amplitude, V (default: 0)\n"
+          " -G <num>  -- frequency change, Hz (default: 0)\n"
+          " -U <num>  -- frequency relaxation time, s (default: 0.112)\n"
           " -h        -- write this help message and exit\n";
 }
 
@@ -33,13 +35,16 @@ main(int argc, char *argv[]){
     double amp = 0.582;
     double noise  = 0;
 
+    double ftau = 0.112;
+    double famp = 0;
+
     //double fsw   = 0; // frequency switch
     //double tsw   =  0.5;
     //double tausw = 0.1;
 
     /* parse  options */
     while(1){
-      int c = getopt(argc, argv, "hN:D:F:T:A:n:");
+      int c = getopt(argc, argv, "hN:D:F:T:A:n:G:U:");
       if (c==-1) break;
       switch (c){
         case '?':
@@ -50,6 +55,8 @@ main(int argc, char *argv[]){
         case 'T': tau = atof(optarg); break;
         case 'A': amp = atof(optarg); break;
         case 'n': noise  = atof(optarg); break;
+        case 'G': famp   = atof(optarg); break;
+        case 'U': ftau   = atof(optarg); break;
         case 'h': help(); return 0;
       }
     }
@@ -64,7 +71,7 @@ main(int argc, char *argv[]){
     double phi = 0;
     for (int i = 0; i<N; i++){
       double t = i*dt;
-      double f = f0; // + fsw*tanh((t-tsw)/tausw);
+      double f = f0 + famp*exp(-t/ftau);
       phi += 2*M_PI*f*dt;
       double y = amp*exp(-t/tau)*sin(phi) +
                  noise*(2.0*random()/RAND_MAX-1.0);
