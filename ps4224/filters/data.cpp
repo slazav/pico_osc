@@ -54,17 +54,18 @@ class FFT{
   int           len;
   public:
 
-  FFT(int len_): len(len_){
+  FFT(int len_, int fl1=FFTW_FORWARD, int fl2=FFTW_ESTIMATE): len(len_){
     cbuf = fftw_alloc_complex(len);
-    plan = fftw_plan_dft_1d(len, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
+    plan = fftw_plan_dft_1d(len, cbuf, cbuf, fl1, fl2);
   }
   ~FFT(){
     fftw_destroy_plan(plan);
     fftw_free(cbuf);
   }
-  double real(int i) const {return cbuf[i][0];}
-  double imag(int i) const {return cbuf[i][1];}
-  double abs(int i) const {return hypot(cbuf[i][0],cbuf[i][1]);}
+  double real(const int i) const {return cbuf[i][0];}
+  double imag(const int i) const {return cbuf[i][1];}
+  double abs(const int i) const {return hypot(cbuf[i][0],cbuf[i][1]);}
+  void set(const int i, const double re, const double im) {cbuf[i][0]=re; cbuf[i][1]=im;}
 
   void run(const int16_t *dbuf, double sc, bool use_blackman=false){
     // fill complex buffers
@@ -317,6 +318,40 @@ Data::print_sfft_pnm(double fmin, double fmax, double tmin, double tmax, int win
   }
   pic.print_pnm();
 
+}
+
+/******************************************************************/
+void
+Data::crop(double fmin, double fmax, double tmin, double tmax) {
+
+  set_sig_ind(fmin,fmax,tmin,tmax);
+  int win = lent;
+  fftw_complex  *cbuf;
+  fftw_plan     plan1, plan2;
+  cbuf = fftw_alloc_complex(win);
+  plan1 = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_FORWARD,  FFTW_ESTIMATE);
+  plan2 = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+  for (int i=i1t; i<i2t; i++){
+    cbuf[i-i1t][0] = sc*data[i];
+    cbuf[i-i1t][1] = 0;
+  }
+  // do fft
+  fftw_execute(plan1);
+  for (int i=0; i<win; i++){
+    if (!(i>=i1f && i<i2f) && !(i>=win-i2f && i<win-i1f))
+       cbuf[i][0] = cbuf[i][1] = 0.0;
+  }
+  fftw_execute(plan2);
+  for (int i=i1t; i<i2t; i++){
+    cout << t0+dt*i << "\t"
+         << sc*data[i] << "\t"
+         << cbuf[i-i1t][0]/win << "\n";
+  }
+
+  fftw_destroy_plan(plan1);
+  fftw_destroy_plan(plan2);
+  fftw_free(cbuf);
 }
 
 /******************************************************************/

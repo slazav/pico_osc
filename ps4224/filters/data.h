@@ -51,6 +51,9 @@ class Data{
   // fit fork signal (exponential decay, constant frequency)
   void fit_fork(double fmin, double fmax, double tmin, double tmax);
 
+  // Remove unwanted time ans frequency.
+  void crop(double fmin, double fmax, double tmin, double tmax);
+
 };
 
 #endif
