@@ -509,6 +509,8 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) {
 
   // secons pass
   double dff = M_PI/tau;
+  i1f = max(0.0, floor((fre-dff)/df));
+  i2f = min(1.0*lent, ceil((fre+dff)/df));
 
   double sx2=0, sx1=0, sx0=0;
   complex<double> sxy(0,0), sy(0,0);
