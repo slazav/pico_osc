@@ -496,8 +496,7 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) {
 
   set_sig_ind(fmin,fmax,tmin,tmax);
   FFT fft(lent);
-  fft.run(data.data()+i1t, sc, true);
-
+  fft.run(data.data()+i1t, sc, false);
 
   double A,B,C;
   fft.find_max_par(i1f,i2f,df, A,B,C);
