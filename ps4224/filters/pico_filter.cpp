@@ -24,7 +24,7 @@ void help(){
           "              sfft_pnm_ad -- Adaptive window, no smoothing. Blackman window.\n"
           "              taf         -- time-amp-fre table with adaptive window.\n"
           "              fit_fork    -- Fit fork signal (exponential decay, constant frequency).\n"
-          "              crop        -- Crop time and frequency fance, print table.\n"
+          "              crop        -- Crop time and frequency ranges, print table.\n"
           " -W <num>  -- image width\n"
           " -H <num>  -- image height\n"
           " -F <num>  -- min frequency\n"
