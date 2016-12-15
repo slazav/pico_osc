@@ -174,7 +174,7 @@ Data::Data(const char *fname, int n){
   }
 
   // read data array
-  int bufsize = 1<<12;
+  int bufsize = 1<<16;
   int cnt = 0;
   vector<int16_t> buf(bufsize*num);
   data.clear();
@@ -234,7 +234,7 @@ Data::print_pnm(int w, int h, int color) const{
   vector<int> pic(w*h, (int)0);
   int cmax=0;
   for (int i=0; i<data.size(); i++){
-    int x = (i*w)/data.size();
+    int x = ((double)i*w)/data.size(); // be worry about int overfull
     int y = h/2 - (data[i]*h)/(1<<16);
     if (y<0 || y>=h || x<0 || x>=w) continue;
     pic[y*w+x]++;
@@ -302,11 +302,11 @@ Data::print_sfft_pnm(double fmin, double fmax, double tmin, double tmax, int win
   Image pic(w,h,0);
 
   for (int x = 0; x<w; x++){
-    int il = i1t + ((lent-win)*x)/w;
+    int il = i1t + ((double)(lent-win)*x)/(w-1); // be worry about int overfull
     fft.run(data.data()+il, sc, true);
     for (int y = 0; y<h; y++){
       // convert y -> f
-      double f = fmin + ((fmax-fmin)*(h-1-y))/h;
+      double f = fmin + ((fmax-fmin)*(double)(h-1-y))/h;
       int fi = floor(f/df);
       if (fi<0) fi=0;
       if (fi>win-2) fi=win-2;
@@ -406,8 +406,8 @@ Data::print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int 
     FFT fft(win);
     fft.run(data.data()+start[is], sc, true);
 
-    size_t x1 = (start[is]*w)/lent;
-    size_t x2 = (start[is+1]*w)/lent;
+    size_t x1 = ((double)start[is]*w)/lent; // be worry about int overfull
+    size_t x2 = ((double)start[is+1]*w)/lent;
     for (int y = 0; y<h; y++){
       // convert y -> f
       double f = fmin + ((fmax-fmin)*(h-1-y))/h;
