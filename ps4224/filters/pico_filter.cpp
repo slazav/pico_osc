@@ -88,10 +88,10 @@ main(int argc, char *argv[]){
       D.print_sfft_txt(fmin,fmax, tmin, tmax, win);
     }
     else if (strcasecmp(f, "sfft_pnm")==0){
-       D.print_sfft_pnm(32000,34000, tmin, tmax, win, W,H);
+       D.print_sfft_pnm(fmin ,fmax, tmin, tmax, win, W,H);
     }
     else if (strcasecmp(f, "sfft_pnm_ad")==0){
-       D.print_sfft_pnm_ad(32000,34000, tmin, tmax, W,H);
+       D.print_sfft_pnm_ad(fmin, fmax, tmin, tmax, W,H);
     }
     else if (strcasecmp(f, "taf")==0){
       D.taf_ad(fmin,fmax, tmin, tmax);
