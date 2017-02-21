@@ -36,6 +36,9 @@ class Data{
   // fft of the whole signal, txt table. Rectangular window
   void print_fft_txt(double fmin, double fmax, double tmin, double tmax);
 
+  // FFT power, reduced number of points.
+  void print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int win);
+
   // Text table with sliding fft. Blackman window.
   void print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win);
 

@@ -275,6 +275,25 @@ Data::print_fft_txt(double fmin, double fmax, double tmin, double tmax){
 
 /******************************************************************/
 void
+Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int win){
+
+  set_sig_ind(fmin,fmax,tmin,tmax);
+  FFT fft(lent);
+  fft.run(data.data()+i1t, sc);
+
+  // print selected frequency range
+  cout << scientific;
+  for (int i=i1f; i<i2f; i+=win){
+    double s = 0;
+    int n = 0;
+    for (int j=i; j<i+win; j++) s+=pow(fft.abs(j),2);
+    cout << i*df + win*0.5*df << "\t" 
+         << s/win << "\n";
+  }
+}
+
+/******************************************************************/
+void
 Data::print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win) {
 
   set_sig_ind(fmin,fmax,tmin,tmax, win);
