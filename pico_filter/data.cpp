@@ -281,7 +281,7 @@ Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int 
   FFT fft(lent);
   fft.run(data.data()+i1t, sc);
 
-  double k = dt/lent; // convert power to V^2/Hz
+  double k = 2*dt/lent; // convert power to V^2/Hz
 
   // print selected frequency range
   int w = lent/N;
@@ -305,7 +305,7 @@ Data::print_fft_pow_lavr(double fmin, double fmax, double tmin, double tmax, int
   FFT fft(lent);
   fft.run(data.data()+i1t, sc);
 
-  double k = dt/lent; // convert power to V^2/Hz
+  double k = 2*dt/lent; // convert power to V^2/Hz
 
   // frequency step
   if (fmin==0) fmin=df;
