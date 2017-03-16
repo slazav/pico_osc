@@ -94,8 +94,8 @@ PicoInt::cmd(const vector<string> & args){
     if (args.size()!=6) throw Err()
       << "Usage: block <ch> <npre> <npost> <dt> <file>";
     string chans = args[1];
-    uint32_t  npre  = atoi(args[2].c_str());
-    uint32_t  npost = atoi(args[3].c_str());
+    uint32_t  npre  = atof(args[2].c_str());
+    uint32_t  npost = atof(args[3].c_str());
     float     dt    = atof(args[4].c_str());
     const char *fname = args[5].c_str();
     uint32_t  N     = npre+npost;
