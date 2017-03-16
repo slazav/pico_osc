@@ -19,6 +19,7 @@ void help(){
           "              txt (default) -- Print a simple x-y text table.\n"
           "              pnm -- Make image with a raw signal.\n"
           "              fft_pow_avr -- FFT power with reduced number of points. V^2/Hz output\n"
+          "              fft_pow_lavr -- same but in log scale\n"
           "              fft_txt -- FFT of the whole signal, txt table. Rectangular window.\n"
           "              sfft_txt -- Text table with sliding fft. Blackman window.\n"
           "              sfft_pnm -- PNM with sliding fft. Blackman window.\n"
@@ -90,6 +91,9 @@ main(int argc, char *argv[]){
     }
     else if (strcasecmp(f, "fft_pow_avr")==0){
        D.print_fft_pow_avr(fmin,fmax, tmin, tmax, N);
+    }
+    else if (strcasecmp(f, "fft_pow_lavr")==0){
+       D.print_fft_pow_lavr(fmin,fmax, tmin, tmax, N);
     }
     else if (strcasecmp(f, "sfft_txt")==0){
       D.print_sfft_txt(fmin,fmax, tmin, tmax, win);

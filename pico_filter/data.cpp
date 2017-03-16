@@ -299,6 +299,37 @@ Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int 
 
 /******************************************************************/
 void
+Data::print_fft_pow_lavr(double fmin, double fmax, double tmin, double tmax, int N){
+
+  set_sig_ind(fmin,fmax,tmin,tmax);
+  FFT fft(lent);
+  fft.run(data.data()+i1t, sc);
+
+  double k = dt/lent; // convert power to V^2/Hz
+
+  // frequency step
+  if (fmin==0) fmin=df;
+  double fstep = pow(fmax/fmin, 1.0/N);
+
+  // print selected frequency range
+  cout << scientific;
+
+  double f0=fmin;
+  double s = 0;
+  int n = 0;
+  for (int i=i1f; i<i2f; i++){
+    s+=pow(fft.abs(i),2);
+    n++;
+    // print point and reset counters if needed
+    if (f0*fstep <= i*df || i==i2f-1){
+      cout << i*df + n*0.5*df << "\t" << k*s/n << "\n";
+      f0=(i+1)*df; s=0; n=0;
+    }
+  }
+}
+
+/******************************************************************/
+void
 Data::print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win) {
 
   set_sig_ind(fmin,fmax,tmin,tmax, win);
