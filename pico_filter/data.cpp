@@ -275,7 +275,7 @@ Data::print_fft_txt(double fmin, double fmax, double tmin, double tmax){
 
 /******************************************************************/
 void
-Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int win){
+Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int N){
 
   set_sig_ind(fmin,fmax,tmin,tmax);
   FFT fft(lent);
@@ -284,14 +284,16 @@ Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int 
   double k = dt/lent; // convert power to V^2/Hz
 
   // print selected frequency range
+  int w = lent/N;
+
   cout << scientific;
-  for (int i=i1f; i<i2f; i+=win){
+  for (int i=i1f; i<i2f; i+=w){
     double s = 0;
     int n = 0;
-    for (int j=i; j<i+win; j++) s+=pow(fft.abs(j),2);
-
-    cout << i*df + win*0.5*df << "\t" 
-         << k*s/win << "\n";
+    for (int j=i; j<min(i+w,lent); j++){
+       s+=pow(fft.abs(j),2); n++;
+    }
+    cout << i*df + n*0.5*df << "\t" << k*s/n << "\n";
   }
 }
 

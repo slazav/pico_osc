@@ -33,6 +33,7 @@ void help(){
           " -T <num>  -- min time\n"
           " -U <num>  -- max time\n"
           " -w <num>  -- fft window (for fft_txt, fft_pnm), 1024 by default\n"
+          " -N <num>  -- number of points (for fft_pow_avr, fft_pow_lavr), 1024 by default\n"
           " -h        -- write this help message and exit\n";
 }
 
@@ -46,6 +47,7 @@ main(int argc, char *argv[]){
     char *f = f_def;
     int W=1024, H=768;
     int win = 1024;
+    int N = 1024;
     double fmin = -HUGE_VAL;
     double fmax = +HUGE_VAL;
     double tmin = -HUGE_VAL;
@@ -53,7 +55,7 @@ main(int argc, char *argv[]){
 
     /* parse  options */
     while(1){
-      int c = getopt(argc, argv, "hn:f:W:H:w:F:G:T:U:");
+      int c = getopt(argc, argv, "hn:f:W:H:w:N:F:G:T:U:");
       if (c==-1) break;
       switch (c){
         case '?':
@@ -63,6 +65,7 @@ main(int argc, char *argv[]){
         case 'W': W = atoi(optarg); break;
         case 'H': H = atoi(optarg); break;
         case 'w': win = atoi(optarg); break;
+        case 'N': N   = atoi(optarg); break;
         case 'F': fmin = atof(optarg); break;
         case 'G': fmax = atof(optarg); break;
         case 'T': tmin = atof(optarg); break;
@@ -86,7 +89,7 @@ main(int argc, char *argv[]){
        D.print_fft_txt(fmin,fmax, tmin, tmax);
     }
     else if (strcasecmp(f, "fft_pow_avr")==0){
-       D.print_fft_pow_avr(fmin,fmax, tmin, tmax, win);
+       D.print_fft_pow_avr(fmin,fmax, tmin, tmax, N);
     }
     else if (strcasecmp(f, "sfft_txt")==0){
       D.print_sfft_txt(fmin,fmax, tmin, tmax, win);
