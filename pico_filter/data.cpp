@@ -215,7 +215,7 @@ Data::set_sig_ind(double &fmin, double &fmax, double &tmin, double &tmax, int wi
   if (win==0) win = lent;
   df = 1/dt/win;
   i1f = max(0.0, floor(fmin/df));
-  i2f = min(1.0*win, ceil(fmax/df));
+  i2f = min(1.0*win, ceil(fmax/df/2));
   lenf = i2f-i1f;
   if (lent<1) throw Err() << "Error: too small frequency range: " << fmin << " - " << fmax;
 }
@@ -281,14 +281,17 @@ Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int 
   FFT fft(lent);
   fft.run(data.data()+i1t, sc);
 
+  double k = dt/lent; // convert power to V^2/Hz
+
   // print selected frequency range
   cout << scientific;
   for (int i=i1f; i<i2f; i+=win){
     double s = 0;
     int n = 0;
     for (int j=i; j<i+win; j++) s+=pow(fft.abs(j),2);
+
     cout << i*df + win*0.5*df << "\t" 
-         << s/win << "\n";
+         << k*s/win << "\n";
   }
 }
 

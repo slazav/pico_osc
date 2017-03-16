@@ -18,7 +18,7 @@ void help(){
           " -f <name> -- filter type:\n"
           "              txt (default) -- Print a simple x-y text table.\n"
           "              pnm -- Make image with a raw signal.\n"
-          "              fft_pow_avr -- FFT power with reduced number of points.\n"
+          "              fft_pow_avr -- FFT power with reduced number of points. V^2/Hz output\n"
           "              fft_txt -- FFT of the whole signal, txt table. Rectangular window.\n"
           "              sfft_txt -- Text table with sliding fft. Blackman window.\n"
           "              sfft_pnm -- PNM with sliding fft. Blackman window.\n"
