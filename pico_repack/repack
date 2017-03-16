@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# repack pico libraries into ringle altlinux RPM
+# repack pico libraries into a single altlinux RPM
 
 info='\
 libp libpicoipp 1.1.2 4r56

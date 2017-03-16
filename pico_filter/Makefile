@@ -4,9 +4,9 @@ CC=g++
 
 all: pico_filter testsig
 
-tests: testsig pico_filter
-	ln -s ../../ex1ch.txt tests/ex1ch.dat ||:
-	ln -s ../../ex2ch.txt tests/ex2ch.dat ||:
+test: testsig pico_filter
+	ln -s ../../pico_rec/ex1ch.txt tests/ex1ch.dat ||:
+	ln -s ../../pico_rec/ex2ch.txt tests/ex2ch.dat ||:
 	./testsig -N 100000 -D 1e-5 > tests/test1.dat
 	./testsig -N 100000 -D 1e-5 -G 1000 -U 0.12> tests/test2.dat
 	for i in ex1ch ex2ch test1 test2; do \
@@ -29,13 +29,13 @@ testsig: testsig.o
 
 
 pico_filter.o:\
-   ../err.h data.h pico_filter.cpp
+   ../pico_rec/err.h data.h pico_filter.cpp
 data.o:\
-   ../err.h data.h data.cpp
+   ../pico_rec/err.h data.h data.cpp
 rainbow.o: rainbow.h
 
 testsig.o:\
-   ../err.h testsig.cpp
+   ../pico_rec/err.h testsig.cpp
 
 clean:
 	rm -f *.o pico_filter testsig

@@ -1,3 +1,4 @@
+============================================================
 pico_rec -- record signals using Picoscope.
 Now only PS4224 model is supported.
 
@@ -39,4 +40,9 @@ block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)
    dt    -- time step, seconds
    file  -- output file
    Answer: Ready when trigger can be run, Done when file is saved.
+
+============================================================
+
+pico_filter -- program for processing siglnals
+recorded by pico_rec program.
 `

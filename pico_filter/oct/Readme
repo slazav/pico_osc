@@ -1,0 +1,2 @@
+First version of free decay fitting scripts
+Now this code works in data.h:fit_fork()

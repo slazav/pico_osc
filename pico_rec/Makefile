@@ -3,7 +3,6 @@ CPPFLAGS = -g
 CC=g++
 
 all: pico_rec
-	make -C filters
 
 pico_rec: pico_rec.o pico_err.o pico_int.o
 

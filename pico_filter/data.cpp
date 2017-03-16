@@ -6,14 +6,14 @@
 #include <complex>
 #include <vector>
 #include <fftw3.h>
-#include "../err.h"
 #include "data.h"
 #include "rainbow.h"
 
 using namespace std;
 
 /******************************************************************/
-// strange double image
+// Strange double image
+// You fill it with doubles and then you dump in to PNM
 class Image:vector<double> {
   public:
   int w,h;

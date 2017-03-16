@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
-#include "../err.h"
+#include "../pico_rec/err.h"
 
 // read data file
 
