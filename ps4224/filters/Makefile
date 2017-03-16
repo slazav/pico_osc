@@ -2,7 +2,9 @@ LDLIBS = -lm -lfftw3
 CPPFLAGS = -g
 CC=g++
 
-test: pico_filter testsig
+all: pico_filter testsig
+
+tests: testsig pico_filter
 	ln -s ../../ex1ch.txt tests/ex1ch.dat ||:
 	ln -s ../../ex2ch.txt tests/ex2ch.dat ||:
 	./testsig -N 100000 -D 1e-5 > tests/test1.dat
