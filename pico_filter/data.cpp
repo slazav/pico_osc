@@ -203,8 +203,8 @@ Data::set_sig_ind(double &fmin, double &fmax, double &tmin, double &tmax, int wi
   if (tmax > t0+data.size()*dt) tmax = t0+data.size()*dt;
   if (tmin < t0)   tmin = t0;
   if (fmax<fmin) swap(fmax, fmin);
-  if (fmax > 1/dt) fmax = 1/dt;
-  if (fmin > 1/dt) fmin = 1/dt;
+  if (fmax > 0.5/dt) fmax = 0.5/dt;
+  if (fmin > 0.5/dt) fmin = 0.5/dt;
   if (fmin < 0)    fmin = 0;
   // select time indices
   i1t = max(0.0, floor((tmin-t0)/dt));
@@ -215,7 +215,7 @@ Data::set_sig_ind(double &fmin, double &fmax, double &tmin, double &tmax, int wi
   if (win==0) win = lent;
   df = 1/dt/win;
   i1f = max(0.0, floor(fmin/df));
-  i2f = min(1.0*win, ceil(fmax/df/2));
+  i2f = min(1.0*win, ceil(fmax/df));
   lenf = i2f-i1f;
   if (lent<1) throw Err() << "Error: too small frequency range: " << fmin << " - " << fmax;
 }
@@ -283,18 +283,22 @@ Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int 
 
   double k = 2*dt/lent; // convert power to V^2/Hz
 
-  // print selected frequency range
-  int w = lent/N;
+  double fstep = (fmax-fmin)/N;
 
   cout << scientific;
-  for (int i=i1f; i<i2f; i+=w){
-    double s = 0;
-    int n = 0;
-    for (int j=i; j<min(i+w,lent); j++){
-       s+=pow(fft.abs(j),2); n++;
+  double s = 0;
+  int n = 0; // number of samples in the average
+  int j = 0; // output counter
+  for (int i=i1f; i<i2f; i++){
+    s+=pow(fft.abs(i),2);
+    n++;
+    // print point and reset counters if needed
+    if (i*df >= fmin + fstep*j || i==i2f-1){
+      cout << (i-0.5*n)*df << "\t" << k*s/n << "\n";
+      s=0; n=0; j++;
     }
-    cout << i*df + n*0.5*df << "\t" << k*s/n << "\n";
   }
+
 }
 
 /******************************************************************/
@@ -313,17 +317,16 @@ Data::print_fft_pow_lavr(double fmin, double fmax, double tmin, double tmax, int
 
   // print selected frequency range
   cout << scientific;
-
-  double f0=fmin;
   double s = 0;
-  int n = 0;
+  int n = 0; // number of samples in the average
+  int j = 0; // output counter
   for (int i=i1f; i<i2f; i++){
     s+=pow(fft.abs(i),2);
     n++;
     // print point and reset counters if needed
-    if (f0*fstep <= i*df || i==i2f-1){
-      cout << i*df + n*0.5*df << "\t" << k*s/n << "\n";
-      f0=(i+1)*df; s=0; n=0;
+    if (i*df >= fmin*pow(fstep,j+1) || i==i2f-1){
+      cout << (i-0.5*n)*df << "\t" << k*s/n << "\n";
+      s=0; n=0; j++;
     }
   }
 }
