@@ -591,17 +591,30 @@ Data::fit_fork(double fmin, double fmax, double tmin, double tmax) {
   }
   complex<double> BB = (sxy*sx1 - sy*sx2)/(sx1*sx1 - sx0*sx2);
   complex<double> AA = (sxy - BB*sx1)/sx2;
+  complex<double> I = complex<double>(0,1);
 
   // this complex amplitudes are fit the original complex fft signal
-  double AmpR =  2*M_PI*(1.0/AA).imag()*Max;
-  double AmpI =  2*M_PI*(1.0/AA).real()*Max;
-  // this amplitude corresponds to the original signal (volts an t=0)
-  double Amp =  hypot(AmpR, AmpI)*2*(tmax-tmin)/lent;
+  complex<double> Amp = 2.0*M_PI*I/AA*Max;
+
+  // convert to volts
+  Amp*=2*(tmax-tmin)/lent;
+
   fre = fre - (BB/AA).real();
   tau = -1/(2*M_PI*(BB/AA).imag());
+
+  // Adjust amplitude and phase
+  // in fft we have [F(t2)exp(iw t2) - F(t1)exp(iw t1)] factor
+  complex<double> v1 = exp(-tmin/tau + 2*M_PI*fre*I*tmin);
+  complex<double> v2 = exp(-tmax/tau + 2*M_PI*fre*I*tmax);
+  double w1 = 2.0*M_PI*fmin;
+  double w2 = 2.0*M_PI*fmax;
+
+  Amp /= v2*exp(I*w2) - v1*exp(I*w1);
+
   cout << t0abs << " "
-       << setprecision(6)  << Amp << " "
        << setprecision(12) << fre << " "
-       << setprecision(6)  << tau << "\n";
+       << setprecision(6)  << tau << " "
+       << setprecision(6)  << abs(Amp) << " "
+       << setprecision(6)  << arg(Amp)-M_PI/2 << "\n";
 
 }
