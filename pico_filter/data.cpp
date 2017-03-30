@@ -115,6 +115,11 @@ Data::Data(const char *fname, int n){
   ifstream ff(fname);
   if (ff.fail()) throw Err() << "Can't read file: " << fname;
 
+  t0=0;
+  dt=1;
+  sc=1;
+  t0abs=0;
+
   // read metadata <name>: <value>
   while (!ff.eof()){
     // read line
