@@ -72,9 +72,10 @@ main(int argc, char *argv[]){
     for (int i = 0; i<N; i++){
       double t = i*dt;
       double f = f0 + famp*exp(-t/ftau);
-      phi += 2*M_PI*f*dt;
       double y = amp*exp(-t/tau)*sin(phi) +
                  noise*(2.0*random()/RAND_MAX-1.0);
+      phi += 2*M_PI*f*dt;
+
       int16_t v = y/sc;
       cout.write((const char*)&v, sizeof(int16_t));
     }
