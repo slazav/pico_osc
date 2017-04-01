@@ -17,7 +17,7 @@ main(){
   double amp = 0.582;
   double ph  = 0.1234;
 
-  int N1 = 0;
+  int N1 = 10;
   int N2 = 10000;
 
   for (N2=100000; N2<100150; N2++){
@@ -31,7 +31,7 @@ main(){
     //  buf[i-N1] = amp*cos(w0*t);
     }
 
-    vector<double> ret = fit_signal(buf.data(), buf.size(), dt);
+    vector<double> ret = fit_signal(buf.data(), buf.size(), dt, N1*dt);
     cout << setprecision(12) << ret[0] << " "
          << setprecision(6)  << ret[1] << " "
          << setprecision(6)  << ret[2] << " "

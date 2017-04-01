@@ -8,7 +8,7 @@ pause -1
 
 set title "Relaxartion time, relative error"
 plot  \
- "res.txt" using 0:($2/0.925-1) pt 7 title "tau"
+ "res.txt" using 0:(1/$2/0.925-1) pt 7 title "tau"
 pause -1
 
 

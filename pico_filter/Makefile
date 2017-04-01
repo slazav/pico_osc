@@ -24,7 +24,7 @@ test: testsig pico_filter
 #	./pico_filter -f sfft_txt test.dat > test_sfft.txt
 
 
-pico_filter: pico_filter.o data.o rainbow.o
+pico_filter: pico_filter.o data.o rainbow.o fit_signal.o
 testsig: testsig.o
 
 

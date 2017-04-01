@@ -7,7 +7,7 @@
 
 using namespace std;
 
-vector<double> fit_signal(double *buf, int len, double dt,
+vector<double> fit_signal(double *buf, int len, double dt, double t0=0,
                           double fmin=0, double fmax=+HUGE_VAL){
   // signal parameters:
   double tmin=0;
@@ -50,14 +50,14 @@ vector<double> fit_signal(double *buf, int len, double dt,
   double B = (y1-y2)/(x1-x2) - A*(x1+x2);
   double C = y1 - A*x1*x1 - B*x1;
   // fre - positin of the parabola maximum
-  // tau - one over distance between zero crossings
+  // rtau - distance between zero crossings
   double fre = -B/(2*A);
-  double tau = -2*A/sqrt(B*B-4*A*C)/M_PI;
+  double rtau = -sqrt(B*B-4*A*C)*M_PI/2/A;
 
 
   // third step: fit 1/fft by a linear function
   // adjust index limits
-  double dff = 2*M_PI/tau;
+  double dff = 2*M_PI*rtau;
   i1f = max(0.0,     floor((fre-dff)/df));
   i2f = min(0.5*len, ceil((fre+dff)/df));
   // linear fit with weight w
@@ -77,24 +77,27 @@ vector<double> fit_signal(double *buf, int len, double dt,
   complex<double> AA = (sxy - BB*sx1)/sx2;
   complex<double> I = complex<double>(0,1);
 
+  fftw_destroy_plan(plan);
+  fftw_free(cbuf);
+
   // this complex amplitude corresponds to the original complex fft signal
   complex<double> amp = 2*M_PI*I/AA;
   // Convert to volts:
   amp*=2*dt;
   // Exact freq an tau:
   fre = fre - (BB/AA).real();
-  tau = -1.0/(2*M_PI*(BB/AA).imag());
+  rtau = -2*M_PI*(BB/AA).imag();
   // Boundary-dependent factor:
-  complex<double> v1 = exp(2*M_PI*fre*I*tmin - tmin/tau);
-  complex<double> v2 = exp(2*M_PI*fre*I*tmax - tmax/tau);
+  complex<double> v1 = exp(2*M_PI*fre*I*tmin - tmin*rtau);
+  complex<double> v2 = exp(2*M_PI*fre*I*tmax - tmax*rtau);
   amp /= v2-v1;
 
-  fftw_destroy_plan(plan);
-  fftw_free(cbuf);
+  //convert from t=t0 to t=0:
+  amp *=exp(t0*rtau - 2*M_PI*fre*I*t0);
 
   vector<double> ret(5,0.0);
   ret[0] = fre;
-  ret[1] = tau;
+  ret[1] = rtau;
   ret[2] = abs(amp);
   ret[3] = arg(amp)-M_PI/2;
   return ret;

@@ -55,7 +55,7 @@ class Data{
   void taf_ad(double fmin, double fmax, double tmin, double tmax);
 
   // fit fork signal (exponential decay, constant frequency)
-  void fit_fork(double fmin, double fmax, double tmin, double tmax);
+  void fit_signal(double fmin, double fmax, double tmin, double tmax);
 
   // Remove unwanted time ans frequency.
   void crop(double fmin, double fmax, double tmin, double tmax);

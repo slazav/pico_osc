@@ -8,6 +8,7 @@
 #include <fftw3.h>
 #include "data.h"
 #include "rainbow.h"
+#include "fit_signal.h"
 
 using namespace std;
 
@@ -220,7 +221,7 @@ Data::set_sig_ind(double &fmin, double &fmax, double &tmin, double &tmax, int wi
   if (win==0) win = lent;
   df = 1/dt/win;
   i1f = max(0.0, floor(fmin/df));
-  i2f = min(1.0*win, ceil(fmax/df));
+  i2f = min(0.5*win, ceil(fmax/df));
   lenf = i2f-i1f;
   if (lent<1) throw Err() << "Error: too small frequency range: " << fmin << " - " << fmax;
 }
@@ -555,66 +556,19 @@ Data::taf_ad(double fmin, double fmax, double tmin, double tmax) {
 
 /******************************************************************/
 void
-Data::fit_fork(double fmin, double fmax, double tmin, double tmax) {
+Data::fit_signal(double fmin, double fmax, double tmin, double tmax) {
 
   set_sig_ind(fmin,fmax,tmin,tmax);
-  FFT fft(lent);
-  fft.run(data.data()+i1t, sc, false);
+  vector<double> buf(lent);
+  for (int i=i1t; i<i2t; i++)
+    buf[i-i1t] = data[i] * sc;
 
-  double A,B,C;
-  fft.find_max_par(i1f,i2f,df, A,B,C);
-  double Max = -B*B/(4*A) + C;
-
-  // fre - parabola maximum
-  // tau - one over distance between zero crossings
-  double fre = -B/(2*A);
-  double tau = -2*A/sqrt(B*B-4*A*C)/M_PI;
-
-  // secons pass
-  double dff = M_PI/tau;
-  i1f = max(0.0, floor((fre-dff)/df));
-  i2f = min(1.0*lent, ceil((fre+dff)/df));
-
-  double sx2=0, sx1=0, sx0=0;
-  complex<double> sxy(0,0), sy(0,0);
-  for (int i = i1f; i<i2f; i++){
-    double x = df*i-fre;
-    double Re = fft.real(i);
-    double Im = fft.imag(i);
-    complex<double> y = Max/complex<double>(Re,Im);
-    double w = pow(fft.abs(i), 4.0);
-    sx2 += x*x*w;
-    sx1 += x*w;
-    sx0 += w;
-    sxy += x*y*w;
-    sy  += y*w;
-  }
-  complex<double> BB = (sxy*sx1 - sy*sx2)/(sx1*sx1 - sx0*sx2);
-  complex<double> AA = (sxy - BB*sx1)/sx2;
-  complex<double> I = complex<double>(0,1);
-
-  // this complex amplitudes are fit the original complex fft signal
-  complex<double> Amp = 2.0*M_PI*I/AA*Max;
-
-  // convert to volts
-  Amp*=2*(tmax-tmin)/lent;
-
-  fre = fre - (BB/AA).real();
-  tau = -1/(2*M_PI*(BB/AA).imag());
-
-  // Adjust amplitude and phase
-  // in fft we have [F(t2)exp(iw t2) - F(t1)exp(iw t1)] factor
-  complex<double> v1 = exp(-tmin/tau + 2*M_PI*fre*I*tmin);
-  complex<double> v2 = exp(-tmax/tau + 2*M_PI*fre*I*tmax);
-  double w1 = 2.0*M_PI*fmin;
-  double w2 = 2.0*M_PI*fmax;
-
-  Amp /= v2*exp(I*w2) - v1*exp(I*w1);
+  vector<double> ret = ::fit_signal(buf.data(), lent, dt, tmin, fmin, fmax);
 
   cout << t0abs << " "
-       << setprecision(12) << fre << " "
-       << setprecision(6)  << tau << " "
-       << setprecision(6)  << abs(Amp) << " "
-       << setprecision(6)  << arg(Amp)-M_PI/2 << "\n";
+       << setprecision(12) << ret[0] << " "
+       << setprecision(6)  << ret[1] << " "
+       << setprecision(6)  << ret[2] << " "
+       << setprecision(6)  << ret[3] << "\n";
 
 }
