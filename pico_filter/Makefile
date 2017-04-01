@@ -31,7 +31,7 @@ testsig: testsig.o
 pico_filter.o:\
    ../pico_rec/err.h data.h pico_filter.cpp
 data.o:\
-   ../pico_rec/err.h data.h data.cpp
+   ../pico_rec/err.h dimage.h fft.h data.h data.cpp
 rainbow.o: rainbow.h
 
 testsig.o:\

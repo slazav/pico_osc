@@ -9,7 +9,7 @@ output: a vector with 4 double values:
   fre, 1/tau, amp, ph
 
 input:
-  buf -- signal data, double array
+  buf -- signal data array
   len -- array length
   dt  -- time step
   t0  -- time of the first point, returned amplitude and phase is converted to t=0

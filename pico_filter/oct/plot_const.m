@@ -77,9 +77,10 @@ function plot_const()
   f0b = f0 - real(CC(2)/CC(1));
   t0b = -1/(2*pi*imag(CC(2)/CC(1)));
 
-kk = (exp(2*pi*f0b*i*t(end) - t(end)/t0b) - exp(2*pi*f0b*i*t(1) - t(1)/t0b));
+kk = exp(2*pi*f0b*i*t(end) - t(end)/t0) - exp(2*pi*f0b*i*t(1) - t(1)/t0);
 
-  find_figure("sig2"); clf; hold on
+#  find_figure("sig2"); clf; hold on
+  figure; clf; hold on
 
   #za = Aa./(i*2*pi*(f-f0a) + 1/t0a);
   zb = Ab./(i*2*pi*(f-f0b) + 1/t0b);

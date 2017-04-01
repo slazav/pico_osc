@@ -6,7 +6,7 @@ function plot_fork()
   f0  = 32.188e3;  # frequency
   w0  = 2*pi*f0;
   p  = 2;          # phase
-  t0 = 1;        # tau
+  t0 = 0.563;        # tau
 
 
   T  = 1*t0;
@@ -36,7 +36,7 @@ function plot_fork()
 
   figure; clf; hold on
 #  plot(n, t0b1, 'r.-');
-  plot(n, t0b2, 'b.-');
+  plot(n, t0b2/t0, 'b.-');
 
 
 
