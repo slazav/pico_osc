@@ -1,0 +1,6 @@
+test_fit_signal
+*.o
+*.dat
+*.txt
+*.pnm
+*.png

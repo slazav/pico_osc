@@ -1,0 +1,102 @@
+#include <vector>
+#include <complex>
+#include <cmath>
+#include <iostream>
+#include <fftw3.h>
+
+
+using namespace std;
+
+vector<double> fit_signal(double *buf, int len, double dt,
+                          double fmin=0, double fmax=+HUGE_VAL){
+  // signal parameters:
+  double tmin=0;
+  double tmax=dt*len;
+  double df = 1/tmax;
+
+  // do fft
+  fftw_complex *cbuf = fftw_alloc_complex(len);
+  fftw_plan     plan = fftw_plan_dft_1d(len, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
+  for (int i=0; i<len; i++){
+    cbuf[i][0] = buf[i];
+    cbuf[i][1] = 0;
+  }
+  fftw_execute(plan);
+
+  // first step: find max(abs(fft))
+  // index limits
+  int i1f = max(0.0,    floor(fmin/df));
+  int i2f = min(0.5*len, ceil(fmax/df));
+  double vm = hypot(cbuf[i1f][0], cbuf[i1f][1]);
+  int im = i1f;
+  for (int i = i1f; i<i2f; i++){
+    double v = hypot(cbuf[i][0], cbuf[i][1]);
+    if (v>=vm) {vm=v; im=i;}
+  }
+
+
+  // second step: find parabolic fit near maximum
+  if (im<i1f+1 || im>=i2f-1){
+    cerr << "Can't find signal frequency\n";
+    return vector<double>(5, 0.0);
+  }
+  double x1 = df*(im-1);
+  double x2 = df*im;
+  double x3 = df*(im+1);
+  double y1 = hypot(cbuf[im-1][0], cbuf[im-1][1]);
+  double y2 = hypot(cbuf[im  ][0], cbuf[im  ][1]);
+  double y3 = hypot(cbuf[im+1][0], cbuf[im+1][1]);
+  double A = ((y1-y2)/(x1-x2) - (y2-y3)/(x2-x3))/(x1-x3);
+  double B = (y1-y2)/(x1-x2) - A*(x1+x2);
+  double C = y1 - A*x1*x1 - B*x1;
+  // fre - positin of the parabola maximum
+  // tau - one over distance between zero crossings
+  double fre = -B/(2*A);
+  double tau = -2*A/sqrt(B*B-4*A*C)/M_PI;
+
+
+  // third step: fit 1/fft by a linear function
+  // adjust index limits
+  double dff = 2*M_PI/tau;
+  i1f = max(0.0,     floor((fre-dff)/df));
+  i2f = min(0.5*len, ceil((fre+dff)/df));
+  // linear fit with weight w
+  double sx2=0, sx1=0, sx0=0;
+  complex<double> sxy(0,0), sy(0,0);
+  for (int i = i1f; i<i2f; i++){
+    double x = df*i-fre;
+    complex<double> y = 1.0/complex<double>(cbuf[i][0], cbuf[i][1]);
+    double w = pow(1.0/abs(y), 4.0);
+    sx2 += x*x*w;
+    sx1 += x*w;
+    sx0 += w;
+    sxy += x*y*w;
+    sy  += y*w;
+  }
+  complex<double> BB = (sxy*sx1 - sy*sx2)/(sx1*sx1 - sx0*sx2);
+  complex<double> AA = (sxy - BB*sx1)/sx2;
+  complex<double> I = complex<double>(0,1);
+
+  // this complex amplitude corresponds to the original complex fft signal
+  complex<double> amp = 2*M_PI*I/AA;
+  // Convert to volts:
+  amp*=2*dt;
+  // Exact freq an tau:
+  fre = fre - (BB/AA).real();
+  tau = -1.0/(2*M_PI*(BB/AA).imag());
+  // Boundary-dependent factor:
+  complex<double> v1 = exp(2*M_PI*fre*I*tmin - tmin/tau);
+  complex<double> v2 = exp(2*M_PI*fre*I*tmax - tmax/tau);
+  amp /= v2-v1;
+
+  fftw_destroy_plan(plan);
+  fftw_free(cbuf);
+
+  vector<double> ret(5,0.0);
+  ret[0] = fre;
+  ret[1] = tau;
+  ret[2] = abs(amp);
+  ret[3] = arg(amp)-M_PI/2;
+  return ret;
+}
+
