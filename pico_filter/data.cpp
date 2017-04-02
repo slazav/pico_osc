@@ -462,11 +462,8 @@ void
 Data::fit_signal(double fmin, double fmax, double tmin, double tmax) {
 
   set_sig_ind(fmin,fmax,tmin,tmax);
-  vector<double> buf(lent);
-  for (int i=i1t; i<i2t; i++)
-    buf[i-i1t] = data[i] * sc;
 
-  vector<double> ret = ::fit_signal(buf.data(), lent, dt, tmin, fmin, fmax);
+  vector<double> ret = ::fit_signal(data.data()+i1t, lent, sc, dt, tmin, fmin, fmax);
 
   cout << t0abs << " "
        << setprecision(12) << ret[0] << " "

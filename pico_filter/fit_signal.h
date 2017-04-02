@@ -1,4 +1,5 @@
 #include <vector>
+#include <stdint.h>
 
 /*
 Fit a signal by a model:
@@ -11,10 +12,11 @@ output: a vector with 4 double values:
 input:
   buf -- signal data array
   len -- array length
+  sc  -- amplitude scale
   dt  -- time step
   t0  -- time of the first point, returned amplitude and phase is converted to t=0
   fmin, fmax -- where to look for a frequency
 */
 
-std::vector<double> fit_signal(double *buf, int len, double dt, double t0=0,
+std::vector<double> fit_signal(int16_t *buf, int len, double sc, double dt, double t0=0,
                                double fmin=0, double fmax=+HUGE_VAL);

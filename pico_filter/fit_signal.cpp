@@ -3,11 +3,12 @@
 #include <cmath>
 #include <iostream>
 #include <fftw3.h>
+#include <stdint.h>
 
 
 using namespace std;
 
-vector<double> fit_signal(double *buf, int len, double dt, double t0=0,
+vector<double> fit_signal(int16_t *buf, int len, double sc, double dt, double t0=0,
                           double fmin=0, double fmax=+HUGE_VAL){
   // signal parameters:
   double tmin=0;
@@ -18,7 +19,7 @@ vector<double> fit_signal(double *buf, int len, double dt, double t0=0,
   fftw_complex *cbuf = fftw_alloc_complex(len);
   fftw_plan     plan = fftw_plan_dft_1d(len, cbuf, cbuf, FFTW_FORWARD, FFTW_ESTIMATE);
   for (int i=0; i<len; i++){
-    cbuf[i][0] = buf[i];
+    cbuf[i][0] = buf[i]*sc;
     cbuf[i][1] = 0;
   }
   fftw_execute(plan);

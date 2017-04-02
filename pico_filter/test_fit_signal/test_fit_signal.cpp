@@ -20,18 +20,21 @@ main(){
   int N1 = 10;
   int N2 = 10000;
 
+
   for (N2=100000; N2<100150; N2++){
     int N=N2-N1;
-    vector<double> buf(N);
+    vector<int16_t> buf(N);
+    int max=1<<15;
+    double sc = amp/max;
 
     // build a pure sine signal
     for (int i = N1; i<N2; i++){
       double t = i*dt;
-      buf[i-N1] = amp*exp(-t/tau)*sin(w0*t + ph);
-    //  buf[i-N1] = amp*cos(w0*t);
+      buf[i-N1] = max*exp(-t/tau)*sin(w0*t + ph);
+    //  buf[i-N1] = max*cos(w0*t);
     }
 
-    vector<double> ret = fit_signal(buf.data(), buf.size(), dt, N1*dt);
+    vector<double> ret = fit_signal(buf.data(), buf.size(), sc, dt, N1*dt);
     cout << setprecision(12) << ret[0] << " "
          << setprecision(6)  << ret[1] << " "
          << setprecision(6)  << ret[2] << " "
