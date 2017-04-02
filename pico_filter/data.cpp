@@ -13,247 +13,195 @@
 
 using namespace std;
 
-/******************************************************************/
-// constructor -- read one data channel from a file
-Data::Data(const char *fname, int n){
-  ifstream ff(fname);
-  if (ff.fail()) throw Err() << "Can't read file: " << fname;
-
-  t0=0;
-  dt=1;
-  sc=1;
-  t0abs=0;
-
-  // read metadata <name>: <value>
-  while (!ff.eof()){
-    // read line
-    string line;
-    getline(ff,line);
-
-    // after * we have data array!
-    if (line == "*") break;
-
-    // remove comments
-    size_t nc = line.find('#');
-    if (nc!=string::npos) line = line.substr(0,nc);
-
-    string key, val;
-
-    // find key: value pair
-    nc = line.find(':');
-    if (nc!=string::npos){
-      key = line.substr(0,nc);
-      val = line.substr(nc+1);
-    }
-    else  val = line;
-
-    // split into words
-    istringstream ss1(key), ss2(val);
-    vector<string> keyw, valw;
-    while (!ss1.eof()){ string w; ss1>>w; if (w!="") keyw.push_back(w); }
-    while (!ss2.eof()){ string w; ss2>>w; if (w!="") valw.push_back(w); }
-
-    // empty line
-    if (keyw.size()==0 && valw.size()==0) continue;
-
-    if (keyw.size()!=1) throw Err() << "Broken file: " << line;
-    key=keyw[0];
-
-    // collect useful parameters
-    if (key == "dt"){
-      if (valw.size()<1) throw Err() << "Broken file: " << line;
-      dt = atof(valw[0].c_str());
-    }
-    if (key == "t0"){
-      if (valw.size()<1) throw Err() << "Broken file: " << line;
-      t0 = atof(valw[0].c_str());
-    }
-    if (key == "t0abs"){
-      if (valw.size()<1) throw Err() << "Broken file: " << line;
-      t0abs = atoi(valw[0].c_str());
-    }
-    if (key == "data"){
-      if (valw.size()<3) throw Err() << "Broken file: " << line;
-      if (atoi(valw[0].c_str())==n) sc = atof(valw[2].c_str());
-    }
-    if (key == "data_num"){
-      if (valw.size()<1) throw Err() << "Broken file: " << line;
-      num = atoi(valw[0].c_str());
-    }
-  }
-
-  // read data array
-  int bufsize = 1<<16;
-  int cnt = 0;
-  vector<int16_t> buf(bufsize*num);
-  data.clear();
-  while (!ff.eof()){
-    ff.read((char *)buf.data(), bufsize*num*sizeof(int16_t));
-    int len = ff.gcount()/num/sizeof(int16_t);
-    data.resize(cnt+len);
-    for (int i=0; i<len; i++){
-      data[cnt+i] = buf[i*num+n];
-    }
-    cnt+=len;
-  }
-
-  //set ind
-  i1t=0; i2t=lent=data.size();
-  i1f=0; i2f=lenf=data.size();
-  df = 1/dt/data.size();
-}
-
-/******************************************************************/
-// check ranges and update signal indices
-void
-Data::set_sig_ind(double &fmin, double &fmax, double &tmin, double &tmax, int win){
-  // adjust tmin/tmax/fmin/fmax
-  if (tmax<tmin) swap(tmax, tmin);
-  if (tmax > t0+data.size()*dt) tmax = t0+data.size()*dt;
-  if (tmin < t0)   tmin = t0;
-  if (fmax<fmin) swap(fmax, fmin);
-  if (fmax > 0.5/dt) fmax = 0.5/dt;
-  if (fmin > 0.5/dt) fmin = 0.5/dt;
-  if (fmin < 0)    fmin = 0;
-  // select time indices
-  i1t = max(0.0, floor((tmin-t0)/dt));
-  i2t = min(1.0*data.size(), ceil((tmax-t0)/dt));
-  lent = i2t-i1t;
-  if (lent<1) throw Err() << "Error: too small time range: " << tmin << " - " << tmax;
-  // select frequency indices
-  if (win==0) win = lent;
-  df = 1/dt/win;
-  i1f = max(0.0, floor(fmin/df));
-  i2f = min(0.5*win, ceil(fmax/df));
-  lenf = i2f-i1f;
-  if (lent<1) throw Err() << "Error: too small frequency range: " << fmin << " - " << fmax;
-}
+// get_n()>0 get_c()>0 -- already checked
 
 /******************************************************************/
 void
-Data::print_txt() const{
+flt_txt(const Signal & s){
+  int n = s.get_n();
   cout << scientific;
-  for (int i=0; i<data.size(); i++)
-    cout << t0+dt*i << "\t" << sc*data[i] << "\n";
+  for (int i=0; i<n; i++){
+    double t = s.t0 + s.dt*i;
+    cout << s.t0 + s.dt*i;
+    for (int c = 0; c<s.get_ch(); c++){
+      cout << "\t" << s.get_val(c,i);
+    }
+    cout << "\n";
+  }
 }
 
 /******************************************************************/
+
 void
-Data::print_pnm(int w, int h, int color) const{
-  vector<int> pic(w*h, (int)0);
-  int cmax=0;
-  for (int i=0; i<data.size(); i++){
-    int x = ((double)i*w)/data.size(); // be worry about int overfull
-    int y = h/2 - (data[i]*h)/(1<<16);
-    if (y<0 || y>=h || x<0 || x>=w) continue;
-    pic[y*w+x]++;
-    if (cmax < pic[y*w+x]) cmax = pic[y*w+x];
+flt_pnm(const Signal & s, int W, int H){
+  int colors[] = {0x00880000, 0x00008800, 0x00000088,
+                  0x00888800, 0x00008888, 0x00880088,
+                  0x00000000};
+  int cn = sizeof(colors)/sizeof(int); // number of colors
+
+  // the picture
+  vector<int> pic(W*H, (int)0xFFFFFFFF);
+  int N = s.get_n();
+
+  // plot t=0 line
+  int x0 = (-s.t0/s.dt*W)/N; 
+  if (x0>=0 && x0<W) for (int y=0;y<H;y++){ pic[y*W+x0] = 0x00888888;}
+  //// plot y=0 line
+  // int y0 = H/2;
+  // for (int x=0;x<W;x++){ pic[y0*W+x] = 0x00888888;}
+
+  for (int ch = 0; ch<s.get_ch(); ch++){
+    for (int i=0; i<N; i++){
+      int x = ((double)i*W)/N; // be worry about int overfull
+      int y = H/2 - (s.chan[ch][i]*H)/(1<<16);
+      if (y<0 || y>=H || x<0 || x>=W) continue;
+      pic[y*W+x] = colors[ch % cn];
+    }
   }
-  unsigned char r = (color & 0xFF);
-  unsigned char g = ((color>>8) & 0xFF);
-  unsigned char b = ((color>>16) & 0xFF);
-
-  cout << "P6\n" << w << " " << h << "\n255\n";
-  for (int y=0; y<h; y++){
-    for (int x=0; x<w; x++){
-
-    unsigned char r1 = pic[y*w+x] ? r:0xFF;
-    unsigned char g1 = pic[y*w+x] ? g:0xFF;
-    unsigned char b1 = pic[y*w+x] ? b:0xFF;
-
-      cout.write((char *)&r1, 1);
-      cout.write((char *)&g1, 1);
-      cout.write((char *)&b1, 1);
+  cout << "P6\n" << W << " " << H << "\n255\n";
+  for (int y=0; y<H; y++){
+    for (int x=0; x<W; x++){
+      cout.write((char *)(&pic[y*W+x])+1, 3);
     }
   }
 }
 
-/******************************************************************/
-void
-Data::print_fft_txt(double fmin, double fmax, double tmin, double tmax){
-
-  set_sig_ind(fmin,fmax,tmin,tmax);
-  FFT fft(lent);
-  fft.run(data.data()+i1t, sc);
-
-  // print selected frequency range
-  cout << scientific;
-  for (int i=i1f; i<i2f; i++)
-    cout << i*df << "\t" << fft.real(i) << "\t" << fft.imag(i) << "\n";
-}
 
 /******************************************************************/
+
 void
-Data::print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int N){
+flt_fft_txt(const Signal & s, double fmin, double fmax){
 
-  set_sig_ind(fmin,fmax,tmin,tmax);
-  FFT fft(lent);
-  fft.run(data.data()+i1t, sc);
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
 
-  double k = 2*dt/lent; // convert power to V^2/Hz
-
-  double fstep = (fmax-fmin)/N;
+  FFT fft(N);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+  vector<vector<double> > dat_im(cN), dat_re(cN);
+  for (int c = 0; c<cN; c++){
+    fft.run(s.chan[c].data(), s.chan[c].sc);
+    dat_re[c] = fft.real(i1f,i2f);
+    dat_im[c] = fft.imag(i1f,i2f);
+  }
 
   cout << scientific;
-  double s = 0;
+  for (int i=i1f; i<i2f; i++){
+    cout << df*i;
+    for (int c = 0; c<cN; c++){
+      cout << "\t" << dat_re[c][i-i1f] << "\t" << dat_im[c][i-i1f];
+    }
+    cout << "\n";
+  }
+}
+
+/******************************************************************/
+
+void
+flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts){
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+
+  double k = 2*s.dt/N; // convert power to V^2/Hz
+
+  FFT fft(N);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+  vector<vector<double> > dat(cN);
+  for (int c = 0; c<cN; c++){
+    fft.run(s.chan[c].data(), s.chan[c].sc);
+    dat[c] = fft.abs(i1f,i2f);
+  }
+
+  double fstep = (fmax-fmin)/npts;
+
+  cout << scientific;
+  vector<double> ss(cN, 0);
   int n = 0; // number of samples in the average
   int j = 0; // output counter
   for (int i=i1f; i<i2f; i++){
-    s+=pow(fft.abs(i),2);
+    for (int c = 0; c<cN; c++) ss[c]+=pow(dat[c][i-i1f],2);
     n++;
     // print point and reset counters if needed
     if (i*df >= fmin + fstep*j || i==i2f-1){
-      cout << (i-0.5*n)*df << "\t" << k*s/n << "\n";
-      s=0; n=0; j++;
+      for (int c = 0; c<cN; c++){
+        cout << (i-0.5*(n-1))*df << "\t" << k*ss[c]/n << "\n";
+        ss[c]=0;
+      }
+      n=0; j++;
     }
   }
 
 }
 
 /******************************************************************/
+
 void
-Data::print_fft_pow_lavr(double fmin, double fmax, double tmin, double tmax, int N){
+flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts){
 
-  set_sig_ind(fmin,fmax,tmin,tmax);
-  FFT fft(lent);
-  fft.run(data.data()+i1t, sc);
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
 
-  double k = 2*dt/lent; // convert power to V^2/Hz
+  double k = 2*s.dt/N; // convert power to V^2/Hz
 
-  // frequency step
+  FFT fft(N);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+  vector<vector<double> > dat(cN);
+  for (int c = 0; c<cN; c++){
+    fft.run(s.chan[c].data(), s.chan[c].sc);
+    dat[c] = fft.abs(i1f,i2f);
+  }
+
   if (fmin==0) fmin=df;
-  double fstep = pow(fmax/fmin, 1.0/N);
+  double fstep = pow(fmax/fmin, 1.0/npts);
 
-  // print selected frequency range
   cout << scientific;
-  double s = 0;
+  vector<double> ss(cN, 0);
   int n = 0; // number of samples in the average
   int j = 0; // output counter
   for (int i=i1f; i<i2f; i++){
-    s+=pow(fft.abs(i),2);
+    for (int c = 0; c<cN; c++) ss[c]+=pow(dat[c][i-i1f],2);
     n++;
     // print point and reset counters if needed
     if (i*df >= fmin*pow(fstep,j+1) || i==i2f-1){
-      cout << (i-0.5*n)*df << "\t" << k*s/n << "\n";
-      s=0; n=0; j++;
+      for (int c = 0; c<cN; c++){
+        cout << (i-0.5*(n-1))*df << "\t" << k*ss[c]/n << "\n";
+        ss[c]=0;
+      }
+      n=0; j++;
     }
   }
 }
 
 /******************************************************************/
 void
-Data::print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win) {
+flt_sfft_txt(const Signal & s, double fmin, double fmax, int win) {
 
-  set_sig_ind(fmin,fmax,tmin,tmax, win);
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch=0;
+
   FFT fft(win);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
 
-  for (int iw=i1t; iw<i2t-win; iw+=win){
-    fft.run(data.data()+iw, sc, true);
+  for (int iw=0; iw<N-win; iw+=win){
+    fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
 
     // print selected frequency range
     cout << scientific;
     for (int i=i1f; i<i2f; i++){
-      cout << t0+dt*(iw+win/2) << "\t" << i*df << "\t"
+      cout << s.t0 + s.dt*(iw+win/2) << "\t" << i*df << "\t"
                 << fft.real(i) << "\t" << fft.imag(i) << "\n";
     }
     cout << "\n";
@@ -261,19 +209,28 @@ Data::print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win
 }
 
 /******************************************************************/
+
 void
-Data::print_sfft_pnm(double fmin, double fmax, double tmin, double tmax, int win, int w, int h) {
+flt_sfft_pnm(const Signal & s, double fmin, double fmax, int win, int W, int H) {
 
-  set_sig_ind(fmin,fmax,tmin,tmax, win);
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch=0;
+
   FFT fft(win);
-  dImage pic(w,h,0);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
 
-  for (int x = 0; x<w; x++){
-    int il = i1t + ((double)(lent-win)*x)/(w-1); // be worry about int overfull
-    fft.run(data.data()+il, sc, true);
-    for (int y = 0; y<h; y++){
+  dImage pic(W,H,0);
+
+  for (int x = 0; x<W; x++){
+    int il = ((double)(N-win)*x)/(W-1); // be worry about int overfull
+    fft.run(s.chan[ch].data()+il, s.chan[ch].sc, true);
+    for (int y = 0; y<H; y++){
       // convert y -> f
-      double f = fmin + ((fmax-fmin)*(double)(h-1-y))/h;
+      double f = fmin + ((fmax-fmin)*(double)(H-1-y))/H;
       int fi = floor(f/df);
       if (fi<0) fi=0;
       if (fi>win-2) fi=win-2;
@@ -284,71 +241,45 @@ Data::print_sfft_pnm(double fmin, double fmax, double tmin, double tmax, int win
     }
   }
   pic.print_pnm();
-
 }
 
 /******************************************************************/
+
 void
-Data::crop(double fmin, double fmax, double tmin, double tmax) {
+flt_sfft_pnm_ad(const Signal & s, double fmin, double fmax, int W, int H) {
 
-  set_sig_ind(fmin,fmax,tmin,tmax);
-  int win = lent;
-  fftw_complex  *cbuf;
-  fftw_plan     plan1, plan2;
-  cbuf = fftw_alloc_complex(win);
-  plan1 = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_FORWARD,  FFTW_ESTIMATE);
-  plan2 = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_BACKWARD, FFTW_ESTIMATE);
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch=0;
 
-  for (int i=i1t; i<i2t; i++){
-    cbuf[i-i1t][0] = sc*data[i];
-    cbuf[i-i1t][1] = 0;
-  }
-  // do fft
-  fftw_execute(plan1);
-  for (int i=0; i<win; i++){
-    if (!(i>=i1f && i<i2f) && !(i>=win-i2f && i<win-i1f))
-       cbuf[i][0] = cbuf[i][1] = 0.0;
-  }
-  fftw_execute(plan2);
-  for (int i=i1t; i<i2t; i++){
-    cout << t0+dt*i << "\t"
-         << sc*data[i] << "\t"
-         << cbuf[i-i1t][0]/win << "\n";
-  }
+  int i1f, i2f;
+  double df;
 
-  fftw_destroy_plan(plan1);
-  fftw_destroy_plan(plan2);
-  fftw_free(cbuf);
-}
-
-/******************************************************************/
-void
-Data::print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int w, int h) {
-
-  set_sig_ind(fmin,fmax,tmin,tmax);
+  FFT fft(N);
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
 
   // min window: we have NM points in fmin:fmax range
   // max window: we have NM points in tmin:tmax range
   int NM = 5;
-  int wmin = floor(NM/(fmax-fmin)/dt);
-  int wmax = ceil((tmax-tmin)/NM/dt);
-
+  int wmin = floor(NM/(fmax-fmin)/s.dt);
+  int wmax = ceil(N/NM);
 
   // first pass
   vector<int> start; // start points for the full calculation
   {
     int win=wmin;
-    set_sig_ind(fmin,fmax,tmin,tmax, win);
     FFT fft(win);
-    vector<double> vp(lenf,0); // previous step data
+    fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+    vector<double> vp(win,0); // previous step data
 
     // for each x point
-    for (int iw=i1t; iw<i2t-win; iw+=win){
-      fft.run(data.data()+iw, sc, true);
+    for (int iw=0; iw<N-win; iw+=win){
+      fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
 
       // calculate normalized distance from previous point
       double d0=0, d1=0;
-      vector<double> vn(lenf,0); // new data
+      vector<double> vn(win,0); // new data
       for (int i=i1f; i<i2f; i++){
         vn[i-i1f] = fft.abs(i);
         d1 += pow(vn[i-i1f]-vp[i-i1f], 2);
@@ -362,22 +293,23 @@ Data::print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int 
       }
     }
     // move last point to the data end
-    start[start.size()-1] = i2t;
+    start[start.size()-1] = N;
   }
 
   // second pass
-  dImage pic(w,h,0);
+  dImage pic(W,H,0);
   for (int is = 0; is<start.size()-1; is++){
     int win = start[is+1]-start[is];
-    set_sig_ind(fmin,fmax,tmin,tmax, win);
-    FFT fft(win);
-    fft.run(data.data()+start[is], sc, true);
 
-    size_t x1 = ((double)start[is]*w)/lent; // be worry about int overfull
-    size_t x2 = ((double)start[is+1]*w)/lent;
-    for (int y = 0; y<h; y++){
+    FFT fft(win);
+    fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+    fft.run(s.chan[ch].data()+start[is], s.chan[ch].sc, true);
+
+    size_t x1 = ((double)start[is]*W)/N; // be worry about int overfull
+    size_t x2 = ((double)start[is+1]*W)/N;
+    for (int y = 0; y<H; y++){
       // convert y -> f
-      double f = fmin + ((fmax-fmin)*(h-1-y))/h;
+      double f = fmin + ((fmax-fmin)*(H-1-y))/H;
       int fi = floor(f/df);
       if (fi<0) fi=0;
       if (fi>win-2) fi=win-2;
@@ -391,32 +323,42 @@ Data::print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int 
 }
 
 /******************************************************************/
+/*
 void
-Data::taf_ad(double fmin, double fmax, double tmin, double tmax) {
+taf_ad(const Signal & s, double fmin, double fmax) {
 
-  set_sig_ind(fmin,fmax,tmin,tmax);
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch=0;
+
+  int i1f, i2f;
+  double df;
+
+  FFT fft(N);
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
 
   // min window: we have NM points in fmin:fmax range
   // max window: we have NM points in tmin:tmax range
   int NM = 5;
-  int wmin = floor(NM/(fmax-fmin)/dt);
-  int wmax = ceil((tmax-tmin)/NM/dt);
+  int wmin = floor(NM/(fmax-fmin)/s.dt);
+  int wmax = ceil(N/NM);
 
   // first pass with minimal window
   vector<int> start; // start points for the full calculation
   {
     int win=wmin;
-    set_sig_ind(fmin,fmax,tmin,tmax, win);
     FFT fft(win);
-    vector<double> vp(lenf,0); // previous step data
+    fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+    vector<double> vp(win,0); // previous step data
 
     // for each x point
-    for (int iw=i1t; iw<i2t-win; iw+=win){
-      fft.run(data.data()+iw, sc, true);
+    for (int iw=0; iw<N-win; iw+=win){
+      fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
 
       // calculate normalized distance from previous point
       double d0=0, d1=0;
-      vector<double> vn(lenf,0); // new data
+      vector<double> vn(win,0); // new data
       for (int i=i1f; i<i2f; i++){
         vn[i-i1f] = fft.abs(i);
         d1 += pow(vn[i-i1f]-vp[i-i1f], 2);
@@ -430,21 +372,21 @@ Data::taf_ad(double fmin, double fmax, double tmin, double tmax) {
       }
     }
     // move last point to the data end
-    start[start.size()-1] = i2t;
+    start[start.size()-1] = N;
   }
 
   // second pass
   for (int is = 0; is<start.size()-1; is++){
     int win = start[is+1]-start[is];
-    set_sig_ind(fmin,fmax,tmin,tmax, win);
     FFT fft(win);
-    fft.run(data.data()+start[is], sc, true);
+    fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+    fft.run(s.chan[ch].data()+start[is], s.chan[ch].sc, true);
 
     // print point: time, amplitude, frequency
-    double t = t0 + dt*(start[is]+start[is+1])/2;
+    double t = s.t0 + s.dt*(start[is]+start[is+1])/2;
     double amp=0;
     for (int i=i1f; i<i2f; i++) amp+=pow(fft.abs(i),2);
-    amp = sqrt(amp)/lenf/11;
+    amp = sqrt(amp)/win/11;
 
     double A,B,C;
     fft.find_max_par(i1f,i2f,df, A,B,C);
@@ -456,19 +398,90 @@ Data::taf_ad(double fmin, double fmax, double tmin, double tmax) {
 
   }
 }
-
+*/
 /******************************************************************/
+
 void
-Data::fit_signal(double fmin, double fmax, double tmin, double tmax) {
+fit(const Signal & s, double fmin, double fmax) {
 
-  set_sig_ind(fmin,fmax,tmin,tmax);
+  int N  = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch = 0;
 
-  vector<double> ret = ::fit_signal(data.data()+i1t, lent, sc, dt, tmin, fmin, fmax);
+  vector<double> ret = ::fit_signal(
+    s.chan[ch].data(), N, s.chan[ch].sc, s.dt, s.t0, fmin, fmax);
 
-  cout << t0abs << " "
+  cout << s.t0abs << " "
        << setprecision(12) << ret[0] << " "
        << setprecision(6)  << ret[1] << " "
        << setprecision(6)  << ret[2] << " "
        << setprecision(6)  << ret[3] << "\n";
 
 }
+
+/******************************************************************/
+void
+lockin(const Signal & s, double fmin, double fmax) {
+
+  int N  = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1) return;
+  if (cN<2) throw Err() << "at least two channels are needed";
+  int ch_sig = 0;
+  int ch_ref = 1;
+
+  // get frequncy and phase of the reference signal
+  vector<double> ret = ::fit_signal(
+    s.chan[ch_ref].data(), N, s.chan[ch_ref].sc, s.dt, s.t0, fmin, fmax);
+  double fre = ret[0];
+  double ph  = ret[3];
+
+  double ss1=0, ss2=0;
+  for (int i=0; i<N; i++){
+    double v = s.chan[ch_sig][i]*s.chan[ch_sig].sc;
+    ss1+= v*sin(2*M_PI*fre*s.dt*i + ph);
+    ss2+= v*cos(2*M_PI*fre*s.dt*i + ph);
+  }
+  cout << setprecision(12) << fre << " "
+       << setprecision(6)  << 2*ss1/N << " "
+       << setprecision(6)  << 2*ss2/N << "\n";
+
+}
+
+/******************************************************************/
+/*
+void
+crop(const Signal & s, double fmin, double fmax) {
+
+  set_sig_ind(fmin,fmax,tmin,tmax);
+  int win = N;
+  fftw_complex  *cbuf;
+  fftw_plan     plan1, plan2;
+  cbuf = fftw_alloc_complex(win);
+  plan1 = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_FORWARD,  FFTW_ESTIMATE);
+  plan2 = fftw_plan_dft_1d(win, cbuf, cbuf, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+  for (int i=0; i<N; i++){
+    cbuf[i-0][0] = s.chan[ch].sc*data[i];
+    cbuf[i-0][1] = 0;
+  }
+  // do fft
+  fftw_execute(plan1);
+  for (int i=0; i<win; i++){
+    if (!(i>=i1f && i<i2f) && !(i>=win-i2f && i<win-i1f))
+       cbuf[i][0] = cbuf[i][1] = 0.0;
+  }
+  fftw_execute(plan2);
+  for (int i=0; i<N; i++){
+    cout << t0+dt*i << "\t"
+         << s.chan[ch].sc*data[i] << "\t"
+         << cbuf[i][0]/win << "\n";
+  }
+
+  fftw_destroy_plan(plan1);
+  fftw_destroy_plan(plan2);
+  fftw_free(cbuf);
+}
+
+*/

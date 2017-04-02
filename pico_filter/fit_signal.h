@@ -18,5 +18,5 @@ input:
   fmin, fmax -- where to look for a frequency
 */
 
-std::vector<double> fit_signal(int16_t *buf, int len, double sc, double dt, double t0=0,
+std::vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, double t0=0,
                                double fmin=0, double fmax=+HUGE_VAL);

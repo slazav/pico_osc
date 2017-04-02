@@ -1,3 +1,6 @@
+#ifndef DIMAGE_H
+#define DIMAGE_H
+
 #include <iostream>
 #include <vector>
 #include "rainbow.h"
@@ -32,3 +35,5 @@ class dImage:std::vector<double> {
     }
   }
 };
+
+#endif

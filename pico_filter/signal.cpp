@@ -7,7 +7,39 @@
 #include "signal.h"
 
 using namespace std;
+/***********************************************************/
+// Select time range
+void
+Signal::crop_t(double tmin, double tmax){
+  int n = get_n();
+  // adjust tmin/tmax
+  if (tmax<tmin) std::swap(tmax, tmin);
+  if (tmax > t0 + n*dt) tmax = t0 + n*dt;
+  if (tmin < t0) tmin = t0;
+  // select time indices
+  size_t i1t = std::max(0.0,  floor((tmin-t0)/dt));
+  size_t i2t = std::min(1.0*n, ceil((tmax-t0)/dt));
+  if (i2t<=i1t) throw Err() << "too small time range: " << tmin << " - " << tmax;
+  for (int c = 0; c<get_ch(); c++){
+    chan[c].assign(chan[c].begin()+i1t, chan[c].begin()+i2t);
+  }
+  t0 = tmin;
+}
 
+// Select channels
+void
+Signal::crop_c(const std::vector<int> & channels){
+  std::vector<Channel> old_chan;
+  std::swap(chan, old_chan);
+  for (int i =0; i<channels.size(); i++){
+    if (channels[i]<0 || channels[i]>=old_chan.size())
+      throw Err() << "No such channel: " << channels[i];
+    chan.push_back(old_chan[channels[i]]);
+  }
+}
+
+
+/***********************************************************/
 Signal read_signal(const char *fname){
   Signal sig;
 
@@ -102,13 +134,8 @@ void write_signal(const char *fname, const Signal & sig){
   // write data to the file
   ofstream ff(fname);
 
-  // number of points (0 for empty signal, same for all channels)
-  int N =0;
-  for (int i=0; i<sig.chan.size(); i++){
-    if (i==0) N = sig.chan[0].size();
-    else if (N!=sig.chan[0].size())
-      throw Err() << "Broken signal: data arrays have different sizes";
-  }
+  // number of points
+  int N = sig.get_n();
 
   ff << scientific;
   ff << "\n# Signal parameters:\n";

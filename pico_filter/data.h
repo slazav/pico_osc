@@ -5,61 +5,42 @@
 #include <vector>
 #include <stdint.h>
 #include "../pico_rec/err.h"
+#include "signal.h"
 
-// read data file
+// print a simple x-y text table
+void flt_txt(const Signal & s);
 
-class Data{
+// make image with a raw signal
+void flt_pnm(const Signal & s, int W, int H);
 
-  public:
+// fft of the whole signal, txt table. Rectangular window
+void flt_fft_txt(const Signal & s, double fmin, double fmax);
 
-  double t0,dt,sc; // time shift, time step, data scale
-  int num;         // number of data columns in the file
-  time_t t0abs;
-  std::vector<int16_t> data;
+// FFT power, reduced number of points. V^2/Hz output
+void flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts);
 
-  int i1t,i2t,i1f,i2f,lent,lenf;
-  double df;
+// same but log scale.
+void flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts);
 
-  // constructor -- read one data channel from a file
-  Data(const char *fname, int n);
+// Text table with sliding fft. Blackman window. 1st channel
+void flt_sfft_txt(const Signal & s, double fmin, double fmax, int win);
 
-  // check ranges and update signal indices
-  void set_sig_ind(double &fmin, double &fmax, double &tmin, double &tmax, int win=0);
+// PNM with sliding fft. Blackman window. 1st channel
+void flt_sfft_pnm(const Signal & s, double fmin, double fmax, int win, int W, int H);
 
+// Adaptive window, no smoothing. Blackman window.
+void flt_sfft_pnm_ad(const Signal & s, double fmin, double fmax, int W, int H);
 
-  // print a simple x-y text table
-  void print_txt() const;
+// Print t-a-f table. Adaptive window, no smoothing. Blackman window.
+//void taf_ad(const Signal & s, double fmin, double fmax);
 
-  // make image with a raw signal
-  void print_pnm(int w, int h, int color=0) const;
+// fit fork signal (exponential decay, constant frequency)
+void fit(const Signal & s, double fmin, double fmax);
 
-  // fft of the whole signal, txt table. Rectangular window
-  void print_fft_txt(double fmin, double fmax, double tmin, double tmax);
+// fit fork signal (exponential decay, constant frequency)
+void lockin(const Signal & s, double fmin, double fmax);
 
-  // FFT power, reduced number of points. V^2/Hz output
-  void print_fft_pow_avr(double fmin, double fmax, double tmin, double tmax, int N);
-
-  // same but log scale.
-  void print_fft_pow_lavr(double fmin, double fmax, double tmin, double tmax, int N);
-
-  // Text table with sliding fft. Blackman window.
-  void print_sfft_txt(double fmin, double fmax, double tmin, double tmax, int win);
-
-  // PNM with sliding fft. Blackman window.
-  void print_sfft_pnm(double fmin, double fmax, double tmin, double tmax, int win, int w, int h);
-
-  // Adaptive window, no smoothing. Blackman window.
-  void print_sfft_pnm_ad(double fmin, double fmax, double tmin, double tmax, int w, int h);
-
-  // Print t-a-f table. Adaptive window, no smoothing. Blackman window.
-  void taf_ad(double fmin, double fmax, double tmin, double tmax);
-
-  // fit fork signal (exponential decay, constant frequency)
-  void fit_signal(double fmin, double fmax, double tmin, double tmax);
-
-  // Remove unwanted time ans frequency.
-  void crop(double fmin, double fmax, double tmin, double tmax);
-
-};
+// Remove unwanted time ans frequency.
+//void crop(const Signal & s, double fmin, double fmax);
 
 #endif

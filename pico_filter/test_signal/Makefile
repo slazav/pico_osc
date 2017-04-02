@@ -9,7 +9,7 @@ all: test_signal
 	./test_signal sig2.dat sig2a.dat
 	diff sig1.dat sig1a.dat
 	diff sig2.dat sig2a.dat
-	rm -f sig1.dat sig1a.dat sig2.dat sig2a.dat
+#	rm -f sig1.dat sig1a.dat sig2.dat sig2a.dat
 
 test_signal: test_signal.cpp ../signal.cpp
 

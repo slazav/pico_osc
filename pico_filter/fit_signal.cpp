@@ -8,7 +8,7 @@
 
 using namespace std;
 
-vector<double> fit_signal(int16_t *buf, int len, double sc, double dt, double t0=0,
+vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, double t0=0,
                           double fmin=0, double fmax=+HUGE_VAL){
   // signal parameters:
   double tmin=0;
@@ -74,12 +74,13 @@ vector<double> fit_signal(int16_t *buf, int len, double sc, double dt, double t0
     sxy += x*y*w;
     sy  += y*w;
   }
+  fftw_destroy_plan(plan);
+  fftw_free(cbuf);
+
+  // complex linear fit  AA*(f-fre) + BB
   complex<double> BB = (sxy*sx1 - sy*sx2)/(sx1*sx1 - sx0*sx2);
   complex<double> AA = (sxy - BB*sx1)/sx2;
   complex<double> I = complex<double>(0,1);
-
-  fftw_destroy_plan(plan);
-  fftw_free(cbuf);
 
   // this complex amplitude corresponds to the original complex fft signal
   complex<double> amp = 2*M_PI*I/AA;

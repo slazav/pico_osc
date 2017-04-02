@@ -156,8 +156,7 @@ PicoInt::cmd(const vector<string> & args){
        << "  t0:       " << t0 << "  # relative time of the first sample\n"
        << "  t0abs:    " << t0abs << "  # system time of trigger position\n";
 
-    ff << "\n# Data channels (number, osc channel, scale factor, overload):\n";
-    ff << "  data_num: " << chans.size() << "\n";
+    ff << "\n# Data channels (osc channel, scale factor, overload):\n";
     for (int j=0; j<chans.size(); j++){
       char ch = chans[j];
       ic = chconf.find(ch);
@@ -167,7 +166,7 @@ PicoInt::cmd(const vector<string> & args){
       if (ch=='b' || ch=='B') o = (bool)(ov&2);
       if (ch=='c' || ch=='C') o = (bool)(ov&4);
       if (ch=='d' || ch=='D') o = (bool)(ov&8);
-      ff << "  data: " << j << " " << ch << " " << sc << " " << o << "\n";
+      ff << "  chan: " << " " << ch << " " << sc << " " << o << "\n";
     }
 
     ff << "\n*\n";

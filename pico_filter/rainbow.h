@@ -1,7 +1,8 @@
 #ifndef RAINBOW_H
 #define RAINBOW_H
 
-// Rainbow class from mapsoft project
+// Rainbow class from mapsoft project.
+// Convert double values into color gradients.
 
 /* Example:
       struct rainbow_data RD[]={ // user-defined rainbow data

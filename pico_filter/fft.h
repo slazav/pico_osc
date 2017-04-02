@@ -1,3 +1,6 @@
+#ifndef FFT_H
+#define FFT_H
+
 #include <cmath>
 #include <fftw3.h>
 #include "../pico_rec/err.h"
@@ -24,6 +27,26 @@ class FFT{
   double real(const int i) const {return cbuf[i][0];}
   double imag(const int i) const {return cbuf[i][1];}
   double abs(const int i) const {return hypot(cbuf[i][0],cbuf[i][1]);}
+
+  std::vector<double> real(const int i1, const int i2) const {
+    std::vector<double> ret(i2-i1);
+    if (i1<0 || i2>=len) throw Err() << "index out of range";
+    for (int i=i1; i<i2; i++) ret[i-i1] = cbuf[i][0];
+    return ret;
+  }
+  std::vector<double> imag(const int i1, const int i2) const {
+    std::vector<double> ret(i2-i1);
+    if (i1<0 || i2>=len) throw Err() << "index out of range";
+    for (int i=i1; i<i2; i++) ret[i-i1] = cbuf[i][1];
+    return ret;
+  }
+  std::vector<double> abs(const int i1, const int i2) const {
+    std::vector<double> ret(i2-i1);
+    if (i1<0 || i2>=len) throw Err() << "index out of range";
+    for (int i=i1; i<i2; i++) ret[i-i1] = hypot(cbuf[i][0],cbuf[i][1]);
+    return ret;
+  }
+
 
   void set(const int i, const double re, const double im) {cbuf[i][0]=re; cbuf[i][1]=im;}
 
@@ -65,5 +88,22 @@ class FFT{
     C = y1 - A*x1*x1 - B*x1;
   }
 
+  // adjust fmin/fmax
+  void get_ind(const double dt, double *fmin, double *fmax, int *i1f, int *i2f, double *df){
+    if (*fmax<*fmin) std::swap(*fmax, *fmin);
+    if (*fmax > 0.5/dt) *fmax = 0.5/dt;
+    if (*fmin > 0.5/dt) *fmin = 0.5/dt;
+    if (*fmin < 0) *fmin = 0;
+    // select frequency indices
+    *df = 1/dt/len;
+    *i1f = std::max(0.0, floor(*fmin / *df));
+    *i2f = std::min(0.5*len, ceil(*fmax / *df));
+    *fmin = *df * *i1f;
+    *fmax = *df * *i2f;
+    if (*i2f-*i1f<1) throw Err() << "Error: too small frequency range: " << *fmin << " - " << *fmax;
+  }
+
+
 };
 
+#endif

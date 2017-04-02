@@ -16,7 +16,7 @@ void help(){
           " -N <num>  -- number of points (default: 100000)\n"
           " -D <num>  -- time step, s  (default: 1e-5)\n"
           " -F <num>  -- signal frequency, Hz (default: 32674)\n"
-          " -T <num>  -- signal decay time, s (default: 0.325)\n"
+          " -T <num>  -- signal decay time, s (default: 0.325), 0 for non-decaying signal\n"
           " -A <num>  -- signal amplitude,  V (default: 0.582) (full scale=1V)\n"
           " -n <num>  -- noise amplitude, V (default: 0)\n"
           " -G <num>  -- frequency change, Hz (default: 0)\n"
@@ -65,15 +65,16 @@ main(int argc, char *argv[]){
 
     cout << "  dt:       " << dt << "\n"
          << "  t0:       " << 0 << "\n"
-         << "  data_num: " << 1 << "\n"
-         << "  data: 0 A " << sc << " 0 \n"
+         << "  chan: A "   << sc << " 0\n"
          << "\n*\n";
     double phi = 0;
     for (int i = 0; i<N; i++){
       double t = i*dt;
       double f = f0 + famp*exp(-t/ftau);
-      double y = amp*exp(-t/tau)*sin(phi) +
-                 noise*(2.0*random()/RAND_MAX-1.0);
+      double y = amp*sin(phi);
+      if (tau != 0) y *= exp(-t/tau);
+
+      y += noise*(2.0*random()/RAND_MAX-1.0);
       phi += 2*M_PI*f*dt;
 
       int16_t v = y/sc;

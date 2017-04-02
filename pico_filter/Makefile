@@ -24,14 +24,14 @@ test: testsig pico_filter
 #	./pico_filter -f sfft_txt test.dat > test_sfft.txt
 
 
-pico_filter: pico_filter.o data.o rainbow.o fit_signal.o
+pico_filter: pico_filter.o data.o signal.o rainbow.o fit_signal.o
 testsig: testsig.o
 
 
 pico_filter.o:\
    ../pico_rec/err.h data.h pico_filter.cpp
 data.o:\
-   ../pico_rec/err.h dimage.h fft.h data.h data.cpp
+   ../pico_rec/err.h dimage.h signal.h fft.h data.h data.cpp
 rainbow.o: rainbow.h
 
 testsig.o:\
