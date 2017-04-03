@@ -61,7 +61,8 @@ main(int argc, char *argv[]){
       }
     }
 
-    double sc = 1.0/(1<<15);
+    double max = amp+noise;
+    double sc = max/(1<<15);
 
     cout << "  dt:       " << dt << "\n"
          << "  t0:       " << 0 << "\n"
