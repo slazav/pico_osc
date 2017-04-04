@@ -1,0 +1,117 @@
+#!/usr/bin/wish
+package require Itcl
+package require xBlt 3
+
+
+#source data_source.tcl
+#source comment_source.tcl
+source data_mod.tcl
+source scroll.tcl
+source hielems.tcl
+source readout.tcl
+#source format_time.tcl
+
+load ./sig_load.so
+
+itcl::class sig_viewer {
+    # widgets: root, plot, top menu, scrollbar:
+    variable rwid
+    variable pwid
+    variable mwid
+    variable swid
+
+  constructor {} {
+    set rwid {}
+    if {$rwid ne {}} {frame $rwid}
+    set pwid $rwid.p
+    set mwid $rwid.f
+    set swid $rwid.sb
+    frame $mwid
+
+    button $mwid.exit -command "$this finish" -text Exit
+    pack $mwid.exit -side left -padx 2
+
+    pack $mwid -side top -fill x -padx 4 -pady 4
+
+    scrollbar $swid -orient horizontal
+    pack $swid -side bottom -fill x
+
+    ## set window size
+    set swidth [winfo screenwidth .]
+    set pwidth [expr {$swidth - 80}]
+    if {$pwidth > 1520} {set pwidth 1520}
+
+    blt::graph $pwid -width $pwidth -height 600 -leftmargin 60
+    pack $pwid -side top -expand yes -fill both
+
+    $pwid legend configure -activebackground white
+    $pwid axis configure y -hide 1
+    $pwid axis create zy -hide 0 -min 0 -max 1
+
+    # configure standard xBLT things:
+    xblt::plotmenu $pwid -showbutton 1 -buttonlabel Menu\
+       -buttonfont {Helvetica 12} -menuoncanvas 0
+    xblt::legmenu  $pwid -showseparator 0
+
+    yblt::hielems $pwid -usemenu 1
+    xblt::crosshairs $pwid -variable v_crosshairs -usemenu 1
+    xblt::measure $pwid -event <Key-equal> -usemenu 1\
+          -quickevent <Alt-1>; # -command "$this message"
+    yblt::readout $pwid -variable v_readout -usemenu 1\
+          -active 1; # -eventcommand "1 $this message"
+    xblt::zoomstack $pwid -scrollbutton 2  -usemenu 1 -axes x -recttype x
+
+    # Additional rubberrect
+    xblt::rubberrect::add $pwid -type x -modifier Shift \
+      -configure {-outline blue} \
+      -invtransformx x -command "$this show_rect" -cancelbutton ""
+
+    # Configure shifting and scaling of data curves
+    # - 2nd button on plot: shift and rescale
+    # - 3rd button on legend: autoscale
+    DataMod #auto $pwid;
+    Scroll  #auto $pwid $swid;
+
+    bind . <Alt-Key-q>     "$this finish"
+    bind . <Control-Key-q> "$this finish"
+    wm protocol . WM_DELETE_WINDOW "$this finish"
+  }
+
+  destructor {
+  }
+
+  method finish {} { exit }
+
+  method add_signal {file} {
+    set ncols [sig_load vec $file]
+
+    ## configure plot
+    for {set i 0} {$i < $ncols} {incr i} {
+      set defcolors {red green blue cyan magenta yellow}
+      set n "c$i"
+      set t "channel $i"
+      set c [lindex $defcolors [expr {$i%[llength $defcolors]} ] ]
+      set f %e
+      set l 0
+
+      # create vertical axis and the element, bind them
+      $pwid axis create $n -title $t -titlecolor black -logscale $l
+      $pwid element create $n -mapy $n -symbol "" -color $c
+      $pwid element bind $n <Enter> [list $pwid yaxis use [list $n]]
+      # set data vectors for the element
+      $pwid element configure $n -xdata vec_x -ydata vec_y$i
+    }
+  }
+
+}
+
+
+#### load file into BLT vectors
+if {$::argc != 1} {
+  error "Usage: sig_view <file>"
+}
+set file [lindex $::argv 0]
+
+sig_viewer viewer
+viewer add_signal $file
+

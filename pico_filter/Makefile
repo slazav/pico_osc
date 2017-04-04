@@ -1,5 +1,5 @@
 LDLIBS = -lm -lfftw3
-CPPFLAGS = -g
+CPPFLAGS = -fPIC
 CC=g++
 
 all: pico_filter testsig
