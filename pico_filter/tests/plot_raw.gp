@@ -1,5 +1,6 @@
 #!/usr/bin/gnuplot
 
+set terminal x11
 plot "ex1ch.txt" with lines
 pause -1
 

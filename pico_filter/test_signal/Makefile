@@ -2,9 +2,12 @@ LDLIBS = -lm -lfftw3
 CPPFLAGS = -g
 CC=g++
 
+s1=../../signals/fork1.dat
+s2=../../signals/fork2.dat
+
 all: test_signal
-	./test_signal ../../pico_rec/ex1ch.txt sig1.dat
-	./test_signal ../../pico_rec/ex2ch.txt sig2.dat
+	./test_signal ${s1} sig1.dat
+	./test_signal ${s2} sig2.dat
 	./test_signal sig1.dat sig1a.dat
 	./test_signal sig2.dat sig2a.dat
 	diff sig1.dat sig1a.dat

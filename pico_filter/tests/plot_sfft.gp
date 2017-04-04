@@ -1,5 +1,6 @@
 #!/usr/bin/gnuplot
 
+set terminal x11
 splot "ex1ch_sfft.txt" using 1:2:(sqrt($3**2+$4**2)) with lines
 pause -1
 

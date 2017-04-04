@@ -1,5 +1,6 @@
 #!/usr/bin/gnuplot
 
+set terminal x11
 plot "ex1ch_taf.txt" using 1:3 with linespoints pt 7
 pause -1
 

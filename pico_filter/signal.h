@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include "../pico_rec/err.h"
 
-// A data-file object. Read/Write functions
+// A signal file object + read/write functions.
 
 class Channel : public std::vector<int16_t> {
   public:

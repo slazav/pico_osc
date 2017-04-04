@@ -55,7 +55,7 @@ function dft_theor()
     z2 = dft_theor(amp,tau,fre,ph, t);
 
     ii = find(f>minf & f<maxf);
-    if (0)
+    if (0) # plot calculated signal
       plot(f(ii), real(1./z1(ii)), 'r.-')
       plot(f(ii), imag(1./z1(ii)), 'b.-')
       plot(f(ii), zeros(size(ii)), 'k-')

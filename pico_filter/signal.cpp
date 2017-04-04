@@ -38,14 +38,9 @@ Signal::crop_c(const std::vector<int> & channels){
   }
 }
 
-
 /***********************************************************/
-Signal read_signal(const char *fname){
+Signal read_header(ifstream &ff){
   Signal sig;
-
-  ifstream ff(fname);
-  if (ff.fail()) throw Err() << "Can't read file: " << fname;
-
   // read metadata <name>: <value>
   while (!ff.eof()){
     // read line
@@ -108,6 +103,15 @@ Signal read_signal(const char *fname){
       sig.chan.push_back(ch);
     }
   }
+  return sig;
+}
+
+/***********************************************************/
+Signal read_signal(const char *fname){
+
+  ifstream ff(fname);
+  if (ff.fail()) throw Err() << "Can't read file: " << fname;
+  Signal sig = read_header(ff);
 
   // read data array
   int bufsize = 1<<16;
@@ -130,6 +134,7 @@ Signal read_signal(const char *fname){
   return sig;
 }
 
+/***********************************************************/
 void write_signal(const char *fname, const Signal & sig){
   // write data to the file
   ofstream ff(fname);
