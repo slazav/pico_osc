@@ -100,7 +100,7 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   vector<double> ret(5,0.0);
   ret[0] = fre;
   ret[1] = rtau;
-  ret[2] = abs(amp);
+  ret[2] = 2.0*abs(amp); // -> pk-pk amplitude
   ret[3] = arg(amp)-M_PI/2;
   return ret;
 }
