@@ -103,6 +103,27 @@ itcl::class sig_viewer {
     }
   }
 
+  method add_text {file} {
+    set ncols [txt_load vec $file]
+
+    ## configure plot
+    for {set i 0} {$i < $ncols} {incr i} {
+      set defcolors {red green blue cyan magenta yellow}
+      set n "c$i"
+      set t "channel $i"
+      set c [lindex $defcolors [expr {$i%[llength $defcolors]} ] ]
+      set f %e
+      set l 0
+
+      # create vertical axis and the element, bind them
+      $pwid axis create $n -title $t -titlecolor black -logscale $l
+      $pwid element create $n -mapy $n -symbol "" -color $c
+      $pwid element bind $n <Enter> [list $pwid yaxis use [list $n]]
+      # set data vectors for the element
+      $pwid element configure $n -xdata vec_x -ydata vec_y$i
+    }
+  }
+
 }
 
 
@@ -113,5 +134,5 @@ if {$::argc != 1} {
 set file [lindex $::argv 0]
 
 sig_viewer viewer
-viewer add_signal $file
+viewer add_text $file
 

@@ -154,7 +154,7 @@ itcl::class Scroll {
   }
 
   method scrollbar_set {x1 x2} {
-    set_time_scale
+#    set_time_scale
     $scrollbar set $x1 $x2
   }
 
