@@ -129,10 +129,12 @@ flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts){
     n++;
     // print point and reset counters if needed
     if (i*df >= fmin + fstep*j || i==i2f-1){
+      cout << (i-0.5*(n-1))*df;
       for (int c = 0; c<cN; c++){
-        cout << (i-0.5*(n-1))*df << "\t" << k*ss[c]/n << "\n";
+        cout << "\t" << k*ss[c]/n;
         ss[c]=0;
       }
+      cout << "\n";
       n=0; j++;
     }
   }
@@ -172,14 +174,125 @@ flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts){
     n++;
     // print point and reset counters if needed
     if (i*df >= fmin*pow(fstep,j+1) || i==i2f-1){
+      cout << (i-0.5*(n-1))*df;
       for (int c = 0; c<cN; c++){
-        cout << (i-0.5*(n-1))*df << "\t" << k*ss[c]/n << "\n";
+        cout << "\t" << k*ss[c]/n;
         ss[c]=0;
       }
+      cout << "\n";
       n=0; j++;
     }
   }
 }
+
+/******************************************************************/
+
+void
+flt_fft_pow_avr_corr(const Signal & s, double fmin, double fmax, int npts){
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  // we need two channels!
+  if (N<2 || cN!=2) return;
+
+  double k = 2*s.dt/N; // convert power to V^2/Hz
+
+  FFT fft(N);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+  vector<double> dat1re, dat1im, dat2re, dat2im, dat0re, dat0im;
+
+  // run fft on the first channel
+  fft.run(s.chan[0].data(), s.chan[0].sc);
+  // copy complex values
+  dat1re = fft.real(i1f,i2f);
+  dat1im = fft.imag(i1f,i2f);
+  fft.run(s.chan[1].data(), s.chan[1].sc);
+  dat2re = fft.real(i1f,i2f);
+  dat2im = fft.imag(i1f,i2f);
+
+  // correlation is a A*B^*
+  // http://mathworld.wolfram.com/Cross-CorrelationTheorem.html
+  for (int i=0; i<dat1re.size(); i++){
+    dat0re.push_back(dat1re[i]*dat2re[i]+dat1im[i]*dat2im[i]);
+    dat0im.push_back(dat1im[i]*dat2re[i]-dat1re[i]*dat2im[i]);
+  }
+
+  double fstep = (fmax-fmin)/npts;
+
+  cout << scientific;
+  double sre=0, sim=0;
+  int n = 0; // number of samples in the average
+  int j = 0; // output counter
+  for (int i=i1f; i<i2f; i++){
+    sre+=dat0re[i-i1f];
+    sim+=dat0im[i-i1f];
+    n++;
+    // print point and reset counters if needed
+    if (i*df >= fmin + fstep*j || i==i2f-1){
+      cout << (i-0.5*(n-1))*df << "\t" << k*hypot(sre,sim)/n << "\n";
+      sre=0; sim=0;
+      n=0; j++;
+    }
+  }
+
+}
+
+/******************************************************************/
+
+void
+flt_fft_pow_lavr_corr(const Signal & s, double fmin, double fmax, int npts){
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  // we need two channels!
+  if (N<2 || cN!=2) return;
+
+  double k = 2*s.dt/N; // convert power to V^2/Hz
+
+  FFT fft(N);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+  vector<double> dat1re, dat1im, dat2re, dat2im, dat0re, dat0im;
+
+  // run fft on the first channel
+  fft.run(s.chan[0].data(), s.chan[0].sc);
+  // copy complex values
+  dat1re = fft.real(i1f,i2f);
+  dat1im = fft.imag(i1f,i2f);
+  fft.run(s.chan[1].data(), s.chan[1].sc);
+  dat2re = fft.real(i1f,i2f);
+  dat2im = fft.imag(i1f,i2f);
+
+  // correlation is a A*B^*
+  // http://mathworld.wolfram.com/Cross-CorrelationTheorem.html
+  for (int i=0; i<dat1re.size(); i++){
+    dat0re.push_back(dat1re[i]*dat2re[i]+dat1im[i]*dat2im[i]);
+    dat0im.push_back(dat1im[i]*dat2re[i]-dat1re[i]*dat2im[i]);
+  }
+
+  if (fmin==0) fmin=df;
+  double fstep = pow(fmax/fmin, 1.0/npts);
+
+  cout << scientific;
+  double sre=0, sim=0;
+  int n = 0; // number of samples in the average
+  int j = 0; // output counter
+  for (int i=i1f; i<i2f; i++){
+    sre+=dat0re[i-i1f];
+    sim+=dat0im[i-i1f];
+    n++;
+    // print point and reset counters if needed
+    if (i*df >= fmin*pow(fstep,j+1) || i==i2f-1){
+      cout << (i-0.5*(n-1))*df << "\t" << k*hypot(sre,sim)/n << "\n";
+      sre=0; sim=0;
+      n=0; j++;
+    }
+  }
+}
+
 
 /******************************************************************/
 void

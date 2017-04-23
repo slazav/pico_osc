@@ -49,8 +49,10 @@ void help(){
           "     txt (default) -- Print a text table with all channels.\n"
           "     pnm           -- Make image with all channels.\n"
           "     fft_txt       -- FFT of the whole signal, txt table. Rectangular window, all channels.\n"
-          "     fft_pow_avr   -- FFT power with reduced number of points. V^2/Hz output\n"
+          "     fft_pow_avr   -- FFT power with reduced number of points. V^2/Hz output, all channels\n"
           "     fft_pow_lavr  -- same but in log scale\n"
+          "     fft_pow_avr_corr  -- FFT power with reduced number of points. V^2/Hz output, 1+2 channal correlation\n"
+          "     fft_pow_lavr_corr -- same but in log scale\n"
           "     sfft_txt      -- Text table with sliding fft. Blackman window.\n"
           "     sfft_pnm      -- PNM with sliding fft. Blackman window.\n"
           "     sfft_pnm_ad   -- Adaptive window, no smoothing. Blackman window.\n"
@@ -125,6 +127,12 @@ main(int argc, char *argv[]){
     }
     else if (strcasecmp(f, "fft_pow_lavr")==0){
        flt_fft_pow_lavr(sig, fmin,fmax, npts);
+    }
+    else if (strcasecmp(f, "fft_pow_avr_corr")==0){
+       flt_fft_pow_avr_corr(sig, fmin,fmax, npts);
+    }
+    else if (strcasecmp(f, "fft_pow_lavr_corr")==0){
+       flt_fft_pow_lavr_corr(sig, fmin,fmax, npts);
     }
     else if (strcasecmp(f, "sfft_txt")==0){
       flt_sfft_txt(sig, fmin,fmax, win);

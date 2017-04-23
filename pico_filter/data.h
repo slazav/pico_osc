@@ -22,6 +22,13 @@ void flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts);
 // same but log scale.
 void flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts);
 
+// FFT power, reduced number of points. V^2/Hz output. ch 1+2 correlaton
+void flt_fft_pow_avr_corr(const Signal & s, double fmin, double fmax, int npts);
+
+// same but log scale.
+void flt_fft_pow_lavr_corr(const Signal & s, double fmin, double fmax, int npts);
+
+
 // Text table with sliding fft. Blackman window. 1st channel
 void flt_sfft_txt(const Signal & s, double fmin, double fmax, int win);
 
