@@ -10,7 +10,7 @@
 using namespace std;
 
 void help(){
-  cout << "testsig -- createtest signals\n"
+  cout << "testsig -- create test signals with decaying oscillations\n"
           "Usage: testsig [options] > <file>\n"
           "Options:\n"
           " -N <num>  -- number of points (default: 100000)\n"

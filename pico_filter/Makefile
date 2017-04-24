@@ -2,7 +2,7 @@ LDLIBS = -lm -lfftw3
 CPPFLAGS = -fPIC
 CC=g++
 
-all: pico_filter testsig
+all: pico_filter testsig testsig_noise
 
 f1=../../signals/fork1.dat
 f2=../../signals/fork2.dat
@@ -40,6 +40,9 @@ rainbow.o: rainbow.h
 
 testsig.o:\
    ../pico_rec/err.h testsig.cpp
+
+testsig_noise.o:\
+   ../pico_rec/err.h testsig_noise.cpp
 
 clean:
 	rm -f *.o pico_filter testsig

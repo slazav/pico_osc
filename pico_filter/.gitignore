@@ -1,6 +1,7 @@
 *.o
 pico_filter
 testsig
+testsig_noise
 *.dat
 *.txt
 *.pnm
