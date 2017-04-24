@@ -123,19 +123,18 @@ flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts){
   cout << scientific;
   vector<double> ss(cN, 0);
   int n = 0; // number of samples in the average
-  int j = 0; // output counter
   for (int i=i1f; i<i2f; i++){
     for (int c = 0; c<cN; c++) ss[c]+=pow(dat[c][i-i1f],2);
     n++;
     // print point and reset counters if needed
-    if (i*df >= fmin + fstep*j || i==i2f-1){
+    if (i*df >= fmin + fstep || i==i2f-1){
       cout << (i-0.5*(n-1))*df;
       for (int c = 0; c<cN; c++){
         cout << "\t" << k*ss[c]/n;
         ss[c]=0;
       }
       cout << "\n";
-      n=0; j++;
+      n=0; fmin=i*df;
     }
   }
 
@@ -168,19 +167,18 @@ flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts){
   cout << scientific;
   vector<double> ss(cN, 0);
   int n = 0; // number of samples in the average
-  int j = 0; // output counter
   for (int i=i1f; i<i2f; i++){
     for (int c = 0; c<cN; c++) ss[c]+=pow(dat[c][i-i1f],2);
     n++;
     // print point and reset counters if needed
-    if (i*df >= fmin*pow(fstep,j+1) || i==i2f-1){
+    if (i*df >= fmin*fstep || i==i2f-1){
       cout << (i-0.5*(n-1))*df;
       for (int c = 0; c<cN; c++){
         cout << "\t" << k*ss[c]/n;
         ss[c]=0;
       }
       cout << "\n";
-      n=0; j++;
+      n=0; fmin=i*df;
     }
   }
 }
@@ -224,16 +222,15 @@ flt_fft_pow_avr_corr(const Signal & s, double fmin, double fmax, int npts){
   cout << scientific;
   double sre=0, sim=0;
   int n = 0; // number of samples in the average
-  int j = 0; // output counter
   for (int i=i1f; i<i2f; i++){
     sre+=dat0re[i-i1f];
     sim+=dat0im[i-i1f];
     n++;
     // print point and reset counters if needed
-    if (i*df >= fmin + fstep*j || i==i2f-1){
+    if (i*df >= fmin + fstep || i==i2f-1){
       cout << (i-0.5*(n-1))*df << "\t" << k*hypot(sre,sim)/n << "\n";
       sre=0; sim=0;
-      n=0; j++;
+      n=0; fmin=i*df;
     }
   }
 
@@ -279,16 +276,15 @@ flt_fft_pow_lavr_corr(const Signal & s, double fmin, double fmax, int npts){
   cout << scientific;
   double sre=0, sim=0;
   int n = 0; // number of samples in the average
-  int j = 0; // output counter
   for (int i=i1f; i<i2f; i++){
     sre+=dat0re[i-i1f];
     sim+=dat0im[i-i1f];
     n++;
     // print point and reset counters if needed
-    if (i*df >= fmin*pow(fstep,j+1) || i==i2f-1){
+    if (i*df >= fmin*fstep || i==i2f-1){
       cout << (i-0.5*(n-1))*df << "\t" << k*hypot(sre,sim)/n << "\n";
       sre=0; sim=0;
-      n=0; j++;
+      n=0; fmin=i*df;
     }
   }
 }
