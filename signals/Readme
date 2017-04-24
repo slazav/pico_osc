@@ -35,3 +35,7 @@ lockin1.dat -- 10mV, 25kHz signal + generator sync
 # pico_filter -f lockin lockin1.dat
 25000.048189 0.0101066 9.95048e-05
 (frequency, amplitude, phase)
+
+============================================================
+corr10k.dat, corr_nc -- 2-channal noise signals for
+correlation measurements: non correlated 50R and correlated 10k.
