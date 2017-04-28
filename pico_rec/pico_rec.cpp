@@ -16,16 +16,9 @@ void list(){
 // read command from stdin, remove comments,
 // split into words
 vector<string> read_cmd(){
-  // read line, combine lines with \ at the end
-  string line = "\\";
-  while (cin.good() && line.rfind('\\')==line.size()-1){
-    string l;
-    getline(cin,l);
-    line = line.substr(0,line.size()-1) + l;
-    // remove comments
-    size_t nc = line.find('#');
-    if (nc!=string::npos) line = line.substr(0,nc);
-  }
+  // read line
+  string line;
+  getline(cin,line);
 
   // split into words
   istringstream ss(line);
@@ -65,18 +58,24 @@ main(int argc, char *argv[]){
           return 0;
       }
     }
-
     // open the device
     Pico4224 osc(dev);
 
     cout << "Picoscope device is opened. Type help to see command list.\n";
-    while (cin.good()){
-      try { osc.cmd(read_cmd()); }
-      catch (Err e){ cout << e.str() << "\n" << flush; }
+    cout << "#OK\n";
+    while (1){
+      try {
+        osc.cmd(read_cmd());
+        if (!cin.eof()) cout << "#OK\n" << flush;
+        else break;
+      }
+      catch (Err E){ cout << "#Error: " << E.str() << "\n" << flush; }
     }
 
   }
   catch (Err E){
-    cerr << E.str() << "\n";
+    cerr << "#Error: " << E.str() << "\n";
+    return 1;
   }
+
 }

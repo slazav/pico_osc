@@ -1,4 +1,4 @@
-Examples of signals
+## Examples of signals
 
 ============================================================
 noise.dat -- oscilloscope voltage noise. input is shortened to ground.

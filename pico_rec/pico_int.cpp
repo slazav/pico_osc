@@ -15,8 +15,7 @@ is_cmd(const vector<string> & args, const char *name){
 const char *
 PicoInt::cmd_help() const{
   return
-  "===\n"
-    "help -- show command list\n"
+  "help -- show command list\n"
   "ranges <ch> -- show possible ranges\n"
   "   ch  -- select channel: A,B\n"
   "chan_set <ch> <en> <cpl> <rng> -- set channel parameters\n"
@@ -35,7 +34,6 @@ PicoInt::cmd_help() const{
   "   npost -- number of posttrigger samples\n"
   "   dt    -- time step, seconds\n"
   "   file  -- output file\n"
-  "===\n"
   ;
 }
 
@@ -69,7 +67,6 @@ PicoInt::cmd(const vector<string> & args){
     C.rng = atof(args[4].c_str());
     chan_set(ch, C.en, C.cpl.c_str(), C.rng);
     chconf[chc] = C; // save channel configuration
-    cout << "OK\n" << flush;
     return;
   }
 
@@ -86,7 +83,6 @@ PicoInt::cmd(const vector<string> & args){
     // save trigger configuration
     trconf.clear();
     trconf.push_back(T);
-    cout << "OK\n" << flush;
     return;
   }
 
@@ -122,7 +118,7 @@ PicoInt::cmd(const vector<string> & args){
     // start collecting data
     run_block(npre, npost, &dt);
     usleep(npre*dt*1e6);
-    cout << "Ready\n" << flush;
+    cout << "#OK\n" << flush;
     usleep(npost*dt*1e6);
     while (!is_ready()) usleep(1000);
     time_t t0abs = time(NULL); // system time of last record
@@ -178,7 +174,6 @@ PicoInt::cmd(const vector<string> & args){
         ff.write((const char*)(ic->second.buf.data()+i), sizeof(int16_t));
       }
     }
-    cout << "Done\n" << flush;
     return;
   }
   throw Err() << "Unknown command: " << args[0];
