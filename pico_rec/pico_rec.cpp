@@ -61,6 +61,7 @@ main(int argc, char *argv[]){
     // open the device
     Pico4224 osc(dev);
 
+    cout << "#SPP001\n"; // a command-line protocol, version 001.
     cout << "Picoscope device is opened. Type help to see command list.\n";
     cout << "#OK\n";
     while (1){

@@ -15,16 +15,17 @@ Now only PS4224 model is supported.
  -h        -- write this help message and exit
 `
 
-The program implements a simple command line interface: When it is
-started and an oscilloscope device is opened a prompt message is printed
-to stdout followed by "#OK" line. In case of an error "#Error: <...>"
-line is printed and program exits.
+The program implements a simple pipe protocol (see somewhere in my
+tcl_exp package): When it is started and an oscilloscope device is opened
+a prompt message is printed to stdout started with "#SPP001" and followed
+by "#OK" line. In case of an error "#Error: <...>" line is printed and
+program exits.
 
 If the oscilloscope have been opened sucsessfully, the program reads
 commands from stdin and sends ansers to stdout folowed by "#OK" or
 "#Error: <...>" lines until the user  close the connection.
 
-There is one non-trivial exceptoin in the protocol: the "block" command
+There is one non-trivial exception in the protocol: the "block" command
 returns two "#OK" lines: one then the device is ready for the signal
 recording, and second then the recording is done and the signal is
 written to a file. User should care about reading both of them.
