@@ -41,7 +41,7 @@ itcl::class sig_viewer {
        -buttonfont {Helvetica 12} -menuoncanvas 0
     xblt::legmenu  $pwid -showseparator 0
 
-    xblt::hielems $pwid -usemenu 0
+    xblt::hielems $pwid
     xblt::crosshairs $pwid -show 1
     xblt::measure $pwid
     xblt::readout $pwid -variable v_readout -active 1
