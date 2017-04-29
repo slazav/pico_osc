@@ -134,7 +134,7 @@ PicoInt::cmd(const vector<string> & args){
     // write data to the file
     ofstream ff(fname);
 
-    // channel and trigger settings
+    ff << "*SIG001\n";
     ff << "# " << ctime(&t0abs) << "\n";
     ff << "\n# Oscilloscope settings:\n";
     ff << scientific;

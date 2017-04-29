@@ -41,10 +41,15 @@ Signal::crop_c(const std::vector<int> & channels){
 /***********************************************************/
 Signal read_header(ifstream &ff){
   Signal sig;
+
+  // first line: *SIG001
+  string line;
+  getline(ff,line);
+  if (line != "*SIG001") throw Err() << "unsupported format";
+
   // read metadata <name>: <value>
   while (!ff.eof()){
     // read line
-    string line;
     getline(ff,line);
 
     // after * we have data array!

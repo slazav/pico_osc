@@ -60,7 +60,8 @@ main(int argc, char *argv[]){
     // channel scale
     double sc = (a0 + std::max(a1,a2))/(1<<15);
 
-    cout << "  dt:       " << dt << "\n"
+    cout << "*SIG001\n"
+         << "  dt:       " << dt << "\n"
          << "  t0:       " << 0 << "\n"
          << "  chan: A "   << sc << " 0\n"
          << "  chan: B "   << sc << " 0\n"

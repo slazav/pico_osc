@@ -9,7 +9,7 @@
 #include <iostream>
 #include <cstring>  // strtok
 #include <cstdlib>  // atof
-#include "../pico_filter/signal.h"
+#include "../sig_filter/signal.h"
 #include "../pico_rec/err.h"
 
 /*
@@ -62,13 +62,18 @@ int SigLoadObjCmd (ClientData clientData, Tcl_Interp *interp,
     // vector for time
     Blt_Vector *vx;
     string vxn = string(pref) + "_x"; // vector name
-    if (Blt_CreateVector (interp, (char *)vxn.c_str(), 0, &vx) != TCL_OK)
+    // we have to check separately if the vector already exists
+    if (Blt_VectorExists(interp, (char *)vxn.c_str()) != TCL_OK)
+      throw Err() << "vector exists: " << vxn;
+    if (Blt_CreateVector(interp, (char *)vxn.c_str(), 0, &vx) != TCL_OK)
       throw Err() << "can't create vector: " << vxn;
     // vectors for data channels
     vector<Blt_Vector*> vy(num);
     for (int i=0; i<num; i++){
       ostringstream ss;
       ss << pref << "_y" << i;
+      if (Blt_VectorExists(interp, (char *)ss.str().c_str()) != TCL_OK)
+        throw Err() << "vector exists: " << vxn;
       if (Blt_CreateVector (interp, (char *)ss.str().c_str(), 0, &vy[i]) != TCL_OK)
         throw Err() << "can't create vector: " << ss.str();
       vy[0]->min = +HUGE_VAL;
@@ -188,6 +193,8 @@ int TxtLoadObjCmd (ClientData clientData, Tcl_Interp *interp,
     // vector for time
     Blt_Vector *vx;
     string vxn = string(pref) + "_x"; // vector name
+    if (Blt_VectorExists(interp, (char *)vxn.c_str()) == TCL_OK)
+      throw Err() << "vector exists: " << vxn;
     if (Blt_CreateVector (interp, (char *)vxn.c_str(), cnt, &vx) != TCL_OK)
       throw Err() << "can't create vector: " << vxn;
     vx->min = min[0];
@@ -198,6 +205,8 @@ int TxtLoadObjCmd (ClientData clientData, Tcl_Interp *interp,
     for (int n=0; n<cn; n++){
       ostringstream ss;
       ss << pref << "_y" << n;
+      if (Blt_VectorExists(interp, (char *)ss.str().c_str()) == TCL_OK)
+        throw Err() << "vector exists: " << vxn;
       if (Blt_CreateVector (interp, (char *)ss.str().c_str(), cnt, &vy[n]) != TCL_OK)
         throw Err() << "can't create vector: " << ss.str();
       vy[n]->min = min[n+1];

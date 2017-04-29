@@ -1,3 +1,25 @@
+## Signal format
+
+File starts with "*SIG001" line which shows the format name and version
+Then header goes followed by a "*" line.
+Header can contain comments (started with #), empty lines
+and "<key>: <value1> <value2> ..." lines.
+
+The most important keys are:
+* dt -- time distance between points, s (default: 1)
+* t0 -- relative time of the first point, s (default: 0)
+* t0abs -- system time of t=0 position, s (default: 0)
+* chan -- channel specification, contains three values:
+   * 1-symbol name (A, B, ...)
+   * y-scale
+   * overflow flag
+
+After the header and the "*" line there is data. It is an array
+of points. Each point contains 2-byte integers, one for each channel.
+
+TODO: packing
+
+
 ## Examples of signals
 
 ============================================================

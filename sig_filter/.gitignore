@@ -1,6 +1,6 @@
 *.o
 sig_filter
-testsig
+testsig_decay
 testsig_noise
 *.dat
 *.txt

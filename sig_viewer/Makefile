@@ -5,7 +5,7 @@ CC=g++
 
 all: sig_load.so
 
-sig_load.so: sig_load.o ../pico_filter/signal.o
+sig_load.so: sig_load.o ../sig_filter/signal.o
 	${CC} -shared ${LDFLAGS} $^ ${LDLIBS} -o $@
 
 sig_load.o: sig_load.cpp

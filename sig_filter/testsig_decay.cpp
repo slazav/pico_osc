@@ -64,10 +64,11 @@ main(int argc, char *argv[]){
     double max = amp+noise;
     double sc = max/(1<<15);
 
-    cout << "  dt:       " << dt << "\n"
+    cout << "*SIG001\n"
+         << "  dt:       " << dt << "\n"
          << "  t0:       " << 0 << "\n"
          << "  chan: A "   << sc << " 0\n"
-         << "\n*\n";
+         << "*\n";
     double phi = 0;
     for (int i = 0; i<N; i++){
       double t = i*dt;
