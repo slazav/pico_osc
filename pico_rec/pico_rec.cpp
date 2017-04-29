@@ -41,11 +41,12 @@ main(int argc, char *argv[]){
 
     /* parse  options */
     while(1){
+      opterr=0;
       int c = getopt(argc, argv, "hld:");
       if (c==-1) break;
       switch (c){
         case '?':
-        case ':': continue; /* error msg is printed by getopt*/
+        case ':': throw Err() << "incorrect options, see -h"; /* error msg is printed by getopt*/
         case 'd': dev = optarg; break;
         case 'l': list(); return 0;
         case 'h':
@@ -74,6 +75,7 @@ main(int argc, char *argv[]){
 
   }
   catch (Err E){
+    cout << "#SPP001\n"; // a command-line protocol, version 001.
     cerr << "#Error: " << E.str() << "\n";
     return 1;
   }
