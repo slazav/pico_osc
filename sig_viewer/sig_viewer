@@ -6,6 +6,8 @@ package require xBlt 3
 #source comment_source.tcl
 #source format_time.tcl
 
+source xcomments.tcl
+
 load ./sig_load.so
 
 itcl::class sig_viewer {
@@ -39,37 +41,46 @@ itcl::class sig_viewer {
     blt::graph $pwid -width $pwidth -height 600 -leftmargin 60
     pack $pwid -side top -expand yes -fill both
 
-
-    $pwid legend configure -activebackground white
-    $pwid axis configure y -hide 1
-    $pwid axis create zy -hide 0 -min 0 -max 1
+#    $pwid legend configure -activebackground white
+#    $pwid axis configure y -hide 1
+#    $pwid axis create zy -hide 0 -min 0 -max 1
 
     # configure standard xBLT things:
     xblt::plotmenu $pwid -showbutton 1 -buttonlabel Menu\
        -buttonfont {Helvetica 12} -menuoncanvas 0
     xblt::legmenu  $pwid -showseparator 0
 
-    xblt::hielems $pwid -usemenu 1
-    xblt::crosshairs $pwid -variable v_crosshairs -usemenu 1
-    xblt::measure $pwid -event <Key-equal> -usemenu 1\
-          -quickevent <Alt-1>; # -command "$this message"
-    xblt::readout $pwid -variable v_readout -usemenu 1\
-          -active 1; # -eventcommand "1 $this message"
-    xblt::zoomstack $pwid -scrollbutton 2  -usemenu 1 -axes x -recttype x
-    xblt::elemop $pwid; # shifting and scaling data
+    xblt::hielems $pwid -usemenu 0
+    xblt::crosshairs $pwid -show 1
+    xblt::measure $pwid -event <Key-equal>\
+          -quickevent <Alt-1> -command "puts measure"
+    xblt::readout $pwid -variable v_readout\
+          -active 1 -eventcommand "1 puts readout"
+    xblt::zoomstack $pwid -axes x -recttype x
+    xblt::elemop $pwid
+    xblt::scroll $pwid $swid;
+    xblt::xcomments $pwid -on_add "$this on_add" -on_del "$this on_del"
+
 
     # Additional rubberrect
     xblt::rubberrect::add $pwid -type x -modifier Shift \
       -configure {-outline blue} \
-      -invtransformx x -command "$this show_rect" -cancelbutton ""
+      -invtransformx x -command "$pwid.sel_menu show" -cancelbutton ""
 
-    # - 2nd button on plot: shift and rescale
-    # - 3rd button on legend: autoscale
-    xblt::scroll $pwid $swid;
 
     bind . <Alt-Key-q>     "$this finish"
     bind . <Control-Key-q> "$this finish"
     wm protocol . WM_DELETE_WINDOW "$this finish"
+
+
+  # select menu
+#  set sel_menu($pwid) [menu $pwid.sel_menu -tearoff 0]
+#  xblt::bindtag::add $pwid xblt::sel_menu -after xblt::legmenu
+#  $pwid.sel_menu add command -label "Delete comments" -command [list puts "dc\n"]
+#  $pwid.sel_menu add command -label "Delete data" -command [list puts "dc\n"]
+#  $pwid.sel_menu add command -label "Zoom" -command [list puts "dc\n"]
+
+
   }
 
   destructor {
@@ -98,6 +109,14 @@ itcl::class sig_viewer {
     }
   }
 
+  method on_add {n t0 txt} {
+    puts "add: $n -- $t0 -- $txt"
+  }
+
+  method on_del {n t0 txt} {
+    puts "del: $n -- $t0 -- $txt"
+  }
+
   method add_text {file} {
     set ncols [txt_load vec $file]
 
@@ -112,10 +131,12 @@ itcl::class sig_viewer {
 
       # create vertical axis and the element, bind them
       $pwid axis create $n -title $t -titlecolor black -logscale $l
-      $pwid element create $n -mapy $n -symbol "" -color $c
+      $pwid element create $n -mapy $n -color $c
       $pwid element bind $n <Enter> [list $pwid yaxis use [list $n]]
       # set data vectors for the element
       $pwid element configure $n -xdata vec_x -ydata vec_y$i
+
+
     }
   }
 
