@@ -1,5 +1,5 @@
 *.o
-pico_filter
+sig_filter
 testsig
 testsig_noise
 *.dat
