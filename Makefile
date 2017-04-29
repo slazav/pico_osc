@@ -1,7 +1,7 @@
 all:
 	make -C pico_rec
-	make -C pico_filter
+	make -C sig_filter
 
 install: all
 	mkdir -p ${bindir}
-	install pico_rec/pico_rec pico_filter/pico_filter ${bindir}
+	install pico_rec/pico_rec sig_filter/sig_filter ${bindir}
