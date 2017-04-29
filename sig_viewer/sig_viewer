@@ -7,8 +7,6 @@ package require xBlt 3
 #source comment_source.tcl
 source data_mod.tcl
 source scroll.tcl
-source hielems.tcl
-source readout.tcl
 #source format_time.tcl
 
 load ./sig_load.so
@@ -53,11 +51,11 @@ itcl::class sig_viewer {
        -buttonfont {Helvetica 12} -menuoncanvas 0
     xblt::legmenu  $pwid -showseparator 0
 
-    yblt::hielems $pwid -usemenu 1
+    xblt::hielems $pwid -usemenu 1
     xblt::crosshairs $pwid -variable v_crosshairs -usemenu 1
     xblt::measure $pwid -event <Key-equal> -usemenu 1\
           -quickevent <Alt-1>; # -command "$this message"
-    yblt::readout $pwid -variable v_readout -usemenu 1\
+    xblt::readout $pwid -variable v_readout -usemenu 1\
           -active 1; # -eventcommand "1 $this message"
     xblt::zoomstack $pwid -scrollbutton 2  -usemenu 1 -axes x -recttype x
 
@@ -134,5 +132,5 @@ if {$::argc != 1} {
 set file [lindex $::argv 0]
 
 sig_viewer viewer
-viewer add_text $file
+viewer add_signal $file
 
