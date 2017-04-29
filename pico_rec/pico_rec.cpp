@@ -66,8 +66,7 @@ main(int argc, char *argv[]){
     cout << "#OK\n";
     while (1){
       try {
-        osc.cmd(read_cmd());
-        if (!cin.eof()) cout << "#OK\n" << flush;
+        if (osc.cmd(read_cmd())) cout << "#OK\n" << flush;
         else break;
       }
       catch (Err E){ cout << "#Error: " << E.str() << "\n" << flush; }

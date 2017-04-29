@@ -57,5 +57,8 @@ block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)
    npost -- number of posttrigger samples
    dt    -- time step, seconds
    file  -- output file
-   Answer: Ready when trigger can be run, Done when file is saved.
+   Answer: OK when trigger can be run. To wait until the signal is
+   recorded and written to a file use wait command after the block command.
+
+wait -- wait until the oscilloscope is ready
 `

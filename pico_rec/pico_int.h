@@ -34,8 +34,9 @@ class PicoInt{
 
   public:
 
-  // high-level commands
-  void cmd(const std::vector<std::string> & args);
+  // High-level commands.
+  // return true if #OK should be printed
+  bool cmd(const std::vector<std::string> & args);
   const char * cmd_help() const; // return command help
 
   /*****************************************************************************/

@@ -13,7 +13,7 @@ is_cmd(const vector<string> & args, const char *name){
   return strcasecmp(args[0].c_str(), name)==0; }
 
 const char *
-PicoInt::cmd_help() const{
+PicoInt::cmd_help() const {
   return
   "help -- show command list\n"
   "ranges <ch> -- show possible ranges\n"
@@ -37,21 +37,22 @@ PicoInt::cmd_help() const{
   ;
 }
 
-void
+bool
 PicoInt::cmd(const vector<string> & args){
-  if (args.size()<1) return;
+  if (args.size()<1) return false;
 
   // print help
   if (is_cmd(args, "help")){
+    if (args.size()!=1) throw Err() << "Usage: help";
     cout << cmd_help();
-    return;
+    return true;
   }
 
   // show range settings
   if (is_cmd(args, "ranges")){
     if (args.size()!=2) throw Err() << "Usage: ranges <ch>";
     cout << chan_get_ranges(args[1].c_str()) << "\n";
-    return;
+    return true;
   }
 
   // set channel parameters
@@ -67,7 +68,7 @@ PicoInt::cmd(const vector<string> & args){
     C.rng = atof(args[4].c_str());
     chan_set(ch, C.en, C.cpl.c_str(), C.rng);
     chconf[chc] = C; // save channel configuration
-    return;
+    return true;
   }
 
   // set trigger parameters
@@ -83,7 +84,7 @@ PicoInt::cmd(const vector<string> & args){
     // save trigger configuration
     trconf.clear();
     trconf.push_back(T);
-    return;
+    return true;
   }
 
   if (is_cmd(args, "block")) {
@@ -174,7 +175,14 @@ PicoInt::cmd(const vector<string> & args){
         ff.write((const char*)(ic->second.buf.data()+i), sizeof(int16_t));
       }
     }
-    return;
+    return false;
   }
+
+  // wait until osc is ready
+  if (is_cmd(args, "wait")) {
+    if (args.size()!=1) throw Err() << "Usage: wait";
+    return true;
+  }
+
   throw Err() << "Unknown command: " << args[0];
 }
