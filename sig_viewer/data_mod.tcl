@@ -1,64 +1,60 @@
-package require Itcl
-package require BLT
-
 # shift and rescale plots
-
 # 2nd button on plot: shift and rescale
 
-itcl::class DataMod {
-  variable blt_plot
-  variable elemop
+namespace eval xblt::elemop {
+  variable data
+}
 
-  ######################################################################
-  constructor {plot args} {
-    set blt_plot $plot
-    bind elemop <ButtonPress-2> "$this elemopstart %x %y"
-    bind elemop <B2-Motion> "$this elemopdo %x %y"
-    bind elemop <ButtonRelease-2> "$this elemopend %x %y"
-    xblt::bindtag::add $blt_plot elemop
-    set elemop(started) 0
+proc xblt::elemop {graph args} {
+  eval xblt::elemop::add $graph $args
+}
+
+proc xblt::elemop::add {graph args} {
+  bind xblt::elemop::data <ButtonPress-2>   "xblt::elemop::start $graph %x %y"
+  bind xblt::elemop::data <B2-Motion>       "xblt::elemop::do    $graph %x %y"
+  bind xblt::elemop::data <ButtonRelease-2> "xblt::elemop::end   $graph %x %y"
+  xblt::bindtag::add $graph xblt::elemop::data
+  set xblt::elemop::data(started) 0
+}
+
+######################################################################
+proc xblt::elemop::start {graph xp yp} {
+  $graph element closest $xp $yp e -interpolate yes
+  set xblt::elemop::data(es) $e(name)
+  if {$xblt::elemop::data(es) == ""} return
+  xblt::crosshairs::show $graph 0
+  set xblt::elemop::data(xpi) $xp
+  set xblt::elemop::data(yi) [$graph axis invtransform $xblt::elemop::data(es) $yp]
+  set xblt::elemop::data(sc) 1.0
+  set xblt::elemop::data(started) 1
+  return -code break
+}
+
+proc xblt::elemop::do {graph xp yp} {
+  if {! $xblt::elemop::data(started)} return
+  set v $xblt::elemop::data(es)
+  set yi $xblt::elemop::data(yi)
+  set y [$graph axis invtransform $v $yp]
+  set y1 [lindex [$graph axis limits $v] 0]
+  set y2 [lindex [$graph axis limits $v] 1]
+  set sc [expr {exp(($xp - $xblt::elemop::data(xpi)) / 100.0)}]
+
+  if {[$graph axis cget $v -logscale]} {
+    set newmin [expr {exp(log($yi) - (log($y) - log($y1))*$xblt::elemop::data(sc)/$sc)}]
+    set newmax [expr {exp(log($yi) + (log($y2) - log($y))*$xblt::elemop::data(sc)/$sc)}]
+  } else {
+    set newmin [expr {$yi - ($y - $y1)*$xblt::elemop::data(sc)/$sc}]
+    set newmax [expr {$yi + ($y2 - $y)*$xblt::elemop::data(sc)/$sc}]
   }
+  $graph axis configure $v -min $newmin -max $newmax
+  set xblt::elemop::data(sc) $sc
+  return -code break
+}
 
-  ######################################################################
-  method elemopstart {xp yp} {
-    $blt_plot element closest $xp $yp e -interpolate yes
-    set elemop(es) $e(name)
-    if {$elemop(es) == ""} return
-    xblt::crosshairs::show $blt_plot 0
-    set elemop(xpi) $xp
-    set elemop(yi) [$blt_plot axis invtransform $elemop(es) $yp]
-    set elemop(sc) 1.0
-    set elemop(started) 1
-    return -code break
-  }
-
-  method elemopdo {xp yp} {
-    if {! $elemop(started)} return
-    set v $elemop(es)
-    set yi $elemop(yi)
-    set y [$blt_plot axis invtransform $v $yp]
-    set y1 [lindex [$blt_plot axis limits $v] 0]
-    set y2 [lindex [$blt_plot axis limits $v] 1]
-    set sc [expr {exp(($xp - $elemop(xpi)) / 100.0)}]
-
-    if {[$blt_plot axis cget $v -logscale]} {
-      set newmin [expr {exp(log($yi) - (log($y) - log($y1))*$elemop(sc)/$sc)}]
-      set newmax [expr {exp(log($yi) + (log($y2) - log($y))*$elemop(sc)/$sc)}]
-    } else {
-      set newmin [expr {$yi - ($y - $y1)*$elemop(sc)/$sc}]
-      set newmax [expr {$yi + ($y2 - $y)*$elemop(sc)/$sc}]
-    }
-    $blt_plot axis configure $v -min $newmin -max $newmax
-    set elemop(sc) $sc
-    return -code break
-  }
-
-  method elemopend {xp yp} {
-    if {! $elemop(started)} return
-    set elemop(started) 0
-    xblt::crosshairs::show $blt_plot 1
-    return -code break
-  }
-
+proc xblt::elemop::end {graph xp yp} {
+  if {! $xblt::elemop::data(started)} return
+  set xblt::elemop::data(started) 0
+  xblt::crosshairs::show $graph 1
+  return -code break
 }
 
