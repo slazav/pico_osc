@@ -4,7 +4,6 @@ package require xBlt 3
 
 #source data_source.tcl
 #source comment_source.tcl
-source scroll.tcl
 #source format_time.tcl
 
 load ./sig_load.so
