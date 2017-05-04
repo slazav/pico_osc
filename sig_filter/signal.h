@@ -31,8 +31,8 @@ class Signal{
     size_t get_n() const{
       int n =0;
       for (int i=0; i<chan.size(); i++){
-        if (i==0) n = chan[0].size();
-        else if (n!=chan[0].size())
+        if (i==0) n = chan[i].size();
+        else if (n!=chan[i].size())
           throw Err() << "Broken signal: data arrays have different sizes";
       }
       return n;
