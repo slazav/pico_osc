@@ -35,7 +35,6 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
     if (v>=vm) {vm=v; im=i;}
   }
 
-
   // second step: find parabolic fit near maximum
   if (im<i1f+1 || im>=i2f-1){
     cerr << "Can't find signal frequency\n";
@@ -52,22 +51,25 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   double C = y1 - A*x1*x1 - B*x1;
   // fre - positin of the parabola maximum
   // rtau - distance between zero crossings
+  // amp0 - value in the maximum
   double fre = -B/(2*A);
   double rtau = -sqrt(B*B-4*A*C)*M_PI/2/A;
+  double amp0 = C - B*B/(4*A);
 
 
   // third step: fit 1/fft by a linear function
   // adjust index limits
-  double dff = 2*M_PI*rtau;
+  double dff = rtau;
   i1f = max(0.0,     floor((fre-dff)/df));
   i2f = min(0.5*len, ceil((fre+dff)/df));
+
   // linear fit with weight w
   double sx2=0, sx1=0, sx0=0;
   complex<double> sxy(0,0), sy(0,0);
   for (int i = i1f; i<i2f; i++){
     double x = df*i-fre;
-    complex<double> y = 1.0/complex<double>(cbuf[i][0], cbuf[i][1]);
-    double w = pow(1.0/abs(y), 4.0);
+    complex<double> y = amp0/complex<double>(cbuf[i][0], cbuf[i][1]);
+    double w = pow(1.0/(x*x+rtau), 4.0);
     sx2 += x*x*w;
     sx1 += x*w;
     sx0 += w;
@@ -79,11 +81,11 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
 
   // complex linear fit  AA*(f-fre) + BB
   complex<double> BB = (sxy*sx1 - sy*sx2)/(sx1*sx1 - sx0*sx2);
-  complex<double> AA = (sxy - BB*sx1)/sx2;
+  complex<double> AA = (sy*sx1 - sxy*sx0)/(sx1*sx1 - sx0*sx2);
   complex<double> I = complex<double>(0,1);
 
   // this complex amplitude corresponds to the original complex fft signal
-  complex<double> amp = 2*M_PI*I/AA;
+  complex<double> amp = 2*M_PI*I/AA * amp0;
   // Convert to volts:
   amp*=2*dt;
   // Exact freq an tau:
