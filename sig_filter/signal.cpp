@@ -148,6 +148,7 @@ void write_signal(const char *fname, const Signal & sig){
   int N = sig.get_n();
 
   ff << scientific;
+  ff << "*SIG001\n";
   ff << "\n# Signal parameters:\n";
   ff << "  points:   " << N  << "  # number of points\n"
      << "  dt:       " << sig.dt << "  # time step\n"
