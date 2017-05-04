@@ -10,7 +10,7 @@ function dft_theor()
 
 
   # theory for the same thing
-  function z = dft_theor(amp,tau,fre,ph, t)
+  function z = dft_th(amp,tau,fre,ph, t)
     # frequency space
     N = length(t);
     T = t(end)-t(1);
@@ -51,8 +51,9 @@ function dft_theor()
     # build model
     t = linspace(0,T,N);
     f = linspace(0,(N-1)/T, N);
+
     z1 = dft_calc(amp,tau,fre,ph, t);
-    z2 = dft_theor(amp,tau,fre,ph, t);
+    z2 = dft_th(amp,tau,fre,ph, t);
 
     ii = find(f>minf & f<maxf);
     if (0) # plot calculated signal
