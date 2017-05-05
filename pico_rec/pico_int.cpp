@@ -6,6 +6,8 @@
 #include "pico_int.h"
 #include "err.h"
 
+#define VERSION "2.1"
+
 using namespace std;
 
 bool
@@ -34,12 +36,22 @@ PicoInt::cmd_help() const {
   "   npost -- number of posttrigger samples\n"
   "   dt    -- time step, seconds\n"
   "   file  -- output file\n"
+  "wait  -- wait until osc is ready (use after block command)\n"
+  "*idn? -- write id string: \"pico_rec " VERSION "\"\n";
   ;
 }
 
 bool
 PicoInt::cmd(const vector<string> & args){
   if (args.size()<1) return false;
+
+
+  // print id
+  if (is_cmd(args, "*idn?")){
+    if (args.size()!=1) throw Err() << "Usage: *idn?";
+    cout << "pico_rec " VERSION "\n";
+    return true;
+  }
 
   // print help
   if (is_cmd(args, "help")){
