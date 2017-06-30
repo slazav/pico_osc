@@ -39,7 +39,10 @@ Signal::crop_c(const std::vector<int> & channels){
 }
 
 /***********************************************************/
-Signal read_header(ifstream &ff){
+Signal read_signal(const char *fname){
+
+  ifstream ff(fname);
+  if (ff.fail()) throw Err() << "Can't read file: " << fname;
   Signal sig;
 
   // first line: *SIG001
@@ -108,20 +111,27 @@ Signal read_header(ifstream &ff){
       sig.chan.push_back(ch);
     }
   }
-  return sig;
-}
+  // number of channels
+  int num = sig.chan.size();
 
-/***********************************************************/
-Signal read_signal(const char *fname){
+  // find signal length
+  ios::pos_type start_pos = ff.tellg();
+  ff.seekg (0, ios::end);
+  int length = ff.tellg() - start_pos;
+  ff.seekg(start_pos, ios::beg);
 
-  ifstream ff(fname);
-  if (ff.fail()) throw Err() << "Can't read file: " << fname;
-  Signal sig = read_header(ff);
+  if (length%(sig.chan.size()*sizeof(int16_t))!=0)
+    throw Err() << "wrong data length: " << length;
+  length/=sig.chan.size()*sizeof(int16_t);
+
+  // prepare arrays
+  for (int n=0; n< num; n++){
+    sig.chan[n].resize(length);
+  }
 
   // read data array
   int bufsize = 1<<16;
   int cnt = 0;
-  int num = sig.chan.size();
   if (num<1) return sig;
 
   vector<int16_t> buf(bufsize*num);
@@ -129,10 +139,10 @@ Signal read_signal(const char *fname){
     ff.read((char *)buf.data(), bufsize*num*sizeof(int16_t));
     int len = ff.gcount()/num/sizeof(int16_t);
     for (int n=0; n< num; n++){
-      sig.chan[n].resize(cnt+len);
-      for (int i=0; i<len; i++){
-        sig.chan[n][cnt+i] = buf[i*num+n];
-      }
+      // This should not happend. If file is longer than we expected
+      if (cnt+len > sig.chan[n].size()) sig.chan[n].resize(cnt+len);
+      // fill the vector with data
+      for (int i=0; i<len; i++) sig.chan[n][cnt+i] = buf[i*num+n];
     }
     cnt+=len;
   }

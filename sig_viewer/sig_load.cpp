@@ -50,66 +50,47 @@ int SigLoadObjCmd (ClientData clientData, Tcl_Interp *interp,
     const char *pref  = Tcl_GetString(argv[1]);
     const char *fname = Tcl_GetString(argv[2]);
 
-    // open file and read header
-    ifstream ff(fname);
-    if (ff.fail()) throw Err() << "can't open file: " << fname;
-    Signal sig = read_header(ff);
+    // open file and read signal
+    Signal sig = read_signal(fname);
 
     int num = sig.chan.size();
     if (num<1) throw Err() << "no data found in file: " << fname;
 
     // Create BLT vectors:
     // vector for time
+    int len = sig.get_n();
     Blt_Vector *vx;
     string vxn = string(pref) + "_x"; // vector name
     // we have to check separately if the vector already exists
     if (Blt_VectorExists(interp, (char *)vxn.c_str()) != TCL_OK)
       throw Err() << "vector exists: " << vxn;
-    if (Blt_CreateVector(interp, (char *)vxn.c_str(), 0, &vx) != TCL_OK)
+    if (Blt_CreateVector(interp, (char *)vxn.c_str(), len, &vx) != TCL_OK)
       throw Err() << "can't create vector: " << vxn;
-    // vectors for data channels
+
+    // vectors for data channels (zero length)
     vector<Blt_Vector*> vy(num);
     for (int i=0; i<num; i++){
       ostringstream ss;
       ss << pref << "_y" << i;
       if (Blt_VectorExists(interp, (char *)ss.str().c_str()) != TCL_OK)
         throw Err() << "vector exists: " << vxn;
-      if (Blt_CreateVector (interp, (char *)ss.str().c_str(), 0, &vy[i]) != TCL_OK)
+      if (Blt_CreateVector (interp, (char *)ss.str().c_str(), len, &vy[i]) != TCL_OK)
         throw Err() << "can't create vector: " << ss.str();
       vy[0]->min = +HUGE_VAL;
       vy[0]->max = -HUGE_VAL;
     }
 
-    // read data array
-    int bufsize = 1<<16;
-    int cnt = 0;
-    int16_t buf[bufsize*num];
+    // fill time vector:
+    for (int i=0; i<len; i++) vx->valueArr[i] = sig.dt*i + sig.t0;
+    vx->min = sig.t0;
+    vx->max = sig.dt*len + sig.t0;
 
-    while (!ff.eof()){
-      ff.read((char *)buf, bufsize*num*sizeof(int16_t));
-      int len = ff.gcount()/num/sizeof(int16_t);
-
-      // resize and fill time vector:
-      if (Blt_ResizeVector(vx, cnt+len) != TCL_OK)
-        throw Err() << "can't fill vector: " << vxn;
-      for (int i=0; i<len; i++)
-        vx->valueArr[cnt+i] = sig.dt*(cnt+i) + sig.t0;
-      vx->min = sig.t0;
-      vx->max = vx->valueArr[cnt+len-1];
-
-      // resize and fill data vectors:
-      for (int n=0; n< num; n++){
-        if (Blt_ResizeVector(vy[n], cnt+len) != TCL_OK)
-          throw Err() << "can't fill vector: " << vxn;
-        for (int i=0; i<len; i++){
-          double v = buf[i*num+n] * sig.chan[n].sc;
-          vy[n]->valueArr[cnt+i] = v;
-          if (vy[n]->min > v) vy[n]->min=v;
-          if (vy[n]->max < v) vy[n]->max=v;
-        }
-      }
-      cnt+=len;
+    // reset data vectors using data from sig
+    for (int n=0; n< num; n++){
+      for (int i=0; i<len; i++) vy[n]->valueArr[i] = sig.get_val(n,i);
     }
+
+    // return number of channels
     Tcl_SetObjResult(interp, Tcl_NewIntObj(num));
   }
 

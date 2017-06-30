@@ -51,7 +51,6 @@ class Signal{
     void crop_c(const std::vector<int> & channels);
 };
 
-Signal read_header(std::ifstream &ff);
 Signal read_signal(const char *fname);
 void write_signal(const char *fname, const Signal & sig);
 
