@@ -42,6 +42,25 @@ using namespace std;
 /**********************************************************/
 // sig_load code
 
+Blt_Vector *
+prepare_vector(Tcl_Interp *interp, string vname, int len){
+  // we have to check separately if the vector already exists
+  Blt_Vector *ret;
+  char *name = (char *)vname.c_str();
+  if (Blt_VectorExists(interp, name) == 1){
+    if (Blt_GetVector(interp, name, &ret) != TCL_OK)
+      throw Err() << "can't get existing vector: " << name;
+    if (Blt_ResizeVector(ret, len) != TCL_OK)
+      throw Err() << "can't resize existing vector: " << name;
+  }
+  else {
+    if (Blt_CreateVector(interp, name, len, &ret) != TCL_OK)
+      throw Err() << "can't create vector: " << name;
+  }
+  return ret;
+}
+
+//
 int SigLoadObjCmd (ClientData clientData, Tcl_Interp *interp,
                     int argc, Tcl_Obj *const argv[]) {
 
@@ -62,23 +81,16 @@ int SigLoadObjCmd (ClientData clientData, Tcl_Interp *interp,
     int len = sig.get_n();
     Blt_Vector *vx;
     string vxn = string(pref) + "_x"; // vector name
-    // we have to check separately if the vector already exists
-    if (Blt_VectorExists(interp, (char *)vxn.c_str()) != TCL_OK)
-      throw Err() << "vector exists: " << vxn;
-    if (Blt_CreateVector(interp, (char *)vxn.c_str(), len, &vx) != TCL_OK)
-      throw Err() << "can't create vector: " << vxn;
+    char *name = (char *)vxn.c_str();
+
+    vx = prepare_vector(interp, vxn, len);
 
     // vectors for data channels (zero length)
     vector<Blt_Vector*> vy(num);
     for (int i=0; i<num; i++){
       ostringstream ss;
       ss << pref << "_y" << i;
-      if (Blt_VectorExists(interp, (char *)ss.str().c_str()) != TCL_OK)
-        throw Err() << "vector exists: " << vxn;
-      if (Blt_CreateVector (interp, (char *)ss.str().c_str(), len, &vy[i]) != TCL_OK)
-        throw Err() << "can't create vector: " << ss.str();
-      vy[0]->min = +HUGE_VAL;
-      vy[0]->max = -HUGE_VAL;
+      vy[i] = prepare_vector(interp, ss.str().c_str(), len);
     }
 
     // fill time vector:
@@ -89,6 +101,7 @@ int SigLoadObjCmd (ClientData clientData, Tcl_Interp *interp,
     // reset data vectors using data from sig
     for (int n=0; n< num; n++){
       for (int i=0; i<len; i++) vy[n]->valueArr[i] = sig.get_val(n,i);
+      // find and fill min/max ?
     }
 
     // return number of channels
