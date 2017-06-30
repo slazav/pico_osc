@@ -2,6 +2,9 @@ Name:         pico_rec
 Version:      2.0
 Release:      alt1
 
+%define libname SigLoad
+%define libver  1.0
+
 Summary:      Record signals with Picoscope PS4224 and process them.
 Group:        System
 URL:          https://github.com/slazav/pico_osc
@@ -24,7 +27,9 @@ pico_rec - record signals with Picoscope PS4224 and process them
 
 %files
 %_bindir/*
-%_libdir/tcl/*.so
+%_tcllibdir/sig_load.so
+%dir %_tcldatadir/%libname-%libver
+%_tcldatadir/%libname-%libver/pkgIndex.tcl
 
 %changelog
 * Sun Apr 30 2017 Vladislav Zavjalov <slazav@altlinux.org> 1.1-alt1

@@ -1,8 +1,10 @@
 #!/usr/bin/wish
 package require Itcl
 package require xBlt 3
+package require SigLoad 1.0
 
-load ./sig_load.so
+#load ./sig_load.so
+
 
 itcl::class sig_viewer {
     # widgets: root, plot, top menu, scrollbar:

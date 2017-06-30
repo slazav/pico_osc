@@ -32,6 +32,7 @@ int Sig_load_Init (Tcl_Interp *interp) {
                    (ClientData)0, (Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateObjCommand(interp, "txt_load", TxtLoadObjCmd,
                    (ClientData)0, (Tcl_CmdDeleteProc*)NULL);
+  Tcl_PkgProvide(interp,"SigLoad","1.0");
   return TCL_OK;
 }
 }
