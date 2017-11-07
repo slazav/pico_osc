@@ -11,6 +11,9 @@
 #include "pico_err.h"
 #include "pico_int.h"
 
+// Here all picoscope4224-related functions are incapsuleted.
+// Programs should use PicoInt class which should be device-independent.
+
 class Pico4224 : public PicoInt {
   int16_t h; // device handle
 

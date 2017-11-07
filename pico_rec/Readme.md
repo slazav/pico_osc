@@ -16,7 +16,7 @@ Now only PS4224 model is supported.
 `
 
 The program implements a simple pipe protocol (see somewhere in my
-tcl_exp package): When it is started and an oscilloscope device is opened
+tcl-device package): When it is started and an oscilloscope device is opened
 a prompt message is printed to stdout started with "#SPP001" and followed
 by "#OK" line. In case of an error "#Error: <...>" line is printed and
 program exits.
