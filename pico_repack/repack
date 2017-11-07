@@ -1,13 +1,20 @@
 #!/bin/sh
 
-# repack pico libraries into a single altlinux RPM
+# Repack pico libraries into a single altlinux RPM
+# Debian packages are downloaded from
+#   http://labs.picotech.com/debian/pool/main/
+# check for new versions!
+
 
 info='\
-libp libpicoipp 1.1.2 4r56
-libp libps4000  1.2.6 2r07
+libp libpicoipp  1.1.2 4r56
+libp libps4000   1.6.0 2r10
+libp libpicohrdl 1.6.0 1r08
 '
 #arches="amd64 i386"
 arches="amd64"
+rpm_ver="1.1"
+rpm_name="libpico"
 
 for arch in $arches; do
 
@@ -29,7 +36,7 @@ for arch in $arches; do
     echo Processing: ${name}_${ver}-${rel}_${arch}
     ### download packages.
     ### check for new versions!
-     wget http://labs.picotech.com/debfix/pool/main/${dir}/${name}/${fname}
+#     wget http://labs.picotech.com/debfix/pool/main/${dir}/${name}/${fname}
 
     rm -rf -- ${dname}
     alien --to-rpm -g ${fname}
@@ -40,9 +47,9 @@ for arch in $arches; do
     rm -rf -- ${dname}
   done
 
-  cat > libpico.spec <<EOF
-Name: libpico
-Version: 1.0
+  cat > ${rpm_name}.spec <<EOF
+Name: ${rpm_name}
+Version: ${rpm_ver}
 Release: 0
 License: non-free
 Summary: PicoScope libraries
@@ -59,6 +66,6 @@ $docdir/*
 EOF
 
   rpmbuild -bb libpico.spec
-  mv -f /home/sla/RPM/RPMS/x86_64/libpico-1.0-0.x86_64.rpm libpico-1.0-0.$arch.rpm
+  mv -f /home/sla/RPM/RPMS/x86_64/${rpm_name}-${rpm_ver}-0.x86_64.rpm ${rpm_name}-${rpm_ver}-0.$arch.rpm
   rm -rf -- ${dest} libpico.spec
 done
