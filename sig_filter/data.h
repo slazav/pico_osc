@@ -47,6 +47,9 @@ void fit(const Signal & s, double fmin, double fmax);
 // fit fork signal (exponential decay, constant frequency)
 void lockin(const Signal & s, double fmin, double fmax);
 
+// print min/max values
+void minmax(const Signal & s);
+
 // Remove unwanted time ans frequency.
 //void crop(const Signal & s, double fmin, double fmax);
 

@@ -58,6 +58,7 @@ void help(){
           "     sfft_pnm_ad   -- Adaptive window, no smoothing. Blackman window.\n"
           "     fit           -- Fit fork signal (exponential decay, constant frequency).\n"
           "     lockin        -- Detect signal in channel 1 use channel 2 as a reference.\n"
+          "     minmax        -- Print min/max values for each channel.\n"
 /*
           "              taf         -- time-amp-fre table with adaptive window.\n"
           "              crop        -- Crop time and frequency ranges, print table.\n"
@@ -151,6 +152,9 @@ main(int argc, char *argv[]){
     }
     else if (strcasecmp(f, "lockin")==0){
       lockin(sig, fmin,fmax);
+    }
+    else if (strcasecmp(f, "minmax")==0){
+      minmax(sig);
     }
 
 //    else if (strcasecmp(f, "crop")==0){

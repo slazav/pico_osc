@@ -559,6 +559,28 @@ lockin(const Signal & s, double fmin, double fmax) {
 }
 
 /******************************************************************/
+void
+minmax(const Signal & s) {
+
+  int N  = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1) return;
+
+  for (int c = 0; c<cN; c++){
+    double min,max;
+    min = max = s.chan[c][0]*s.chan[c].sc;
+    for (int i=1; i<N; i++){
+      double v = s.chan[c][i]*s.chan[c].sc;
+      if (v<min) min = v;
+      if (v>max) max = v;
+    }
+    cout << setprecision(6)  << min << " "
+         << setprecision(6)  << max << "\n";
+  }
+}
+
+
+/******************************************************************/
 /*
 void
 crop(const Signal & s, double fmin, double fmax) {
