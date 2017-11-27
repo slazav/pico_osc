@@ -76,7 +76,7 @@ main(int argc, char *argv[]){
   }
   catch (Err E){
     cout << "#SPP001\n"; // a command-line protocol, version 001.
-    cerr << "#Error: " << E.str() << "\n";
+    cout << "#Error: " << E.str() << "\n";
     return 1;
   }
 
