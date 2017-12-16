@@ -44,6 +44,9 @@ void flt_sfft_pnm_ad(const Signal & s, double fmin, double fmax, int W, int H);
 // fit fork signal (exponential decay, constant frequency)
 void fit(const Signal & s, double fmin, double fmax);
 
+// fit two-fork signal (sort by frequency)
+void fit2(Signal & s, double fmin, double fmax);
+
 // fit fork signal (exponential decay, constant frequency)
 void lockin(const Signal & s, double fmin, double fmax);
 

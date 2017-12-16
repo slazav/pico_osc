@@ -44,6 +44,9 @@ class Signal{
     // Get a double value. No range checking!
     double get_val(const int c, const int n) const{ return chan[c][n]*chan[c].sc; }
 
+    // Set double value
+    void set_val(const int c, const int n, const double v) { chan[c][n] = int(v/chan[c].sc); }
+
     // Select time range
     void crop_t(double tmin, double tmax);
 

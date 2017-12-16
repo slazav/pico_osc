@@ -432,83 +432,6 @@ flt_sfft_pnm_ad(const Signal & s, double fmin, double fmax, int W, int H) {
 }
 
 /******************************************************************/
-/*
-void
-taf_ad(const Signal & s, double fmin, double fmax) {
-
-  int N = s.get_n();
-  int cN  = s.get_ch();
-  if (N<1 || cN<1) return;
-  int ch=0;
-
-  int i1f, i2f;
-  double df;
-
-  FFT fft(N);
-  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
-
-  // min window: we have NM points in fmin:fmax range
-  // max window: we have NM points in tmin:tmax range
-  int NM = 5;
-  int wmin = floor(NM/(fmax-fmin)/s.dt);
-  int wmax = ceil(N/NM);
-
-  // first pass with minimal window
-  vector<int> start; // start points for the full calculation
-  {
-    int win=wmin;
-    FFT fft(win);
-    fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
-    vector<double> vp(win,0); // previous step data
-
-    // for each x point
-    for (int iw=0; iw<N-win; iw+=win){
-      fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
-
-      // calculate normalized distance from previous point
-      double d0=0, d1=0;
-      vector<double> vn(win,0); // new data
-      for (int i=i1f; i<i2f; i++){
-        vn[i-i1f] = fft.abs(i);
-        d1 += pow(vn[i-i1f]-vp[i-i1f], 2);
-        d0 += fabs(vn[i-i1f]+vp[i-i1f]);
-      }
-      bool change = sqrt(d1)/d0>0.05;
-      bool longwin = start.size() && (iw+win-start[start.size()-1] > wmax);
-      if (change || longwin){
-        vp.swap(vn);
-        start.push_back(iw);
-      }
-    }
-    // move last point to the data end
-    start[start.size()-1] = N;
-  }
-
-  // second pass
-  for (int is = 0; is<start.size()-1; is++){
-    int win = start[is+1]-start[is];
-    FFT fft(win);
-    fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
-    fft.run(s.chan[ch].data()+start[is], s.chan[ch].sc, true);
-
-    // print point: time, amplitude, frequency
-    double t = s.t0 + s.dt*(start[is]+start[is+1])/2;
-    double amp=0;
-    for (int i=i1f; i<i2f; i++) amp+=pow(fft.abs(i),2);
-    amp = sqrt(amp)/win/11;
-
-    double A,B,C;
-    fft.find_max_par(i1f,i2f,df, A,B,C);
-    double fre = -B/(2*A);
-
-    cout << setprecision(6)  << t << " "
-         << setprecision(6)  << amp << " "
-         << setprecision(12) << fre << "\n";
-
-  }
-}
-*/
-/******************************************************************/
 
 void
 fit(const Signal & s, double fmin, double fmax) {
@@ -527,6 +450,49 @@ fit(const Signal & s, double fmin, double fmax) {
        << setprecision(6)  << ret[2] << " "
        << setprecision(6)  << ret[3] << "\n";
 
+}
+
+/******************************************************************/
+
+void
+fit2(Signal & s, double fmin, double fmax) {
+
+  int N  = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch = 0;
+
+  // find first signal (largest amplitude)
+  vector<double> ret1 = ::fit_signal(
+    s.chan[ch].data(), N, s.chan[ch].sc, s.dt, s.t0, fmin, fmax);
+
+  double f1 = ret1[0];
+  double r1 = ret1[1];
+  double a1 = ret1[2]/2;
+  double p1 = ret1[3];
+
+  // subtract it
+  for (int i=0; i<s.get_n(); i++){
+    double t = s.t0+i*s.dt;
+    s.set_val(ch,i, s.get_val(ch,i) - a1*exp(-t*r1)*sin(2*M_PI*f1*t+p1) );
+  }
+
+  // find second signal
+  vector<double> ret2 = ::fit_signal(
+    s.chan[ch].data(), N, s.chan[ch].sc, s.dt, s.t0, fmin, fmax);
+
+  // sort by frequency
+  if (ret1[2] < ret2[2]) ret1.swap(ret2);
+
+  cout << s.t0abs << " "
+       << setprecision(12) << ret1[0] << " "
+       << setprecision(6)  << ret1[1] << " "
+       << setprecision(6)  << ret1[2] << " "
+       << setprecision(6)  << ret1[3] << " "
+       << setprecision(12) << ret2[0] << " "
+       << setprecision(6)  << ret2[1] << " "
+       << setprecision(6)  << ret2[2] << " "
+       << setprecision(6)  << ret2[3] << "\n";
 }
 
 /******************************************************************/

@@ -57,6 +57,7 @@ void help(){
           "     sfft_pnm      -- PNM with sliding fft. Blackman window.\n"
           "     sfft_pnm_ad   -- Adaptive window, no smoothing. Blackman window.\n"
           "     fit           -- Fit fork signal (exponential decay, constant frequency).\n"
+          "     fit2          -- Fit two fork signal (sort by frequency).\n"
           "     lockin        -- Detect signal in channel 1 use channel 2 as a reference.\n"
           "     minmax        -- Print min/max values for each channel.\n"
 /*
@@ -144,11 +145,11 @@ main(int argc, char *argv[]){
     else if (strcasecmp(f, "sfft_pnm_ad")==0){
        flt_sfft_pnm_ad(sig, fmin, fmax, W,H);
     }
-//    else if (strcasecmp(f, "taf")==0){
-//      taf_ad(sig, fmin,fmax);
-//    }
     else if (strcasecmp(f, "fit")==0){
       fit(sig, fmin,fmax);
+    }
+    else if (strcasecmp(f, "fit2")==0){
+      fit2(sig, fmin,fmax);
     }
     else if (strcasecmp(f, "lockin")==0){
       lockin(sig, fmin,fmax);
