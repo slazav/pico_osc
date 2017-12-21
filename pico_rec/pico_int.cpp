@@ -71,15 +71,16 @@ PicoInt::cmd(const vector<string> & args){
   if (is_cmd(args, "chan_set")) {
     if (args.size()!=5) throw Err()
       << "Usage: chan_set <ch> <en> <cpl> <rng>";
-    if (args[1].size()!=1) throw Err() << "Bad channel: " << args[1];
-    const char *ch = args[1].c_str();
-    char chc = args[1][0]; // channel as a single char
-    ChConf C;
-    C.en  = atoi(args[2].c_str());
-    C.cpl = args[3];
-    C.rng = atof(args[4].c_str());
-    chan_set(ch, C.en, C.cpl.c_str(), C.rng);
-    chconf[chc] = C; // save channel configuration
+    for (int i=0; i<args[1].length(); i++){
+      string ch; ch+=args[1][i]; // channel as a string
+      char chc = args[1][i];  // channel as a single char
+      ChConf C;
+      C.en  = atoi(args[2].c_str());
+      C.cpl = args[3];
+      C.rng = atof(args[4].c_str());
+      chan_set(ch.c_str(), C.en, C.cpl.c_str(), C.rng);
+      chconf[chc] = C; // save channel configuration
+    }
     return true;
   }
 

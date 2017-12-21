@@ -38,7 +38,7 @@ ranges <ch> -- show possible ranges
    ch  -- select channel: A,B
 
 chan_set <ch> <en> <cpl> <rng> -- set channel parameters
-   ch  -- select channel: A,B
+   ch  -- select channels: A,B or AB
    en  -- enable channel: 1,0
    cpl -- coupling: AC, DC
    rng -- input range, volts (see ranges command)
