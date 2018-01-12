@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fftw3.h>
 #include <stdint.h>
-
+#include "../pico_rec/err.h"
 
 using namespace std;
 
@@ -36,10 +36,9 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   }
 
   // second step: find parabolic fit near maximum
-  if (im<i1f+1 || im>=i2f-1){
-    cerr << "Can't find signal frequency\n";
-    return vector<double>(5, 0.0);
-  }
+  if (im<i1f+1 || im>=i2f-1)
+    throw Err() << "Can't find signal frequency";
+
   double x1 = df*(im-1);
   double x2 = df*im;
   double x3 = df*(im+1);
