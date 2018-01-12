@@ -129,6 +129,9 @@ PicoInt::cmd(const vector<string> & args){
       set_buf(ch.c_str(), ic->second.buf.data(), ic->second.buf.size());
     }
 
+    ofstream ff(fname);
+    if (ff.fail()) throw Err() << "Can't open output file: " << fname;
+
     // start collecting data
     run_block(npre, npost, &dt);
     usleep(npre*dt*1e6);
@@ -143,8 +146,6 @@ PicoInt::cmd(const vector<string> & args){
     double t0 = get_trig() - npre*dt + T.del*dt;
     t0abs += round(-dt*(double)N+t0); // system time of trigger position
 
-    // write data to the file
-    ofstream ff(fname);
 
     ff << "*SIG001\n";
     ff << "# " << ctime(&t0abs) << "\n";
