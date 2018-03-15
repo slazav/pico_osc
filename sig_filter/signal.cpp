@@ -3,6 +3,8 @@
 #include <vector>
 #include <stdint.h>
 #include <cstdlib> // atof
+#include <cstring>
+#include <stdint.h>
 #include "../pico_rec/err.h"
 #include "signal.h"
 
@@ -180,4 +182,145 @@ void write_signal(const char *fname, const Signal & sig){
     }
   }
 }
+
+/***********************************************************/
+// See: http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
+/***********************************************************/
+Signal read_wav(const char *fname){
+
+  ifstream ff(fname);
+  if (ff.fail()) throw Err() << "Can't read file: " << fname;
+  Signal sig;
+
+  int id_size=4;
+  char id[id_size];
+  uint32_t ch_len;
+
+  ff.read(id, id_size);
+  if (strncmp(id, "RIFF", id_size)!=0)
+    throw Err() << "Not a WAV file, RIFF chunk is missing:" << fname;
+
+  ff.read((char *)&ch_len, sizeof(ch_len));
+
+  ff.read(id, id_size);
+  if (strncmp(id, "WAVE", id_size)!=0)
+    throw Err() << "Not a WAV file, WAVE id is missing:" << fname;
+
+  struct fmt_t {
+    uint16_t wFormatTag;
+    uint16_t nChannels;
+    uint32_t nSamplesPerSec;
+    uint32_t nAvgBytesPerSec;
+    uint16_t nBlockAlign;
+    uint16_t wBitsPerSample;
+  } fmt;
+
+
+  // skip unknown chunks, read format chunk
+  while (ff.good()) {
+    ff.read(id, id_size);
+    if (strncmp(id, "fmt ", id_size)!=0) continue;
+
+    // read chunk length
+    ff.read((char *)&ch_len, sizeof(ch_len));
+    cout << "fmt_len: " << ch_len << "\n";
+
+    cout << "fmt_len: " << sizeof(fmt_t) << "\n";
+
+    if (ch_len < sizeof(fmt_t))
+      throw Err() << "Bad WAV file, FMT chunk is too short: " << fname;
+
+    // read first 8 bytes of the chunk
+    ff.read((char *)&fmt, sizeof(fmt_t));
+    cout << "fmt:  " << fmt.wFormatTag << "\n";
+    cout << "chan: " << fmt.nChannels << "\n";
+    cout << "rate: " << fmt.nSamplesPerSec << "\n";
+
+    // skip rest of the chunk
+    ff.seekg(ch_len-sizeof(fmt_t));
+
+    break;
+  }
+
+
+  // skip unknown chunks, read data chunk
+  while (ff.good()) {
+    ff.read(id, id_size);
+    if (strncmp(id, "data", id_size)!=0) continue;
+
+    // read chunk length
+    ff.read((char *)&ch_len, sizeof(ch_len));
+    cout << "data_len: " << ch_len << "\n";
+
+    // prepare arrays
+    Signal sig;
+    sig.dt = 1.0/fmt.nSamplesPerSec;
+    size_t ssize = fmt.wBitsPerSample/8;
+    size_t bsize = fmt.nChannels*ssize; // block size
+    size_t count = ch_len/bsize;
+    cout << "ssize: " << ssize << "\n";
+    cout << "bsize: " << bsize << "\n";
+    cout << "count: " << count << "\n";
+    for (int n=0; n< fmt.nChannels; n++){
+      Channel ch;
+      ch.name = '0'+n;
+      ch.sc   = 1.0;
+      ch.ov   = 0;
+      sig.chan.push_back(ch);
+      sig.chan[n].resize(count);
+    }
+
+    if (ssize!=2) throw Err() << "Only 16bits per sample supported";
+
+    char buf[bsize];
+    // read data
+    for (int i=0; i<count; i++){
+      ff.read(buf, sizeof(buf));
+      for (int n=0; n<fmt.nChannels; n++){
+        sig.chan[n][i] = *(int16_t *)(buf + n*ssize);
+      }
+    }
+
+    return sig;
+  }
+
+  throw Err() << "Bad WAV file, DATA chunk not found:" << fname;
+}
+
+/***********************************************************/
+void write_wav(const char *fname, const Signal & sig){
+  // write data to the file
+  ofstream ff(fname);
+
+  // number of points
+  int N = sig.get_n();
+
+/*
+  ff << scientific;
+  ff << "*SIG001\n";
+  ff << "\n# Signal parameters:\n";
+  ff << "  points:   " << N  << "  # number of points\n"
+     << "  dt:       " << sig.dt << "  # time step\n"
+     << "  t0:       " << sig.t0 << "  # relative time of the first sample\n"
+     << "  t0abs:    " << sig.t0abs << "  # system time of trigger position\n";
+
+  ff << "\n# Data channels (osc channel, scale factor, overload):\n";
+  for (int j=0; j<sig.chan.size(); j++){
+    char   ch = sig.chan[j].name;
+    double sc = sig.chan[j].sc;
+    bool   ov = sig.chan[j].ov;
+    ff << "  chan: " << " " << ch << " " << sc << " " << ov << "\n";
+  }
+
+  ff << "\n*\n";
+  for (int i = 0; i<N; i++){
+    for (int n=0; n<sig.chan.size(); n++){
+      ff.write((const char*)&sig.chan[n][i], sizeof(int16_t));
+    }
+  }
+*/
+}
+
+
+
 

@@ -57,4 +57,7 @@ class Signal{
 Signal read_signal(const char *fname);
 void write_signal(const char *fname, const Signal & sig);
 
+Signal read_wav(const char *fname);
+void write_wav(const char *fname, const Signal & sig);
+
 #endif
