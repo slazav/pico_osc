@@ -54,9 +54,14 @@ class Signal{
     void crop_c(const std::vector<int> & channels);
 };
 
+// autodetect format
 Signal read_signal(const char *fname);
-void write_signal(const char *fname, const Signal & sig);
 
+// SIG format
+Signal read_sig(const char *fname);
+void write_sig(const char *fname, const Signal & sig);
+
+// WAV format
 Signal read_wav(const char *fname);
 void write_wav(const char *fname, const Signal & sig);
 
