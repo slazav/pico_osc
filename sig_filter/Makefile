@@ -2,7 +2,7 @@ LDLIBS = -lm -lfftw3
 CPPFLAGS = -fPIC
 CC=g++
 
-all: sig_filter testsig_decay testsig_2decay testsig_noise wav2sig
+all: sig_filter testsig_decay testsig_2decay testsig_noise wav2sig sig2wav
 
 f1=../../signals/fork1.dat
 f2=../../signals/fork2.dat
@@ -31,13 +31,13 @@ test: testsig sig_filter
 sig_filter: sig_filter.o data.o signal.o rainbow.o fit_signal.o
 testsig: testsig.o
 wav2sig: wav2sig.o data.o signal.o rainbow.o fit_signal.o
+sig2wav: sig2wav.o data.o signal.o rainbow.o fit_signal.o
 
 
-sig_filter.o:\
-   ../pico_rec/err.h data.h signal.h  sig_filter.cpp
+sig_filter.o: ../pico_rec/err.h data.h signal.h  sig_filter.cpp
 
-wav2sig.o:\
-   ../pico_rec/err.h data.h signal.h  wav2sig.cpp
+wav2sig.o: ../pico_rec/err.h data.h signal.h  wav2sig.cpp
+sig2wav.o: ../pico_rec/err.h data.h signal.h  sig2wav.cpp
 
 
 data.o:\

@@ -184,7 +184,20 @@ void write_signal(const char *fname, const Signal & sig){
 }
 
 /***********************************************************/
+// WAV files
 // See: http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
+/***********************************************************/
+
+// fmt chunk structure
+struct fmt_t {
+  uint16_t wFormatTag;
+  uint16_t nChannels;
+  uint32_t nSamplesPerSec;
+  uint32_t nAvgBytesPerSec;
+  uint16_t nBlockAlign;
+  uint16_t wBitsPerSample;
+};
+
 /***********************************************************/
 Signal read_wav(const char *fname){
 
@@ -206,15 +219,7 @@ Signal read_wav(const char *fname){
   if (strncmp(id, "WAVE", id_size)!=0)
     throw Err() << "Not a WAV file, WAVE id is missing:" << fname;
 
-  struct fmt_t {
-    uint16_t wFormatTag;
-    uint16_t nChannels;
-    uint32_t nSamplesPerSec;
-    uint32_t nAvgBytesPerSec;
-    uint16_t nBlockAlign;
-    uint16_t wBitsPerSample;
-  } fmt;
-
+  fmt_t fmt;
 
   // skip unknown chunks, read format chunk
   while (ff.good()) {
@@ -292,33 +297,48 @@ void write_wav(const char *fname, const Signal & sig){
   // write data to the file
   ofstream ff(fname);
 
-  // number of points
-  int N = sig.get_n();
+  int32_t N = sig.get_n();       // number of blocks
+  int16_t C = sig.chan.size();   // number of channels
+  int16_t B = sizeof(int16_t);   // bytes per sample
 
-/*
-  ff << scientific;
-  ff << "*SIG001\n";
-  ff << "\n# Signal parameters:\n";
-  ff << "  points:   " << N  << "  # number of points\n"
-     << "  dt:       " << sig.dt << "  # time step\n"
-     << "  t0:       " << sig.t0 << "  # relative time of the first sample\n"
-     << "  t0abs:    " << sig.t0abs << "  # system time of trigger position\n";
+  // format chunk
+  fmt_t fmt;
+  fmt.wFormatTag = 1; // PCM
+  fmt.nChannels  = C;
+  fmt.nSamplesPerSec  = int(1.0/sig.dt);
+  fmt.nAvgBytesPerSec = fmt.nSamplesPerSec*C*B;
+  fmt.nBlockAlign    = C*B;
+  fmt.wBitsPerSample = 8*B;
 
-  ff << "\n# Data channels (osc channel, scale factor, overload):\n";
-  for (int j=0; j<sig.chan.size(); j++){
-    char   ch = sig.chan[j].name;
-    double sc = sig.chan[j].sc;
-    bool   ov = sig.chan[j].ov;
-    ff << "  chan: " << " " << ch << " " << sc << " " << ov << "\n";
-  }
+  // data length (4(wave) + 8(fmt chunk header) + 16(fmt chunk) + 8(data chunk header) + data)
+  int32_t len = 4 + 8 + sizeof(fmt) + 8 + N*C*B;
 
-  ff << "\n*\n";
-  for (int i = 0; i<N; i++){
-    for (int n=0; n<sig.chan.size(); n++){
-      ff.write((const char*)&sig.chan[n][i], sizeof(int16_t));
+  ff << "RIFF";
+  ff.write((char *)&len, sizeof(len));
+  ff << "WAVE";
+
+  ff << "fmt ";
+  int32_t fmt_len = sizeof(fmt);
+  ff.write((char *)&fmt_len, sizeof(fmt_len));
+  ff.write((char *)&fmt, sizeof(fmt));
+
+  // TODO: signal chunk
+  // sig.dt // time step
+  // sig.t0 // relative time of the first sample
+  // sig.t0abs // system time of trigger position
+
+  // data chunk
+  ff << "data";
+  int32_t dat_len = N*C*B;
+  ff.write((char *)&dat_len, sizeof(dat_len));
+
+  char buf[C*B];
+  for (int i=0; i<N; i++){
+    for (int n=0; n<C; n++){
+      *(int16_t *)(buf + n*B) = sig.chan[n][i];
     }
+    ff.write(buf, sizeof(buf));
   }
-*/
 }
 
 
