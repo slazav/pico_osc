@@ -42,6 +42,20 @@ Signal::crop_c(const std::vector<int> & channels){
 
 /***********************************************************/
 Signal read_signal(const char *fname){
+  const int hsize=4;
+  char head[hsize];
+  {
+    ifstream ff(fname);
+    if (ff.fail()) throw Err() << "Can't read file: " << fname;
+    ff.read(head, hsize);
+  }
+  if (strncmp(head, "*SIG", hsize)==0) return read_sig(fname);
+  if (strncmp(head, "RIFF", hsize)==0) return read_wav(fname);
+  throw Err() << "unknown format (not SIG or WAV)";
+}
+
+/***********************************************************/
+Signal read_sig(const char *fname){
 
   ifstream ff(fname);
   if (ff.fail()) throw Err() << "Can't read file: " << fname;
@@ -152,7 +166,7 @@ Signal read_signal(const char *fname){
 }
 
 /***********************************************************/
-void write_signal(const char *fname, const Signal & sig){
+void write_sig(const char *fname, const Signal & sig){
   // write data to the file
   ofstream ff(fname);
 

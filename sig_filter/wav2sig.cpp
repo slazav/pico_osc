@@ -18,7 +18,7 @@ main(int argc, char *argv[]){
     const char *i_file = argv[1];
     const char *o_file = argv[2];
 
-    write_signal(o_file, read_wav(i_file));
+    write_sig(o_file, read_wav(i_file));
   }
 
   catch (Err E){
