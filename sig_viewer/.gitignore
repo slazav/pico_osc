@@ -1,0 +1,6 @@
+*.o
+*.so
+*.dat
+*.txt
+*.pnm
+*.png

@@ -51,7 +51,7 @@ testsig_2decay.o: ../pico_rec/err.h testsig_2decay.cpp
 testsig_noise.o: ../pico_rec/err.h testsig_noise.cpp
 
 clean:
-	rm -f *.o sig_filter testsig_decay testsig_noise
+	rm -f *.o sig_filter testsig_decay testsig_noise testsig_2decay wav2sig sig2wav
 
 
 

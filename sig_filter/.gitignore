@@ -2,6 +2,10 @@
 sig_filter
 testsig_decay
 testsig_noise
+testsig_2decay
+sig2wav
+wav2sig
+
 *.dat
 *.txt
 *.pnm

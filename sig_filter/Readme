@@ -1,2 +1,5 @@
-pico_filter -- program for processing siglnals
-recorded by pico_rec program.
+pico_filter    -- program for processing signals recorded by pico_rec program.
+testsig_noise  -- create noise signals for tests
+testsig_decay  -- create decaying signals for tests
+testsig_2decay -- create double decaying signals for tests
+wav2sig, sig2wav -- convert SIG-files to WAV and back

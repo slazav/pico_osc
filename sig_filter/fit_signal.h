@@ -5,6 +5,7 @@
 Fit a signal by a model:
   amp * exp(-t/tau) * sin(2*pi*fre*t + ph),
 it also works for a non-decaying signals with 1/tau=0,
+(TODO: fix boundary conditions!)
 
 output: a vector with 4 double values:
   fre, 1/tau, amp, ph
