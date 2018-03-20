@@ -220,7 +220,7 @@ Signal read_wav(const char *fname){
   Signal sig;
 
   int id_size=4;
-  char id[id_size];
+  char id[id_size+1]; id[4]=0;
   uint32_t ch_len;
 
   ff.read(id, id_size);
@@ -234,76 +234,66 @@ Signal read_wav(const char *fname){
     throw Err() << "Not a WAV file, WAVE id is missing:" << fname;
 
   fmt_t fmt;
+  size_t ssize=0; // sample size, bytes
+  size_t bsize=0; // block size, bytes
+  size_t count=0; // number of blocks
 
-  // skip unknown chunks, read format chunk
+  // read skip unknown chunks, read format chunk
   while (ff.good()) {
+
+    // read chunk id and length
     ff.read(id, id_size);
-    if (strncmp(id, "fmt ", id_size)!=0) continue;
-
-    // read chunk length
     ff.read((char *)&ch_len, sizeof(ch_len));
-    cout << "fmt_len: " << ch_len << "\n";
+    cerr << "chunk: " << id << ", length: " << ch_len << "\n";
 
-    cout << "fmt_len: " << sizeof(fmt_t) << "\n";
+    // fmt chunk
+    if (strncmp(id, "fmt ", id_size)==0) {
 
-    if (ch_len < sizeof(fmt_t))
-      throw Err() << "Bad WAV file, FMT chunk is too short: " << fname;
+      if (ch_len < sizeof(fmt_t))
+        throw Err() << "Bad WAV file, FMT chunk is too short: " << fname;
 
-    // read first 8 bytes of the chunk
-    ff.read((char *)&fmt, sizeof(fmt_t));
-    cout << "fmt:  " << fmt.wFormatTag << "\n";
-    cout << "chan: " << fmt.nChannels << "\n";
-    cout << "rate: " << fmt.nSamplesPerSec << "\n";
+      // read first 8 bytes of the chunk
+      ff.read((char *)&fmt, sizeof(fmt_t));
+      if (fmt.wBitsPerSample!=16) throw Err() << "Only 16bits per sample supported";
 
-    // skip rest of the chunk
-    ff.seekg(ch_len-sizeof(fmt_t));
+      // skip rest of the chunk
+      ff.seekg(ch_len-sizeof(fmt_t), ios::cur);
 
-    break;
-  }
-
-
-  // skip unknown chunks, read data chunk
-  while (ff.good()) {
-    ff.read(id, id_size);
-    if (strncmp(id, "data", id_size)!=0) continue;
-
-    // read chunk length
-    ff.read((char *)&ch_len, sizeof(ch_len));
-    cout << "data_len: " << ch_len << "\n";
-
-    // prepare arrays
-    Signal sig;
-    sig.dt = 1.0/fmt.nSamplesPerSec;
-    size_t ssize = fmt.wBitsPerSample/8;
-    size_t bsize = fmt.nChannels*ssize; // block size
-    size_t count = ch_len/bsize;
-    cout << "ssize: " << ssize << "\n";
-    cout << "bsize: " << bsize << "\n";
-    cout << "count: " << count << "\n";
-    for (int n=0; n< fmt.nChannels; n++){
-      Channel ch;
-      ch.name = '0'+n;
-      ch.sc   = 1.0;
-      ch.ov   = 0;
-      sig.chan.push_back(ch);
-      sig.chan[n].resize(count);
-    }
-
-    if (ssize!=2) throw Err() << "Only 16bits per sample supported";
-
-    char buf[bsize];
-    // read data
-    for (int i=0; i<count; i++){
-      ff.read(buf, sizeof(buf));
-      for (int n=0; n<fmt.nChannels; n++){
-        sig.chan[n][i] = *(int16_t *)(buf + n*ssize);
+      // prepare arrays
+      sig.dt = 1.0/fmt.nSamplesPerSec;
+      ssize = fmt.wBitsPerSample/8;
+      bsize = fmt.nChannels*ssize;
+      count = ch_len/bsize;
+      for (int n=0; n< fmt.nChannels; n++){
+        Channel ch;
+        ch.name = 'A'+n;
+        ch.sc   = 1.0;
+        ch.ov   = 0;
+        sig.chan.push_back(ch);
+        sig.chan[n].resize(count);
       }
+      continue;
     }
 
-    return sig;
+    // data chunk
+    if (strncmp(id, "data", id_size)==0) {
+      if (bsize==0 || count==0 || ssize==0) throw "FMT chunk not found of broken";
+      char buf[bsize];
+      // read data
+      for (int i=0; i<count; i++){
+        ff.read(buf, sizeof(buf));
+        for (int n=0; n<fmt.nChannels; n++){
+          sig.chan[n][i] = *(int16_t *)(buf + n*ssize);
+        }
+      }
+      break;
+    }
+
+    // skip unknown chunk and continue reading
+    ff.seekg(ch_len, ios::cur);
   }
 
-  throw Err() << "Bad WAV file, DATA chunk not found:" << fname;
+  return sig;
 }
 
 /***********************************************************/
