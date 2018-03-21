@@ -37,6 +37,7 @@ PicoInt::cmd_help() const {
   "   dt    -- time step, seconds\n"
   "   file  -- output file\n"
   "wait  -- wait until osc is ready (use after block command)\n"
+  "filter <file> <args> -- run sig_filter program"
   "*idn? -- write id string: \"pico_rec " VERSION "\"\n";
   ;
 }
@@ -194,6 +195,17 @@ PicoInt::cmd(const vector<string> & args){
   // wait until osc is ready
   if (is_cmd(args, "wait")) {
     if (args.size()!=1) throw Err() << "Usage: wait";
+    return true;
+  }
+
+  // run filter
+  // note: stderr can not be transferred to Device
+  if (is_cmd(args, "filter")) {
+    if (args.size()<2) throw Err()
+      << "Usage: filter <file> <args> ...";
+    string cmd = "sig_filter " + args[1];
+    for (int i=2; i<args.size(); i++) cmd += " " + args[i];
+    system(cmd.c_str());
     return true;
   }
 

@@ -61,5 +61,7 @@ block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)
    recorded and written to a file use wait command after the block command.
 
 wait -- wait until the oscilloscope is ready
+filter <file> <args> -- run sig_filter program
 *idn? -- write id string: "pico_rec <VERSION>"
+
 `
