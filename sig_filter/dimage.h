@@ -18,13 +18,15 @@ class dImage:std::vector<double> {
 
   void print_pnm() const{
     // find data range
-    double cmax=0;
+    double cmin=get(0,0);
+    double cmax=cmin;
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
         if (get(x,y) > cmax) cmax = get(x,y);
+        if (get(x,y) < cmin) cmin = get(x,y);
       }
     }
-    simple_rainbow sr(0, cmax, RAINBOW_BURNING1);
+    simple_rainbow sr(cmin, cmax, RAINBOW_BURNING1);
     // print data
     std::cout << "P6\n" << w << " " << h << "\n255\n";
     for (int y=0; y<h; y++){
