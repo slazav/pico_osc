@@ -1,3 +1,4 @@
+#include <fstream>
 #include "data.h"
 #include "signal.h"
 
@@ -15,10 +16,9 @@ int
 main(int argc, char *argv[]){
   try {
     if (argc!=3) { help(); return 0; }
-    const char *i_file = argv[1];
-    const char *o_file = argv[2];
-
-    write_sig(o_file, read_wav(i_file));
+    std::ifstream fi(argv[1]);
+    std::ofstream fo(argv[2]);
+    write_sig(fo, read_wav(fi));
   }
 
   catch (Err E){

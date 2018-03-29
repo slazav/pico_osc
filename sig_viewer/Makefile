@@ -1,4 +1,4 @@
-LDLIBS=-lBLT -ltk
+LDLIBS=-lBLT -ltk -lfftw3
 LDFLAGS=-shared -Wl,-rpath /usr/lib64/tcl
 CPPFLAGS=-O9 -fPIC
 CC=g++

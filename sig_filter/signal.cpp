@@ -7,6 +7,9 @@
 #include <stdint.h>
 #include "../pico_rec/err.h"
 #include "signal.h"
+#include "fft.h"
+
+#define FTYPE float
 
 using namespace std;
 /***********************************************************/
@@ -41,30 +44,32 @@ Signal::crop_c(const std::vector<int> & channels){
 }
 
 /***********************************************************/
-Signal read_signal(const char *fname){
+Signal read_signal(istream & ff){
   const int hsize=4;
   char head[hsize];
-  {
-    ifstream ff(fname);
-    if (ff.fail()) throw Err() << "Can't read file: " << fname;
-    ff.read(head, hsize);
-  }
-  if (strncmp(head, "*SIG", hsize)==0) return read_sig(fname);
-  if (strncmp(head, "RIFF", hsize)==0) return read_wav(fname);
+  if (ff.fail()) throw Err() << "Can't read file";
+  ff.read(head, hsize);
+  ff.seekg(0, ios::beg);
+
+  if (strncmp(head, "*SIG", hsize)==0) return read_sig(ff);
+  if (strncmp(head, "RIFF", hsize)==0) return read_wav(ff);
   throw Err() << "unknown format (not SIG or WAV)";
 }
 
 /***********************************************************/
-Signal read_sig(const char *fname){
+Signal read_sig(istream & ff){
 
-  ifstream ff(fname);
-  if (ff.fail()) throw Err() << "Can't read file: " << fname;
+  if (ff.fail()) throw Err() << "Can't read file";
   Signal sig;
 
   // first line: *SIG001
   string line;
   getline(ff,line);
-  if (line != "*SIG001") throw Err() << "unsupported format";
+  if (line != "*SIG001" && line != "*SIGF01") throw Err() << "unsupported format";
+  bool is_fft = (line == "*SIGF01");
+
+  int i1f=-1, i2f=-1;
+  size_t N=0;
 
   // read metadata <name>: <value>
   while (!ff.eof()){
@@ -101,6 +106,11 @@ Signal read_sig(const char *fname){
     key=keyw[0];
 
     // collect useful parameters
+    // number of points
+    if (key == "points"){
+      if (valw.size()<1) throw Err() << "Broken file: " << line;
+      N = atof(valw[0].c_str());
+    }
     // time step
     if (key == "dt"){
       if (valw.size()<1) throw Err() << "Broken file: " << line;
@@ -126,50 +136,85 @@ Signal read_sig(const char *fname){
       ch.ov   = atoi(valw[2].c_str());
       sig.chan.push_back(ch);
     }
+
+    // fft-specific data
+    if (is_fft){
+      if (key == "ifmin"){
+        if (valw.size()<1) throw Err() << "Broken file: " << line;
+        i1f = atoi(valw[0].c_str());
+      }
+      if (key == "ifmax"){
+        if (valw.size()<1) throw Err() << "Broken file: " << line;
+        i2f = atoi(valw[0].c_str());
+      }
+    }
   }
   // number of channels
   int num = sig.chan.size();
 
-  // find signal length
+
+  // find data length
   ios::pos_type start_pos = ff.tellg();
   ff.seekg (0, ios::end);
   int length = ff.tellg() - start_pos;
   ff.seekg(start_pos, ios::beg);
 
-  if (length%(sig.chan.size()*sizeof(int16_t))!=0)
-    throw Err() << "wrong data length: " << length;
-  length/=sig.chan.size()*sizeof(int16_t);
+  if (!is_fft) {
+    if (length != N*num*sizeof(int16_t))
+      throw Err() << "wrong data length: " << length;
 
-  // prepare arrays
-  for (int n=0; n< num; n++){
-    sig.chan[n].resize(length);
-  }
+    // prepare arrays
+    for (int n=0; n< num; n++){ sig.chan[n].resize(N); }
 
-  // read data array
-  int bufsize = 1<<16;
-  int cnt = 0;
-  if (num<1) return sig;
+    // read data array
+    int bufsize = 1<<16;
+    int cnt = 0;
+    if (num<1) return sig;
 
-  vector<int16_t> buf(bufsize*num);
-  while (!ff.eof()){
-    ff.read((char *)buf.data(), bufsize*num*sizeof(int16_t));
-    int len = ff.gcount()/num/sizeof(int16_t);
-    for (int n=0; n< num; n++){
-      // This should not happend. If file is longer than we expected
-      if (cnt+len > sig.chan[n].size()) sig.chan[n].resize(cnt+len);
-      // fill the vector with data
-      for (int i=0; i<len; i++) sig.chan[n][cnt+i] = buf[i*num+n];
+    vector<int16_t> buf(bufsize*num);
+    while (!ff.eof()){
+      ff.read((char *)buf.data(), bufsize*num*sizeof(int16_t));
+      int len = ff.gcount()/num/sizeof(int16_t);
+      for (int n=0; n< num; n++){
+        // This should not happend. If file is longer than we expected
+        if (cnt+len > sig.chan[n].size()) sig.chan[n].resize(cnt+len);
+        // fill the vector with data
+        for (int i=0; i<len; i++) sig.chan[n][cnt+i] = buf[i*num+n];
+      }
+      cnt+=len;
     }
-    cnt+=len;
+  }
+  else { // fft
+
+    if (i1f<0 || i2f<0 || i1f>N/2 || i2f>N/2 || i1f>=i2f)
+      throw Err() << "wrong frequncy indices: " << i1f << ", " << i2f;
+
+    if (length != 2*sizeof(FTYPE)*num*(i2f-i1f))
+      throw Err() << "wrong data length: " << length << " (should be " << 2*sizeof(FTYPE)*num*(i2f-i1f)<< ")";
+
+    FFT fft(N, FFTW_BACKWARD);
+    for (int n=0; n<num; n++){
+      for (int i = 0; i<(N+1)/2; i++){
+        if (i>=i1f && i<i2f){
+          FTYPE data[2];
+          ff.read((char *)data, 2*sizeof(FTYPE));
+          fft.set(i,   data[0],  data[1]);
+          fft.set(N-i, data[0], -data[1]);
+        }
+        else {
+          fft.set(i, 0.0, 0.0);
+          fft.set(N-i, 0.0, 0.0);
+        }
+      }
+      fft.run();
+      sig.chan[n].vector<int16_t>::operator=(fft.real(0,N, sig.chan[n].sc*N));
+    }
   }
   return sig;
 }
 
 /***********************************************************/
-void write_sig(const char *fname, const Signal & sig){
-  // write data to the file
-  ofstream ff(fname);
-
+void write_sig(ostream & ff, const Signal & sig){
   // number of points
   int N = sig.get_n();
 
@@ -198,6 +243,58 @@ void write_sig(const char *fname, const Signal & sig){
 }
 
 /***********************************************************/
+void write_sigf(ostream & ff, const Signal & sig, double fmin, double fmax){
+  // write fft data to the file
+
+  // number of points
+  int N = sig.get_n();
+  int cN = sig.chan.size();
+
+  // same header, but SIGF instead of SIG
+  ff << scientific;
+  ff << "*SIGF01\n";
+  ff << "\n# Signal parameters:\n";
+  ff << "  points:   " << N  << "  # number of points\n"
+     << "  dt:       " << sig.dt << "  # time step\n"
+     << "  t0:       " << sig.t0 << "  # relative time of the first sample\n"
+     << "  t0abs:    " << sig.t0abs << "  # system time of trigger position\n";
+
+  ff << "\n# Data channels (osc channel, scale factor, overload):\n";
+  for (int j=0; j<cN; j++){
+    char   ch = sig.chan[j].name;
+    double sc = sig.chan[j].sc;
+    bool   ov = sig.chan[j].ov;
+    ff << "  chan: " << " " << ch << " " << sc << " " << ov << "\n";
+  }
+
+  // prepare FFT, write additional frequency information
+  FFT fft(N);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(sig.dt, &fmin, &fmax, &i1f, &i2f, &df);
+  ff << "\n# FFT parameters:\n";
+  ff << "  fmin:   " << fmin  << "  # lowest frequncy\n";
+  ff << "  fmax:   " << fmax  << "  # highest frequncy\n";
+  ff << "  df:     " << df    << "  # frequncy step\n";
+  ff << "  ifmin:  " << i1f   << "  # lowest frequncy index\n";
+  ff << "  ifmax:  " << i2f   << "  # highest frequncy index\n";
+
+  ff << "\n*\n";
+  if (N<1 || cN<1) return;
+
+  // do fft and write data
+  for (int c = 0; c<cN; c++){
+    fft.run(sig.chan[c].data(), sig.chan[c].sc);
+    for (int i=i1f; i<i2f; i++){
+      FTYPE re = fft.real(i);
+      FTYPE im = fft.imag(i);
+      ff.write((char*)&re, sizeof(FTYPE));
+      ff.write((char*)&im, sizeof(FTYPE));
+    }
+  }
+}
+
+/***********************************************************/
 // WAV files
 // See: http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
 /***********************************************************/
@@ -212,11 +309,24 @@ struct fmt_t {
   uint16_t wBitsPerSample;
 };
 
-/***********************************************************/
-Signal read_wav(const char *fname){
+// sig1 chunk structure
+//struct sig1_t {
+//  double dt;
+//  double t0;
+//  time_t t0abs;
+//  int16_t n; // number of channel blocks
+//};
+//struct sig1c_t {
+//  char name;
+//  char        name; // channel name
+//  bool        ov;   // overload flag
+//  double      sc;   // scale factor
+//}
 
-  ifstream ff(fname);
-  if (ff.fail()) throw Err() << "Can't read file: " << fname;
+/***********************************************************/
+Signal read_wav(istream & ff){
+
+  if (ff.fail()) throw Err() << "Can't read file";
   Signal sig;
 
   int id_size=4;
@@ -225,18 +335,16 @@ Signal read_wav(const char *fname){
 
   ff.read(id, id_size);
   if (strncmp(id, "RIFF", id_size)!=0)
-    throw Err() << "Not a WAV file, RIFF chunk is missing:" << fname;
+    throw Err() << "Not a WAV file, RIFF chunk is missing";
 
   ff.read((char *)&ch_len, sizeof(ch_len));
 
   ff.read(id, id_size);
   if (strncmp(id, "WAVE", id_size)!=0)
-    throw Err() << "Not a WAV file, WAVE id is missing:" << fname;
+    throw Err() << "Not a WAV file, WAVE id is missing";
 
   fmt_t fmt;
-  size_t ssize=0; // sample size, bytes
-  size_t bsize=0; // block size, bytes
-  size_t count=0; // number of blocks
+  bool fmt_read=false;
 
   // read skip unknown chunks, read format chunk
   while (ff.good()) {
@@ -249,21 +357,31 @@ Signal read_wav(const char *fname){
     // fmt chunk
     if (strncmp(id, "fmt ", id_size)==0) {
 
+      // check if the fmt chunk containt enough information
       if (ch_len < sizeof(fmt_t))
-        throw Err() << "Bad WAV file, FMT chunk is too short: " << fname;
+        throw Err() << "Bad WAV file, FMT chunk is too short";
 
-      // read first 8 bytes of the chunk
+      // read fmt structure
       ff.read((char *)&fmt, sizeof(fmt_t));
       if (fmt.wBitsPerSample!=16) throw Err() << "Only 16bits per sample supported";
 
       // skip rest of the chunk
       ff.seekg(ch_len-sizeof(fmt_t), ios::cur);
+      fmt_read=true;
+
+      continue;
+    }
+
+    // data chunk
+    if (strncmp(id, "data", id_size)==0) {
+      if (!fmt_read) throw "FMT chunk not found";
 
       // prepare arrays
-      sig.dt = 1.0/fmt.nSamplesPerSec;
-      ssize = fmt.wBitsPerSample/8;
-      bsize = fmt.nChannels*ssize;
-      count = ch_len/bsize;
+      size_t nchan = fmt.nChannels;         // number of channels
+      size_t ssize = fmt.wBitsPerSample/8;  // sample size, bytes
+      size_t bsize = nchan*ssize;           // block size, bytes
+      size_t count = ch_len/bsize;          // number of blocks
+      size_t spp   = fmt.nSamplesPerSec;    // samples per second
       for (int n=0; n< fmt.nChannels; n++){
         Channel ch;
         ch.name = 'A'+n;
@@ -272,12 +390,10 @@ Signal read_wav(const char *fname){
         sig.chan.push_back(ch);
         sig.chan[n].resize(count);
       }
-      continue;
-    }
 
-    // data chunk
-    if (strncmp(id, "data", id_size)==0) {
-      if (bsize==0 || count==0 || ssize==0) throw "FMT chunk not found of broken";
+      // time step
+      sig.dt = 1.0/spp;
+
       char buf[bsize];
       // read data
       for (int i=0; i<count; i++){
@@ -297,9 +413,8 @@ Signal read_wav(const char *fname){
 }
 
 /***********************************************************/
-void write_wav(const char *fname, const Signal & sig){
+void write_wav(ostream & ff, const Signal & sig){
   // write data to the file
-  ofstream ff(fname);
 
   int32_t N = sig.get_n();       // number of blocks
   int16_t C = sig.chan.size();   // number of channels

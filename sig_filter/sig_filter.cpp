@@ -1,6 +1,7 @@
 #include "data.h"
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <getopt.h>
 #include <cstring>
 #include <cmath>
@@ -60,6 +61,7 @@ void help(){
           "     fit2          -- Fit two fork signal (sort by frequency).\n"
           "     lockin        -- Detect signal in channel 1 use channel 2 as a reference.\n"
           "     minmax        -- Print min/max values for each channel.\n"
+          "     sigf          -- Print SIGF file (fft with frequency filtering).\n"
 /*
           "              taf         -- time-amp-fre table with adaptive window.\n"
           "              crop        -- Crop time and frequency ranges, print table.\n"
@@ -108,7 +110,9 @@ main(int argc, char *argv[]){
     if (argc!=1) { help(); return 0; }
     const char *fname = argv[0];
 
-    Signal sig = read_signal(fname);
+    std::ifstream ff(fname);
+    Signal sig = read_signal(ff);
+
     sig.crop_t(tmin, tmax);
     if (strlen(cn)>0){
       sig.crop_c(str2ivec(cn));
@@ -116,50 +120,53 @@ main(int argc, char *argv[]){
     if (sig.get_n()<1 || sig.get_ch()<1) throw Err() << "empty signal";
 
     if (strcasecmp(f, "txt")==0){
-      flt_txt(sig);
+      flt_txt(std::cout, sig);
     }
     else if (strcasecmp(f, "pnm")==0){
-      flt_pnm(sig, W,H);
+      flt_pnm(std::cout, sig, W,H);
     }
     else if (strcasecmp(f, "fft_txt")==0){
-       flt_fft_txt(sig, fmin,fmax);
+       flt_fft_txt(std::cout, sig, fmin,fmax);
     }
     else if (strcasecmp(f, "fft_pow_avr")==0){
-       flt_fft_pow_avr(sig, fmin,fmax, npts);
+       flt_fft_pow_avr(std::cout, sig, fmin,fmax, npts);
     }
     else if (strcasecmp(f, "fft_pow_lavr")==0){
-       flt_fft_pow_lavr(sig, fmin,fmax, npts);
+       flt_fft_pow_lavr(std::cout, sig, fmin,fmax, npts);
     }
     else if (strcasecmp(f, "fft_pow_avr_corr")==0){
-       flt_fft_pow_avr_corr(sig, fmin,fmax, npts);
+       flt_fft_pow_avr_corr(std::cout, sig, fmin,fmax, npts);
     }
     else if (strcasecmp(f, "fft_pow_lavr_corr")==0){
-       flt_fft_pow_lavr_corr(sig, fmin,fmax, npts);
+       flt_fft_pow_lavr_corr(std::cout, sig, fmin,fmax, npts);
     }
     else if (strcasecmp(f, "sfft_txt")==0){
-      flt_sfft_txt(sig, fmin,fmax, win);
+      flt_sfft_txt(std::cout, sig, fmin,fmax, win);
     }
     else if (strcasecmp(f, "sfft_pnm")==0){
-       flt_sfft_pnm(sig, fmin ,fmax, win, W,H);
+       flt_sfft_pnm(std::cout, sig, fmin ,fmax, win, W,H);
     }
     else if (strcasecmp(f, "sfft_pnm_ad")==0){
-       flt_sfft_pnm_ad(sig, fmin, fmax, W,H);
+       flt_sfft_pnm_ad(std::cout, sig, fmin, fmax, W,H);
     }
     else if (strcasecmp(f, "fit")==0){
-      fit(sig, fmin,fmax);
+      fit(std::cout, sig, fmin,fmax);
     }
     else if (strcasecmp(f, "fit2")==0){
-      fit2(sig, fmin,fmax);
+      fit2(std::cout, sig, fmin,fmax);
     }
     else if (strcasecmp(f, "lockin")==0){
-      lockin(sig, fmin,fmax);
+      lockin(std::cout, sig, fmin,fmax);
     }
     else if (strcasecmp(f, "minmax")==0){
-      minmax(sig);
+      minmax(std::cout, sig);
+    }
+    else if (strcasecmp(f, "sigf")==0){
+      write_sigf(std::cout, sig, fmin, fmax);
     }
 
 //    else if (strcasecmp(f, "crop")==0){
-//      crop(sig, fmin,fmax);
+//      crop(std::cout, sig, fmin,fmax);
 //    }
     else throw Err() << "Unknown filter: " << f;
   }

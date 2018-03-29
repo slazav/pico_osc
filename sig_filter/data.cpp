@@ -17,23 +17,23 @@ using namespace std;
 
 /******************************************************************/
 void
-flt_txt(const Signal & s){
+flt_txt(ostream & ff, const Signal & s){
   int n = s.get_n();
-  cout << scientific;
+  ff << scientific;
   for (int i=0; i<n; i++){
     double t = s.t0 + s.dt*i;
-    cout << s.t0 + s.dt*i;
+    ff << s.t0 + s.dt*i;
     for (int c = 0; c<s.get_ch(); c++){
-      cout << "\t" << s.get_val(c,i);
+      ff << "\t" << s.get_val(c,i);
     }
-    cout << "\n";
+    ff << "\n";
   }
 }
 
 /******************************************************************/
 
 void
-flt_pnm(const Signal & s, int W, int H){
+flt_pnm(ostream & ff, const Signal & s, int W, int H){
   int colors[] = {0x00880000, 0x00008800, 0x00000088,
                   0x00888800, 0x00008888, 0x00880088,
                   0x00000000};
@@ -58,10 +58,10 @@ flt_pnm(const Signal & s, int W, int H){
       pic[y*W+x] = colors[ch % cn];
     }
   }
-  cout << "P6\n" << W << " " << H << "\n255\n";
+  ff << "P6\n" << W << " " << H << "\n255\n";
   for (int y=0; y<H; y++){
     for (int x=0; x<W; x++){
-      cout.write((char *)(&pic[y*W+x])+1, 3);
+      ff.write((char *)(&pic[y*W+x])+1, 3);
     }
   }
 }
@@ -70,7 +70,7 @@ flt_pnm(const Signal & s, int W, int H){
 /******************************************************************/
 
 void
-flt_fft_txt(const Signal & s, double fmin, double fmax){
+flt_fft_txt(ostream & ff, const Signal & s, double fmin, double fmax){
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -87,20 +87,20 @@ flt_fft_txt(const Signal & s, double fmin, double fmax){
     dat_im[c] = fft.imag(i1f,i2f);
   }
 
-  cout << scientific;
+  ff << scientific;
   for (int i=i1f; i<i2f; i++){
-    cout << df*i;
+    ff << df*i;
     for (int c = 0; c<cN; c++){
-      cout << "\t" << dat_re[c][i-i1f] << "\t" << dat_im[c][i-i1f];
+      ff << "\t" << dat_re[c][i-i1f] << "\t" << dat_im[c][i-i1f];
     }
-    cout << "\n";
+    ff << "\n";
   }
 }
 
 /******************************************************************/
 
 void
-flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts){
+flt_fft_pow_avr(ostream & ff, const Signal & s, double fmin, double fmax, int npts){
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -120,7 +120,7 @@ flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts){
 
   double fstep = (fmax-fmin)/npts;
 
-  cout << scientific;
+  ff << scientific;
   vector<double> ss(cN, 0);
   int n = 0; // number of samples in the average
   for (int i=i1f; i<i2f; i++){
@@ -128,12 +128,12 @@ flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts){
     n++;
     // print point and reset counters if needed
     if (i*df >= fmin + fstep || i==i2f-1){
-      cout << (i-0.5*(n-1))*df;
+      ff << (i-0.5*(n-1))*df;
       for (int c = 0; c<cN; c++){
-        cout << "\t" << k*ss[c]/n;
+        ff << "\t" << k*ss[c]/n;
         ss[c]=0;
       }
-      cout << "\n";
+      ff << "\n";
       n=0; fmin=i*df;
     }
   }
@@ -143,7 +143,7 @@ flt_fft_pow_avr(const Signal & s, double fmin, double fmax, int npts){
 /******************************************************************/
 
 void
-flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts){
+flt_fft_pow_lavr(ostream & ff, const Signal & s, double fmin, double fmax, int npts){
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -164,7 +164,7 @@ flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts){
   if (fmin==0) fmin=df;
   double fstep = pow(fmax/fmin, 1.0/npts);
 
-  cout << scientific;
+  ff << scientific;
   vector<double> ss(cN, 0);
   int n = 0; // number of samples in the average
   for (int i=i1f; i<i2f; i++){
@@ -172,12 +172,12 @@ flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts){
     n++;
     // print point and reset counters if needed
     if (i*df >= fmin*fstep || i==i2f-1){
-      cout << (i-0.5*(n-1))*df;
+      ff << (i-0.5*(n-1))*df;
       for (int c = 0; c<cN; c++){
-        cout << "\t" << k*ss[c]/n;
+        ff << "\t" << k*ss[c]/n;
         ss[c]=0;
       }
-      cout << "\n";
+      ff << "\n";
       n=0; fmin=i*df;
     }
   }
@@ -186,7 +186,7 @@ flt_fft_pow_lavr(const Signal & s, double fmin, double fmax, int npts){
 /******************************************************************/
 
 void
-flt_fft_pow_avr_corr(const Signal & s, double fmin, double fmax, int npts){
+flt_fft_pow_avr_corr(ostream & ff, const Signal & s, double fmin, double fmax, int npts){
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -219,7 +219,7 @@ flt_fft_pow_avr_corr(const Signal & s, double fmin, double fmax, int npts){
 
   double fstep = (fmax-fmin)/npts;
 
-  cout << scientific;
+  ff << scientific;
   double sre=0, sim=0;
   int n = 0; // number of samples in the average
   for (int i=i1f; i<i2f; i++){
@@ -228,7 +228,7 @@ flt_fft_pow_avr_corr(const Signal & s, double fmin, double fmax, int npts){
     n++;
     // print point and reset counters if needed
     if (i*df >= fmin + fstep || i==i2f-1){
-      cout << (i-0.5*(n-1))*df << "\t" << k*hypot(sre,sim)/n << "\n";
+      ff << (i-0.5*(n-1))*df << "\t" << k*hypot(sre,sim)/n << "\n";
       sre=0; sim=0;
       n=0; fmin=i*df;
     }
@@ -239,7 +239,7 @@ flt_fft_pow_avr_corr(const Signal & s, double fmin, double fmax, int npts){
 /******************************************************************/
 
 void
-flt_fft_pow_lavr_corr(const Signal & s, double fmin, double fmax, int npts){
+flt_fft_pow_lavr_corr(ostream & ff, const Signal & s, double fmin, double fmax, int npts){
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -273,7 +273,7 @@ flt_fft_pow_lavr_corr(const Signal & s, double fmin, double fmax, int npts){
   if (fmin==0) fmin=df;
   double fstep = pow(fmax/fmin, 1.0/npts);
 
-  cout << scientific;
+  ff << scientific;
   double sre=0, sim=0;
   int n = 0; // number of samples in the average
   for (int i=i1f; i<i2f; i++){
@@ -282,7 +282,7 @@ flt_fft_pow_lavr_corr(const Signal & s, double fmin, double fmax, int npts){
     n++;
     // print point and reset counters if needed
     if (i*df >= fmin*fstep || i==i2f-1){
-      cout << (i-0.5*(n-1))*df << "\t" << k*hypot(sre,sim)/n << "\n";
+      ff << (i-0.5*(n-1))*df << "\t" << k*hypot(sre,sim)/n << "\n";
       sre=0; sim=0;
       n=0; fmin=i*df;
     }
@@ -292,7 +292,7 @@ flt_fft_pow_lavr_corr(const Signal & s, double fmin, double fmax, int npts){
 
 /******************************************************************/
 void
-flt_sfft_txt(const Signal & s, double fmin, double fmax, int win) {
+flt_sfft_txt(ostream & ff, const Signal & s, double fmin, double fmax, int win) {
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -308,19 +308,19 @@ flt_sfft_txt(const Signal & s, double fmin, double fmax, int win) {
     fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
 
     // print selected frequency range
-    cout << scientific;
+    ff << scientific;
     for (int i=i1f; i<i2f; i++){
-      cout << s.t0 + s.dt*(iw+win/2) << "\t" << i*df << "\t"
-                << fft.real(i) << "\t" << fft.imag(i) << "\n";
+      ff << s.t0 + s.dt*(iw+win/2) << "\t" << i*df << "\t"
+         << fft.real(i) << "\t" << fft.imag(i) << "\n";
     }
-    cout << "\n";
+    ff << "\n";
   }
 }
 
 /******************************************************************/
 
 void
-flt_sfft_pnm(const Signal & s, double fmin, double fmax, int win, int W, int H) {
+flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, int win, int W, int H) {
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -349,13 +349,13 @@ flt_sfft_pnm(const Signal & s, double fmin, double fmax, int win, int W, int H) 
       pic.set(x,y,v);
     }
   }
-  pic.print_pnm();
+  pic.print_pnm(ff);
 }
 
 /******************************************************************/
 
 void
-flt_sfft_pnm_ad(const Signal & s, double fmin, double fmax, int W, int H) {
+flt_sfft_pnm_ad(ostream & ff, const Signal & s, double fmin, double fmax, int W, int H) {
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -428,13 +428,13 @@ flt_sfft_pnm_ad(const Signal & s, double fmin, double fmax, int W, int H) {
       for (int x=x1; x<x2; x++) pic.set(x,y,v);
     }
   }
-  pic.print_pnm();
+  pic.print_pnm(ff);
 }
 
 /******************************************************************/
 
 void
-fit(const Signal & s, double fmin, double fmax) {
+fit(ostream & ff, const Signal & s, double fmin, double fmax) {
 
   int N  = s.get_n();
   int cN  = s.get_ch();
@@ -444,18 +444,18 @@ fit(const Signal & s, double fmin, double fmax) {
   vector<double> ret = ::fit_signal(
     s.chan[ch].data(), N, s.chan[ch].sc, s.dt, s.t0, fmin, fmax);
 
-  cout << s.t0abs << " "
-       << setprecision(12) << ret[0] << " "
-       << setprecision(6)  << ret[1] << " "
-       << setprecision(6)  << ret[2] << " "
-       << setprecision(6)  << ret[3] << "\n";
+  ff << s.t0abs << " "
+     << setprecision(12) << ret[0] << " "
+     << setprecision(6)  << ret[1] << " "
+     << setprecision(6)  << ret[2] << " "
+     << setprecision(6)  << ret[3] << "\n";
 
 }
 
 /******************************************************************/
 
 void
-fit2(Signal & s, double fmin, double fmax) {
+fit2(ostream & ff, Signal & s, double fmin, double fmax) {
 
   int N  = s.get_n();
   int cN  = s.get_ch();
@@ -484,20 +484,20 @@ fit2(Signal & s, double fmin, double fmax) {
   // sort by frequency
   if (ret1[2] < ret2[2]) ret1.swap(ret2);
 
-  cout << s.t0abs << " "
-       << setprecision(12) << ret1[0] << " "
-       << setprecision(6)  << ret1[1] << " "
-       << setprecision(6)  << ret1[2] << " "
-       << setprecision(6)  << ret1[3] << " "
-       << setprecision(12) << ret2[0] << " "
-       << setprecision(6)  << ret2[1] << " "
-       << setprecision(6)  << ret2[2] << " "
-       << setprecision(6)  << ret2[3] << "\n";
+  ff << s.t0abs << " "
+     << setprecision(12) << ret1[0] << " "
+     << setprecision(6)  << ret1[1] << " "
+     << setprecision(6)  << ret1[2] << " "
+     << setprecision(6)  << ret1[3] << " "
+     << setprecision(12) << ret2[0] << " "
+     << setprecision(6)  << ret2[1] << " "
+     << setprecision(6)  << ret2[2] << " "
+     << setprecision(6)  << ret2[3] << "\n";
 }
 
 /******************************************************************/
 void
-lockin(const Signal & s, double fmin, double fmax) {
+lockin(ostream & ff, const Signal & s, double fmin, double fmax) {
 
   int N  = s.get_n();
   int cN  = s.get_ch();
@@ -518,15 +518,15 @@ lockin(const Signal & s, double fmin, double fmax) {
     ss1+= v*sin(2*M_PI*fre*s.dt*i + ph);
     ss2+= v*cos(2*M_PI*fre*s.dt*i + ph);
   }
-  cout << setprecision(12) << fre << " "
-       << setprecision(6)  << 2*ss1/N << " "
-       << setprecision(6)  << 2*ss2/N << "\n";
+  ff << setprecision(12) << fre << " "
+     << setprecision(6)  << 2*ss1/N << " "
+     << setprecision(6)  << 2*ss2/N << "\n";
 
 }
 
 /******************************************************************/
 void
-minmax(const Signal & s) {
+minmax(ostream & ff, const Signal & s) {
 
   int N  = s.get_n();
   int cN  = s.get_ch();
@@ -540,8 +540,8 @@ minmax(const Signal & s) {
       if (v<min) min = v;
       if (v>max) max = v;
     }
-    cout << setprecision(6)  << min << " "
-         << setprecision(6)  << max << "\n";
+    ff << setprecision(6)  << min << " "
+       << setprecision(6)  << max << "\n";
   }
 }
 
@@ -549,7 +549,7 @@ minmax(const Signal & s) {
 /******************************************************************/
 /*
 void
-crop(const Signal & s, double fmin, double fmax) {
+crop(ostream & ff, const Signal & s, double fmin, double fmax) {
 
   set_sig_ind(fmin,fmax,tmin,tmax);
   int win = N;
@@ -571,9 +571,9 @@ crop(const Signal & s, double fmin, double fmax) {
   }
   fftw_execute(plan2);
   for (int i=0; i<N; i++){
-    cout << t0+dt*i << "\t"
-         << s.chan[ch].sc*data[i] << "\t"
-         << cbuf[i][0]/win << "\n";
+    ff << t0+dt*i << "\t"
+       << s.chan[ch].sc*data[i] << "\t"
+       << cbuf[i][0]/win << "\n";
   }
 
   fftw_destroy_plan(plan1);

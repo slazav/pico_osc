@@ -1,6 +1,7 @@
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -55,14 +56,15 @@ class Signal{
 };
 
 // autodetect format
-Signal read_signal(const char *fname);
+Signal read_signal(std::istream & ff);
 
 // SIG format
-Signal read_sig(const char *fname);
-void write_sig(const char *fname, const Signal & sig);
+Signal read_sig(std::istream & ff);
+void write_sig(std::ostream & ff, const Signal & sig);
+void write_sigf(std::ostream & ff, const Signal & sig, double fmin, double fmax);
 
 // WAV format
-Signal read_wav(const char *fname);
-void write_wav(const char *fname, const Signal & sig);
+Signal read_wav(std::istream & ff);
+void write_wav(std::ostream & ff, const Signal & sig);
 
 #endif
