@@ -1,4 +1,3 @@
-#include "data.h"
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -62,6 +61,8 @@ void help(){
           "     lockin        -- Detect signal in channel 1 use channel 2 as a reference.\n"
           "     minmax        -- Print min/max values for each channel.\n"
           "     sigf          -- Print SIGF file (fft with frequency filtering).\n"
+          "     sig           -- Print SIG file.\n"
+          "     wav           -- Print WAV file.\n"
 /*
           "              taf         -- time-amp-fre table with adaptive window.\n"
           "              crop        -- Crop time and frequency ranges, print table.\n"
@@ -163,6 +164,12 @@ main(int argc, char *argv[]){
     }
     else if (strcasecmp(f, "sigf")==0){
       write_sigf(std::cout, sig, fmin, fmax);
+    }
+    else if (strcasecmp(f, "sig")==0){
+      write_sig(std::cout, sig);
+    }
+    else if (strcasecmp(f, "wav")==0){
+      write_wav(std::cout, sig);
     }
 
 //    else if (strcasecmp(f, "crop")==0){

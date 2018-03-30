@@ -1,5 +1,4 @@
 #include <fstream>
-#include "data.h"
 #include "signal.h"
 
 
