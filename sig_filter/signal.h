@@ -1,24 +1,26 @@
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <cmath>
 #include <stdint.h>
 #include "../pico_rec/err.h"
 
-// A signal file object + read/write functions.
-
-class Channel : public std::vector<int16_t> {
-  public:
-    char        name; // channel name
-    bool        ov;   // overload flag
-    double      sc;   // scale factor
-    Channel(){ sc=1.0; ov=false; name='A'; }
-};
+/***********************************************************/
+// Signal object.
 
 class Signal{
   public:
+
+    struct Channel : public std::vector<int16_t> {
+        char        name; // channel name
+        bool        ov;   // overload flag
+        double      sc;   // scale factor
+        Channel(){ sc=1.0; ov=false; name='A'; }
+    };
+
     double t0,dt; // time shift, time step
     time_t t0abs; // absolute time
     std::vector<Channel> chan;
@@ -54,15 +56,81 @@ class Signal{
     void crop_c(const std::vector<int> & channels);
 };
 
-// autodetect format
-Signal read_signal(const char *fname);
+/***********************************************************/
+// Reading signals
 
-// SIG format
-Signal read_sig(const char *fname);
-void write_sig(const char *fname, const Signal & sig);
+// autodetect format
+Signal read_signal(std::istream & ff);
+
+// SIG/SIGF formats
+Signal read_sig(std::istream & ff);
 
 // WAV format
-Signal read_wav(const char *fname);
-void write_wav(const char *fname, const Signal & sig);
+Signal read_wav(std::istream & ff);
+
+/***********************************************************/
+// "Filters": process a signal and write results
+
+// write SIG format
+void write_sig(std::ostream & ff, const Signal & sig);
+
+// write SIGF format (with frequency filtering)
+void write_sigf(std::ostream & ff, const Signal & sig, double fmin, double fmax);
+
+// write WAV format
+void write_wav(std::ostream & ff, const Signal & sig);
+
+
+
+// print a simple x-y text table
+void flt_txt(std::ostream & ff, const Signal & s);
+
+// make image with a raw signal
+void flt_pnm(std::ostream & ff, const Signal & s, int W, int H);
+
+// fft of the whole signal, txt table. Rectangular window
+void flt_fft_txt(std::ostream & ff, const Signal & s, double fmin, double fmax);
+
+// FFT power, reduced number of points. V^2/Hz output
+void flt_fft_pow_avr(std::ostream & ff, const Signal & s, double fmin, double fmax, int npts);
+
+// same but log scale.
+void flt_fft_pow_lavr(std::ostream & ff, const Signal & s, double fmin, double fmax, int npts);
+
+// FFT power, reduced number of points. V^2/Hz output. ch 1+2 correlaton
+void flt_fft_pow_avr_corr(std::ostream & ff, const Signal & s, double fmin, double fmax, int npts);
+
+// same but log scale.
+void flt_fft_pow_lavr_corr(std::ostream & ff, const Signal & s, double fmin, double fmax, int npts);
+
+// Text table with sliding fft. Blackman window. 1st channel
+void flt_sfft_txt(std::ostream & ff, const Signal & s, double fmin, double fmax, int win);
+
+// PNM with sliding fft. Blackman window. 1st channel
+void flt_sfft_pnm(std::ostream & ff, const Signal & s, double fmin, double fmax, int win, int W, int H);
+
+// Adaptive window, no smoothing. Blackman window.
+void flt_sfft_pnm_ad(std::ostream & ff, const Signal & s, double fmin, double fmax, int W, int H);
+
+// Print t-a-f table. Adaptive window, no smoothing. Blackman window.
+//void taf_ad(std::ostream & ff, const Signal & s, double fmin, double fmax);
+
+// fit fork signal (exponential decay, constant frequency)
+void fit(std::ostream & ff, const Signal & s, double fmin, double fmax);
+
+// fit two-fork signal (sort by frequency)
+void fit2(std::ostream & ff, Signal & s, double fmin, double fmax);
+
+// fit fork signal (exponential decay, constant frequency)
+void lockin(std::ostream & ff, const Signal & s, double fmin, double fmax);
+
+// print min/max values
+void minmax(std::ostream & ff, const Signal & s);
+
+// print sigf file (filtered fft)
+void sigf(std::ostream & ff, Signal & s, double fmin, double fmax);
+
+// Remove unwanted time ans frequency.
+//void crop(std::ostream & ff, const Signal & s, double fmin, double fmax);
 
 #endif

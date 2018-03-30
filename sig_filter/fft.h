@@ -5,6 +5,9 @@
 #include <fftw3.h>
 #include "../pico_rec/err.h"
 
+// FFTW documentation:
+// http://www.fftw.org/fftw3_doc/
+
 /******************************************************************/
 // fft wrapper
 class FFT{
@@ -28,22 +31,43 @@ class FFT{
   double imag(const int i) const {return cbuf[i][1];}
   double abs(const int i) const {return hypot(cbuf[i][0],cbuf[i][1]);}
 
+  // get real/imag/abs as a vector of double
   std::vector<double> real(const int i1, const int i2) const {
     std::vector<double> ret(i2-i1);
-    if (i1<0 || i2>=len) throw Err() << "index out of range";
+    if (i1<0 || i2>len) throw Err() << "index out of range";
     for (int i=i1; i<i2; i++) ret[i-i1] = cbuf[i][0];
     return ret;
   }
   std::vector<double> imag(const int i1, const int i2) const {
     std::vector<double> ret(i2-i1);
-    if (i1<0 || i2>=len) throw Err() << "index out of range";
+    if (i1<0 || i2>len) throw Err() << "index out of range";
     for (int i=i1; i<i2; i++) ret[i-i1] = cbuf[i][1];
     return ret;
   }
   std::vector<double> abs(const int i1, const int i2) const {
     std::vector<double> ret(i2-i1);
-    if (i1<0 || i2>=len) throw Err() << "index out of range";
+    if (i1<0 || i2>len) throw Err() << "index out of range";
     for (int i=i1; i<i2; i++) ret[i-i1] = hypot(cbuf[i][0],cbuf[i][1]);
+    return ret;
+  }
+
+  // get real/imag/abs as a vector of int16_t (useful for converting fft to original signal)
+  std::vector<int16_t> real(const int i1, const int i2, const double sc) const {
+    std::vector<int16_t> ret(i2-i1);
+    if (i1<0 || i2>len) throw Err() << "index out of range";
+    for (int i=i1; i<i2; i++) ret[i-i1] = cbuf[i][0]/sc;
+    return ret;
+  }
+  std::vector<int16_t> imag(const int i1, const int i2, const double sc) const {
+    std::vector<int16_t> ret(i2-i1);
+    if (i1<0 || i2>len) throw Err() << "index out of range";
+    for (int i=i1; i<i2; i++) ret[i-i1] = cbuf[i][1]/sc;
+    return ret;
+  }
+  std::vector<int16_t> abs(const int i1, const int i2, const double sc) const {
+    std::vector<int16_t> ret(i2-i1);
+    if (i1<0 || i2>len) throw Err() << "index out of range";
+    for (int i=i1; i<i2; i++) ret[i-i1] = hypot(cbuf[i][0],cbuf[i][1])/sc;
     return ret;
   }
 
@@ -60,6 +84,11 @@ class FFT{
     // do fft
     fftw_execute(plan);
   }
+
+  void run(){
+    fftw_execute(plan);
+  }
+
 
   // find absolute maxinmum
   int find_max(int i1f, int i2f) const{

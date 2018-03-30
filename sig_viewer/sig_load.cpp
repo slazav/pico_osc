@@ -71,7 +71,8 @@ int SigLoadObjCmd (ClientData clientData, Tcl_Interp *interp,
     const char *fname = Tcl_GetString(argv[2]);
 
     // open file and read signal
-    Signal sig = read_signal(fname);
+    std::ifstream ff(fname);
+    Signal sig = read_signal(ff);
 
     int num = sig.chan.size();
     if (num<1) throw Err() << "no data found in file: " << fname;

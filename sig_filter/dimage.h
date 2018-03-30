@@ -16,7 +16,7 @@ class dImage:std::vector<double> {
   double get(int x, int y) const {return (*this)[w*y+x];}
   void   set(int x, int y, double v) { (*this)[w*y+x] = v;}
 
-  void print_pnm() const{
+  void print_pnm(std::ostream & ff) const{
     // find data range
     double cmin=get(0,0);
     double cmax=cmin;
@@ -28,11 +28,11 @@ class dImage:std::vector<double> {
     }
     simple_rainbow sr(cmin, cmax, RAINBOW_BURNING1);
     // print data
-    std::cout << "P6\n" << w << " " << h << "\n255\n";
+    ff << "P6\n" << w << " " << h << "\n255\n";
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
         int32_t c = sr.get(get(x,y));
-        std::cout.write((char *)&c, 3);
+        ff.write((char *)&c, 3);
       }
     }
   }
