@@ -18,6 +18,7 @@ main(int argc, char *argv[]){
     std::ifstream fi(argv[1]);
     std::ofstream fo(argv[2]);
     write_sig(fo, read_wav(fi));
+  }
   catch (Err E){
     std::cerr << E.str() << "\n";
   }
