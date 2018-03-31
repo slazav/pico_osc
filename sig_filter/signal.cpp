@@ -479,11 +479,11 @@ flt_txt(ostream & ff, const Signal & s){
 
   ff << scientific;
   for (int i=0; i<N; i++){
-    double t = s.t0 + s.dt*i;
     ff << s.t0 + s.dt*i;
-    for (int c = 0; c<cN; c++){
+
+    for (int c = 0; c<cN; c++)
       ff << "\t" << s.get_val(c,i);
-    }
+
     ff << "\n";
   }
 }
@@ -549,9 +549,11 @@ flt_fft_txt(ostream & ff, const Signal & s, double fmin, double fmax){
 
   ff << scientific;
   for (int i=i1f; i<i2f; i++){
-    ff << df*i;
+    ff << setprecision(12) << df*i;
     for (int c = 0; c<cN; c++){
-      ff << "\t" << dat_re[c][i-i1f] << "\t" << dat_im[c][i-i1f];
+      ff << setprecision(8) 
+         << "\t" << dat_re[c][i-i1f]
+         << "\t" << dat_im[c][i-i1f];
     }
     ff << "\n";
   }
