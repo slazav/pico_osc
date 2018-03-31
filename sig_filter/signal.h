@@ -106,6 +106,9 @@ void flt_fft_pow_lavr_corr(std::ostream & ff, const Signal & s, double fmin, dou
 // Text table with sliding fft. Blackman window. 1st channel
 void flt_sfft_txt(std::ostream & ff, const Signal & s, double fmin, double fmax, int win);
 
+// Text table with sliding fft integral. Blackman window. 1st channel
+void flt_sfft_int(std::ostream & ff, const Signal & s, double fmin, double fmax, int win);
+
 // PNM with sliding fft. Blackman window. 1st channel
 void flt_sfft_pnm(std::ostream & ff, const Signal & s, double fmin, double fmax, int win, int W, int H);
 

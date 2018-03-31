@@ -778,6 +778,36 @@ flt_sfft_txt(ostream & ff, const Signal & s, double fmin, double fmax, int win) 
 }
 
 /******************************************************************/
+void
+flt_sfft_int(ostream & ff, const Signal & s, double fmin, double fmax, int win) {
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch=0;
+
+  FFT fft(win);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+
+  for (int iw=0; iw<N-win; iw+=win){
+    fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
+
+    // print selected frequency range
+    ff << scientific;
+    double sum=0.0;
+    int n=0;
+    for (int i=i1f; i<i2f; i++){
+      sum+=fft.abs(i)*fft.abs(i);
+      n++;
+    }
+    ff << s.t0 + s.dt*(iw+win/2) << "\t" << sqrt(sum/n) << "\n";
+  }
+}
+
+
+/******************************************************************/
 
 void
 flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, int win, int W, int H) {
@@ -806,7 +836,7 @@ flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, int win, 
       double v1 = fft.abs(fi);
       double v2 = fft.abs(fi+1);
       double v = (v1 + (f/df-fi)*(v2-v1))/win;
-      pic.set(x,y,v);
+      pic.set(x,y,log(v));
     }
   }
   pic.print_pnm(ff);

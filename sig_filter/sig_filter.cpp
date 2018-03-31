@@ -54,6 +54,7 @@ void help(){
           "     fft_pow_avr_corr  -- FFT power with reduced number of points. V^2/Hz output, 1+2 channal correlation\n"
           "     fft_pow_lavr_corr -- same but in log scale\n"
           "     sfft_txt      -- Text table with sliding fft. Blackman window.\n"
+          "     sfft_int      -- Text table with sliding fft integral. Blackman window.\n"
           "     sfft_pnm      -- PNM with sliding fft. Blackman window.\n"
           "     sfft_pnm_ad   -- Adaptive window, no smoothing. Blackman window.\n"
           "     fit           -- Fit fork signal (exponential decay, constant frequency).\n"
@@ -143,6 +144,9 @@ main(int argc, char *argv[]){
     }
     else if (strcasecmp(f, "sfft_txt")==0){
       flt_sfft_txt(std::cout, sig, fmin,fmax, win);
+    }
+    else if (strcasecmp(f, "sfft_int")==0){
+      flt_sfft_int(std::cout, sig, fmin,fmax, win);
     }
     else if (strcasecmp(f, "sfft_pnm")==0){
        flt_sfft_pnm(std::cout, sig, fmin ,fmax, win, W,H);
