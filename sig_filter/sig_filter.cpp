@@ -112,73 +112,34 @@ main(int argc, char *argv[]){
     if (argc!=1) { help(); return 0; }
     const char *fname = argv[0];
 
+    /* read the signal */
     std::ifstream ff(fname);
     Signal sig = read_signal(ff);
 
+    /* crop time, rearrange channels */
     sig.crop_t(tmin, tmax);
-    if (strlen(cn)>0){
-      sig.crop_c(str2ivec(cn));
-    }
+    if (strlen(cn)>0)  sig.crop_c(str2ivec(cn));
     if (sig.get_n()<1 || sig.get_ch()<1) throw Err() << "empty signal";
 
-    if (strcasecmp(f, "txt")==0){
-      flt_txt(std::cout, sig);
-    }
-    else if (strcasecmp(f, "pnm")==0){
-      flt_pnm(std::cout, sig, W,H);
-    }
-    else if (strcasecmp(f, "fft_txt")==0){
-       flt_fft_txt(std::cout, sig, fmin,fmax);
-    }
-    else if (strcasecmp(f, "fft_pow_avr")==0){
-       flt_fft_pow_avr(std::cout, sig, fmin,fmax, npts);
-    }
-    else if (strcasecmp(f, "fft_pow_lavr")==0){
-       flt_fft_pow_lavr(std::cout, sig, fmin,fmax, npts);
-    }
-    else if (strcasecmp(f, "fft_pow_avr_corr")==0){
-       flt_fft_pow_avr_corr(std::cout, sig, fmin,fmax, npts);
-    }
-    else if (strcasecmp(f, "fft_pow_lavr_corr")==0){
-       flt_fft_pow_lavr_corr(std::cout, sig, fmin,fmax, npts);
-    }
-    else if (strcasecmp(f, "sfft_txt")==0){
-      flt_sfft_txt(std::cout, sig, fmin,fmax, win);
-    }
-    else if (strcasecmp(f, "sfft_int")==0){
-      flt_sfft_int(std::cout, sig, fmin,fmax, win);
-    }
-    else if (strcasecmp(f, "sfft_pnm")==0){
-       flt_sfft_pnm(std::cout, sig, fmin ,fmax, win, W,H);
-    }
-    else if (strcasecmp(f, "sfft_pnm_ad")==0){
-       flt_sfft_pnm_ad(std::cout, sig, fmin, fmax, W,H);
-    }
-    else if (strcasecmp(f, "fit")==0){
-      fit(std::cout, sig, fmin,fmax);
-    }
-    else if (strcasecmp(f, "fit2")==0){
-      fit2(std::cout, sig, fmin,fmax);
-    }
-    else if (strcasecmp(f, "lockin")==0){
-      lockin(std::cout, sig, fmin,fmax);
-    }
-    else if (strcasecmp(f, "minmax")==0){
-      minmax(std::cout, sig);
-    }
-    else if (strcasecmp(f, "sigf")==0){
-      write_sigf(std::cout, sig, fmin, fmax);
-    }
-    else if (strcasecmp(f, "sig")==0){
-      write_sig(std::cout, sig);
-    }
-    else if (strcasecmp(f, "wav")==0){
-      write_wav(std::cout, sig);
-    }
-
-//    else if (strcasecmp(f, "crop")==0){
-//      crop(std::cout, sig, fmin,fmax);
-//    }
+    if (strcasecmp(f, "txt")==0)                    flt_txt(std::cout, sig);
+    else if (strcasecmp(f, "pnm")==0)               flt_pnm(std::cout, sig, W,H);
+    else if (strcasecmp(f, "fft_txt")==0)           flt_fft_txt(std::cout, sig, fmin,fmax);
+    else if (strcasecmp(f, "fft_pow_avr")==0)       flt_fft_pow_avr(std::cout, sig, fmin,fmax, npts);
+    else if (strcasecmp(f, "fft_pow_lavr")==0)      flt_fft_pow_lavr(std::cout, sig, fmin,fmax, npts);
+    else if (strcasecmp(f, "fft_pow_avr_corr")==0)  flt_fft_pow_avr_corr(std::cout, sig, fmin,fmax, npts);
+    else if (strcasecmp(f, "fft_pow_lavr_corr")==0) flt_fft_pow_lavr_corr(std::cout, sig, fmin,fmax, npts);
+    else if (strcasecmp(f, "sfft_txt")==0)          flt_sfft_txt(std::cout, sig, fmin,fmax, win);
+    else if (strcasecmp(f, "sfft_int")==0)          flt_sfft_int(std::cout, sig, fmin,fmax, win);
+    else if (strcasecmp(f, "sfft_pnm")==0)          flt_sfft_pnm(std::cout, sig, fmin ,fmax, win, W,H);
+    else if (strcasecmp(f, "sfft_pnm_ad")==0)       flt_sfft_pnm_ad(std::cout, sig, fmin, fmax, W,H);
+    else if (strcasecmp(f, "fit")==0)               fit(std::cout, sig, fmin,fmax);
+    else if (strcasecmp(f, "fit2")==0)              fit2(std::cout, sig, fmin,fmax);
+    else if (strcasecmp(f, "lockin")==0)            lockin(std::cout, sig, fmin,fmax);
+    else if (strcasecmp(f, "minmax")==0)            minmax(std::cout, sig);
+    else if (strcasecmp(f, "sigf")==0)              write_sigf(std::cout, sig, fmin, fmax);
+    else if (strcasecmp(f, "sig")==0)               write_sig(std::cout, sig);
+    else if (strcasecmp(f, "wav")==0)               write_wav(std::cout, sig);
+//    else if (strcasecmp(f, "crop")==0)            crop(std::cout, sig, fmin,fmax);
     else throw Err() << "Unknown filter: " << f;
   }
 
