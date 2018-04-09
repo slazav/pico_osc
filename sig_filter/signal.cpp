@@ -812,7 +812,7 @@ flt_sfft_int(ostream & ff, const Signal & s, double fmin, double fmax, int win) 
 /******************************************************************/
 
 void
-flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, int win, int W, int H) {
+flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, double amin, double amax, int win, int W, int H) {
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -824,7 +824,7 @@ flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, int win, 
   double df;
   fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
 
-  dImage pic(W,H,0);
+  dImage pic(W,H,0, amin, amax);
 
   for (int x = 0; x<W; x++){
     int il = ((double)(N-win)*x)/(W-1); // be worry about int overfull
@@ -838,7 +838,8 @@ flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, int win, 
       double v1 = fft.abs(fi);
       double v2 = fft.abs(fi+1);
       double v = (v1 + (f/df-fi)*(v2-v1))/win;
-      pic.set(x,y,log(v));
+      v=log(v);
+      pic.set(x,y,v);
     }
   }
   pic.print_pnm(ff);
@@ -847,7 +848,7 @@ flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, int win, 
 /******************************************************************/
 
 void
-flt_sfft_pnm_ad(ostream & ff, const Signal & s, double fmin, double fmax, int W, int H) {
+flt_sfft_pnm_ad(ostream & ff, const Signal & s, double fmin, double fmax, double amin, double amax, int W, int H) {
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -898,7 +899,7 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, double fmin, double fmax, int W,
   }
 
   // second pass
-  dImage pic(W,H,0);
+  dImage pic(W,H,0, amin, amax);
   for (int is = 0; is<start.size()-1; is++){
     int win = start[is+1]-start[is];
 
@@ -917,7 +918,7 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, double fmin, double fmax, int W,
       double v1 = fft.abs(fi);
       double v2 = fft.abs(fi+1);
       double v = (v1 + (f/df-fi)*(v2-v1))/win;
-      for (int x=x1; x<x2; x++) pic.set(x,y,v);
+      for (int x=x1; x<x2; x++) pic.set(x,y,log(v));
     }
   }
   pic.print_pnm(ff);

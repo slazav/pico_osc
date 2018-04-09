@@ -110,10 +110,10 @@ void flt_sfft_txt(std::ostream & ff, const Signal & s, double fmin, double fmax,
 void flt_sfft_int(std::ostream & ff, const Signal & s, double fmin, double fmax, int win);
 
 // PNM with sliding fft. Blackman window. 1st channel
-void flt_sfft_pnm(std::ostream & ff, const Signal & s, double fmin, double fmax, int win, int W, int H);
+void flt_sfft_pnm(std::ostream & ff, const Signal & s, double fmin, double fmax, double amin, double amax, int win, int W, int H);
 
 // Adaptive window, no smoothing. Blackman window.
-void flt_sfft_pnm_ad(std::ostream & ff, const Signal & s, double fmin, double fmax, int W, int H);
+void flt_sfft_pnm_ad(std::ostream & ff, const Signal & s, double fmin, double fmax, double amin, double amax, int W, int H);
 
 // Print t-a-f table. Adaptive window, no smoothing. Blackman window.
 //void taf_ad(std::ostream & ff, const Signal & s, double fmin, double fmax);

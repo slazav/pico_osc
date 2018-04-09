@@ -11,7 +11,10 @@
 class dImage:std::vector<double> {
   public:
   int w,h;
-  dImage(int w_, int h_, double v):w(w_),h(h_),vector(w_*h_,v){}
+  double amin,amax;
+  dImage(int w_, int h_, double v,
+         double amin_=-HUGE_VAL, double amax_=+HUGE_VAL):
+         w(w_),h(h_),amin(amin_),amax(amax_),vector(w_*h_,v){}
 
   double get(int x, int y) const {return (*this)[w*y+x];}
   void   set(int x, int y, double v) { (*this)[w*y+x] = v;}
@@ -26,6 +29,9 @@ class dImage:std::vector<double> {
         if (get(x,y) < cmin) cmin = get(x,y);
       }
     }
+    std::cerr << "picture min: " << cmin << " max: " << cmax << "\n";
+    if (amin!=-HUGE_VAL) cmin=amin;
+    if (amax!=+HUGE_VAL) cmax=amax;
     simple_rainbow sr(cmin, cmax, RAINBOW_BURNING1);
     // print data
     ff << "P6\n" << w << " " << h << "\n255\n";

@@ -43,6 +43,9 @@ void help(){
           " -F <num>  -- min frequency\n"
           " -G <num>  -- max frequency\n"
           "              Used in filters with fft calculation.\n"
+          " -A <num>  -- min amplitude\n"
+          " -B <num>  -- max amplitude\n"
+          "              Used in filters with fft pnm output.\n"
           " -w <num>  -- fft window for sliding fft filters, 1024 by default\n"
           " -N <num>  -- number of points (for fft_pow_avr, fft_pow_lavr), 1024 by default\n"
           " -f <name> -- filter type:\n"
@@ -81,6 +84,8 @@ main(int argc, char *argv[]){
     double tmax = +HUGE_VAL;
     double fmin = -HUGE_VAL;
     double fmax = +HUGE_VAL;
+    double amin = -HUGE_VAL;
+    double amax = +HUGE_VAL;
     char f_def[] = "txt";
     char *f = f_def;
     int W=1024, H=768;
@@ -89,7 +94,7 @@ main(int argc, char *argv[]){
 
     /* parse  options */
     while(1){
-      int c = getopt(argc, argv, "hf:c:T:U:W:H:F:G:w:N:");
+      int c = getopt(argc, argv, "hf:c:T:U:W:H:F:G:A:B:w:N:");
       if (c==-1) break;
       switch (c){
         case '?':
@@ -103,6 +108,8 @@ main(int argc, char *argv[]){
         case 'H': H = atoi(optarg); break;
         case 'F': fmin = atof(optarg); break;
         case 'G': fmax = atof(optarg); break;
+        case 'A': amin = atof(optarg); break;
+        case 'B': amax = atof(optarg); break;
         case 'w': win = atoi(optarg); break;
         case 'N': npts = atoi(optarg); break;
       }
@@ -130,8 +137,8 @@ main(int argc, char *argv[]){
     else if (strcasecmp(f, "fft_pow_lavr_corr")==0) flt_fft_pow_lavr_corr(std::cout, sig, fmin,fmax, npts);
     else if (strcasecmp(f, "sfft_txt")==0)          flt_sfft_txt(std::cout, sig, fmin,fmax, win);
     else if (strcasecmp(f, "sfft_int")==0)          flt_sfft_int(std::cout, sig, fmin,fmax, win);
-    else if (strcasecmp(f, "sfft_pnm")==0)          flt_sfft_pnm(std::cout, sig, fmin ,fmax, win, W,H);
-    else if (strcasecmp(f, "sfft_pnm_ad")==0)       flt_sfft_pnm_ad(std::cout, sig, fmin, fmax, W,H);
+    else if (strcasecmp(f, "sfft_pnm")==0)          flt_sfft_pnm(std::cout, sig, fmin ,fmax, amin, amax, win, W,H);
+    else if (strcasecmp(f, "sfft_pnm_ad")==0)       flt_sfft_pnm_ad(std::cout, sig, fmin, fmax, amin, amax, W,H);
     else if (strcasecmp(f, "fit")==0)               fit(std::cout, sig, fmin,fmax);
     else if (strcasecmp(f, "fit2")==0)              fit2(std::cout, sig, fmin,fmax);
     else if (strcasecmp(f, "lockin")==0)            lockin(std::cout, sig, fmin,fmax);
