@@ -2,7 +2,9 @@
 #include <cstdlib> // atoi
 #include <unistd.h> // usleep
 #include <fstream>
+#include <iomanip>
 #include <cmath>
+#include <time.h>
 #include "pico_int.h"
 #include "err.h"
 
@@ -139,17 +141,24 @@ PicoInt::cmd(const vector<string> & args){
     cout << "#OK\n" << flush;
     usleep(npost*dt*1e6);
     while (!is_ready()) usleep(1000);
-    time_t t0abs = time(NULL); // system time of last record
+    struct timespec t0abs;
+    if (clock_gettime(CLOCK_REALTIME, &t0abs)!=0)
+      throw Err() << "Can't get system time";
 
     int16_t ov;
     get_block(0, &N, &ov);
 
-    double t0 = get_trig() - npre*dt + T.del*dt;
-    t0abs += round(-dt*(double)N+t0); // system time of trigger position
+    double t0 = get_trig() - npre*dt + T.del*dt; // time of the first sample from the trigger (usually negative)
+    double tlen = dt*N; // signal length from trigger to the end in seconds
+    long ds = round(tlen); // second correction
+    long dns = round(1e9*(tlen-ds)); // nanosecond correction
+    t0abs.tv_sec -= ds;
+    t0abs.tv_nsec -= dns;
+    while (t0abs.tv_nsec<0){ t0abs.tv_sec+=1; t0abs.tv_nsec+=1e9; }
 
 
     ff << "*SIG001\n";
-    ff << "# " << ctime(&t0abs) << "\n";
+    ff << "# " << ctime(&(t0abs.tv_sec)) << "\n";
     ff << "\n# Oscilloscope settings:\n";
     ff << scientific;
     for (ic = chconf.begin(); ic!= chconf.end(); ic++){
@@ -165,7 +174,9 @@ PicoInt::cmd(const vector<string> & args){
     ff << "  points:   " << N  << "  # number of points\n"
        << "  dt:       " << dt << "  # time step\n"
        << "  t0:       " << t0 << "  # relative time of the first sample\n"
-       << "  t0abs:    " << t0abs << "  # system time of trigger position\n";
+       << "  t0abs:    " << t0abs.tv_sec << "."
+                         << setw(9) << setfill('0') << t0abs.tv_nsec
+                         << "  # system time of trigger position\n";
 
     ff << "\n# Data channels (osc channel, scale factor, overload):\n";
     for (int j=0; j<chans.size(); j++){
