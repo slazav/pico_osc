@@ -808,6 +808,105 @@ flt_sfft_int(ostream & ff, const Signal & s, double fmin, double fmax, int win) 
   }
 }
 
+/******************************************************************/
+void
+flt_sfft_peaks(ostream & ff, const Signal & s, double fmin, double fmax, int win, double th) {
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch=0;
+
+  FFT fft(win);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+
+  // for each time bin do fft and find peaks
+  for (int iw=0; iw<N-win; iw+=win){
+    fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
+
+    // array for peak "sizes"
+    vector<double> e(i2f-i1f, 0.0);
+
+    // for all peak widths from 1 to 20
+    for (int W=1; W<20; W++) {
+      if (e.size()<=2*W) continue; // too few points
+
+      // for each peak position
+      for (int i=i1f+W; i<i2f-W-1; i++){
+        double x0 = i*df;
+        double y0 = fft.abs(i);
+        double sum = 0.0;
+        int sumn = 0;
+        for (int j=-W; j<=W; j++) {
+          double x = (i+j)*df;
+          double y = fft.abs(i+j)/y0;
+          // model peak with width 4*W, f(x)
+          // (we will look only at the central part, -W:W)
+          double f = 1/(pow(x-x0,2) + pow(4*W,2));
+          // find mean square difference
+          sum+=pow(y-f,2); sumn++;
+        }
+        sum=sqrt(sum/sumn);
+        // find the best width
+        if (e[i-i1f] < 1/sum) e[i-i1f] = 1/sum;
+      }
+    }
+
+    // find mean value for e vector
+    double eavr=0.0; int eavrn=0;
+    for (int i = i1f; i<i2f; i++){
+      eavr+=e[i-i1f]; eavrn++;
+    }
+    eavr/=eavrn;
+
+    // now select peaks which are above threshold
+    ff << s.t0 + s.dt*(iw+win/2);
+    for (int i = i1f+1; i<i2f-1; i++){
+      double v = e[i-i1f]/eavr;
+      double vp = e[i-i1f+1]/eavr;
+      double vn = e[i-i1f-1]/eavr;
+      if (v>th && v>vn && v>vp){
+        ff << "\t" << i*df << " " << fft.abs(i);
+      }
+    }
+    ff << "\n";
+  }
+}
+
+
+/******************************************************************/
+void
+flt_sfft_steps(ostream & ff, const Signal & s, double fmin, double fmax, int win, double th) {
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch=0;
+
+  FFT fft(win);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+
+  // array for previouse line
+  vector<double> p(i2f-i1f, 0.0);
+
+  for (int iw=0; iw<N-win; iw+=win){
+    fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
+    if (iw!=0){
+      // calculate distance between this line and previous line
+      double dist=0; int distn=0;
+      for (int i=i1f; i<i2f; i++){
+        dist += pow(p[i-i1f] - fft.abs(i), 2); distn++;
+      }
+      if (dist/distn > th) ff << s.t0 + s.dt*(iw+win/2) << '\t' << dist/distn << '\n';
+    }
+    // save previous line
+    for (int i=i1f; i<i2f; i++) p[i-i1f] = fft.abs(i);
+  }
+}
 
 /******************************************************************/
 
@@ -839,9 +938,26 @@ flt_sfft_pnm(ostream & ff, const Signal & s, double fmin, double fmax, double am
       double v2 = fft.abs(fi+1);
       double v = (v1 + (f/df-fi)*(v2-v1))/win;
       v=log(v);
+// if (x>0) v-=pic.get(0,y);
       pic.set(x,y,v);
     }
   }
+
+/*
+  int W0=100;
+  vector<double> avr(H);
+  for (int y = 0; y<H; y++){
+    avr[y] = 0;
+    for (int x = 0; x<W0; x++) avr[y] += pic.get(x,y);
+    avr[y] /= W0;
+  }
+  for (int y = 0; y<H; y++){
+    for (int x = 0; x<W; x++) pic.set(x,y, pic.get(x,y)-avr[y]);
+  }
+*/
+
+
+//for (int y = 0; y<H; y++) pic.set(0,y,0);
   pic.print_pnm(ff);
 }
 

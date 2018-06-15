@@ -109,6 +109,12 @@ void flt_sfft_txt(std::ostream & ff, const Signal & s, double fmin, double fmax,
 // Text table with sliding fft integral. Blackman window. 1st channel
 void flt_sfft_int(std::ostream & ff, const Signal & s, double fmin, double fmax, int win);
 
+// Sliding fft + peak detection. Blackman window. 1st channel
+void flt_sfft_peaks(std::ostream & ff, const Signal & s, double fmin, double fmax, int win, double th);
+
+// Sliding fft + step detection. Blackman window. 1st channel
+void flt_sfft_steps(std::ostream & ff, const Signal & s, double fmin, double fmax, int win, double th);
+
 // PNM with sliding fft. Blackman window. 1st channel
 void flt_sfft_pnm(std::ostream & ff, const Signal & s, double fmin, double fmax, double amin, double amax, int win, int W, int H);
 

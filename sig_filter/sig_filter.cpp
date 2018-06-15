@@ -48,6 +48,7 @@ void help(){
           "              Used in filters with fft pnm output.\n"
           " -w <num>  -- fft window for sliding fft filters, 1024 by default\n"
           " -N <num>  -- number of points (for fft_pow_avr, fft_pow_lavr), 1024 by default\n"
+          " -t <num>  -- threshold for peak detection (for sfft_peaks), default: 2.5\n"
           " -f <name> -- filter type:\n"
           "     txt (default) -- Print a text table with all channels.\n"
           "     pnm           -- Make image with all channels.\n"
@@ -58,6 +59,8 @@ void help(){
           "     fft_pow_lavr_corr -- same but in log scale\n"
           "     sfft_txt      -- Text table with sliding fft. Blackman window.\n"
           "     sfft_int      -- Text table with sliding fft integral. Blackman window.\n"
+          "     sfft_peaks    -- Sliding fft + peak detection.\n"
+          "     sfft_steps    -- Sliding fft + step detection.\n"
           "     sfft_pnm      -- PNM with sliding fft. Blackman window.\n"
           "     sfft_pnm_ad   -- Adaptive window, no smoothing. Blackman window.\n"
           "     fit           -- Fit fork signal (exponential decay, constant frequency).\n"
@@ -86,6 +89,7 @@ main(int argc, char *argv[]){
     double fmax = +HUGE_VAL;
     double amin = -HUGE_VAL;
     double amax = +HUGE_VAL;
+    double th=2.5;
     char f_def[] = "txt";
     char *f = f_def;
     int W=1024, H=768;
@@ -94,7 +98,7 @@ main(int argc, char *argv[]){
 
     /* parse  options */
     while(1){
-      int c = getopt(argc, argv, "hf:c:T:U:W:H:F:G:A:B:w:N:");
+      int c = getopt(argc, argv, "hf:c:T:U:W:H:F:G:A:B:w:N:t:");
       if (c==-1) break;
       switch (c){
         case '?':
@@ -112,6 +116,7 @@ main(int argc, char *argv[]){
         case 'B': amax = atof(optarg); break;
         case 'w': win = atoi(optarg); break;
         case 'N': npts = atoi(optarg); break;
+        case 't': th = atof(optarg); break;
       }
     }
     argc-=optind;
@@ -137,6 +142,8 @@ main(int argc, char *argv[]){
     else if (strcasecmp(f, "fft_pow_lavr_corr")==0) flt_fft_pow_lavr_corr(std::cout, sig, fmin,fmax, npts);
     else if (strcasecmp(f, "sfft_txt")==0)          flt_sfft_txt(std::cout, sig, fmin,fmax, win);
     else if (strcasecmp(f, "sfft_int")==0)          flt_sfft_int(std::cout, sig, fmin,fmax, win);
+    else if (strcasecmp(f, "sfft_peaks")==0)        flt_sfft_peaks(std::cout, sig, fmin,fmax, win, th);
+    else if (strcasecmp(f, "sfft_steps")==0)        flt_sfft_steps(std::cout, sig, fmin,fmax, win, th);
     else if (strcasecmp(f, "sfft_pnm")==0)          flt_sfft_pnm(std::cout, sig, fmin ,fmax, amin, amax, win, W,H);
     else if (strcasecmp(f, "sfft_pnm_ad")==0)       flt_sfft_pnm_ad(std::cout, sig, fmin, fmax, amin, amax, W,H);
     else if (strcasecmp(f, "fit")==0)               fit(std::cout, sig, fmin,fmax);
