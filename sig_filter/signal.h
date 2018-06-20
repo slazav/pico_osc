@@ -69,7 +69,7 @@ Signal read_sig(std::istream & ff);
 Signal read_wav(std::istream & ff);
 
 /***********************************************************/
-// "Filters": process a signal and write results
+// Writing signals
 
 // write SIG format
 void write_sig(std::ostream & ff, const Signal & sig);
@@ -79,67 +79,5 @@ void write_sigf(std::ostream & ff, const Signal & sig, double fmin, double fmax)
 
 // write WAV format
 void write_wav(std::ostream & ff, const Signal & sig);
-
-
-
-// print a simple x-y text table
-void flt_txt(std::ostream & ff, const Signal & s);
-
-// make image with a raw signal
-void flt_pnm(std::ostream & ff, const Signal & s, int W, int H);
-
-// fft of the whole signal, txt table. Rectangular window
-void flt_fft_txt(std::ostream & ff, const Signal & s, double fmin, double fmax);
-
-// FFT power, reduced number of points. V^2/Hz output
-void flt_fft_pow_avr(std::ostream & ff, const Signal & s, double fmin, double fmax, int npts);
-
-// same but log scale.
-void flt_fft_pow_lavr(std::ostream & ff, const Signal & s, double fmin, double fmax, int npts);
-
-// FFT power, reduced number of points. V^2/Hz output. ch 1+2 correlaton
-void flt_fft_pow_avr_corr(std::ostream & ff, const Signal & s, double fmin, double fmax, int npts);
-
-// same but log scale.
-void flt_fft_pow_lavr_corr(std::ostream & ff, const Signal & s, double fmin, double fmax, int npts);
-
-// Text table with sliding fft. Blackman window. 1st channel
-void flt_sfft_txt(std::ostream & ff, const Signal & s, double fmin, double fmax, int win);
-
-// Text table with sliding fft integral. Blackman window. 1st channel
-void flt_sfft_int(std::ostream & ff, const Signal & s, double fmin, double fmax, int win);
-
-// Sliding fft + peak detection. Blackman window. 1st channel
-void flt_sfft_peaks(std::ostream & ff, const Signal & s, double fmin, double fmax, int win, double th);
-
-// Sliding fft + step detection. Blackman window. 1st channel
-void flt_sfft_steps(std::ostream & ff, const Signal & s, double fmin, double fmax, int win, double th);
-
-// PNM with sliding fft. Blackman window. 1st channel
-void flt_sfft_pnm(std::ostream & ff, const Signal & s, double fmin, double fmax, double amin, double amax, int win, int W, int H);
-
-// Adaptive window, no smoothing. Blackman window.
-void flt_sfft_pnm_ad(std::ostream & ff, const Signal & s, double fmin, double fmax, double amin, double amax, int W, int H);
-
-// Print t-a-f table. Adaptive window, no smoothing. Blackman window.
-//void taf_ad(std::ostream & ff, const Signal & s, double fmin, double fmax);
-
-// fit fork signal (exponential decay, constant frequency)
-void fit(std::ostream & ff, const Signal & s, double fmin, double fmax);
-
-// fit two-fork signal (sort by frequency)
-void fit2(std::ostream & ff, Signal & s, double fmin, double fmax);
-
-// fit fork signal (exponential decay, constant frequency)
-void lockin(std::ostream & ff, const Signal & s, double fmin, double fmax);
-
-// print min/max values
-void minmax(std::ostream & ff, const Signal & s);
-
-// print sigf file (filtered fft)
-void sigf(std::ostream & ff, Signal & s, double fmin, double fmax);
-
-// Remove unwanted time ans frequency.
-//void crop(std::ostream & ff, const Signal & s, double fmin, double fmax);
 
 #endif

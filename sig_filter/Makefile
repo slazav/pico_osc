@@ -28,7 +28,7 @@ test: testsig sig_filter
 #	./sig_filter -f sfft_txt test.dat > test_sfft.txt
 
 
-sig_filter: sig_filter.o signal.o rainbow.o fit_signal.o
+sig_filter: sig_filter.o signal.o filters.o rainbow.o fit_signal.o
 testsig: testsig.o
 wav2sig: wav2sig.o signal.o rainbow.o fit_signal.o
 sig2wav: sig2wav.o signal.o rainbow.o fit_signal.o
@@ -38,6 +38,7 @@ sig_filter.o: ../pico_rec/err.h signal.h  sig_filter.cpp
 
 wav2sig.o: ../pico_rec/err.h signal.h  wav2sig.cpp
 sig2wav.o: ../pico_rec/err.h signal.h  sig2wav.cpp
+filters.o: ../pico_rec/err.h signal.h  filters.cpp
 
 
 rainbow.o: rainbow.h
