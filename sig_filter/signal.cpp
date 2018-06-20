@@ -29,6 +29,8 @@ Signal::crop_t(double tmin, double tmax){
   // adjust tmin/tmax
   if (tmax<tmin) std::swap(tmax, tmin);
   if (tmax > t0 + n*dt) tmax = t0 + n*dt;
+  if (tmin > t0 + n*dt) tmin = t0 + n*dt;
+  if (tmax < t0) tmax = t0;
   if (tmin < t0) tmin = t0;
   // select time indices
   size_t i1t = std::max(0.0,  floor((tmin-t0)/dt));
