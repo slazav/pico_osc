@@ -64,6 +64,7 @@ main(int argc, char *argv[]){
     double sc = max/(1<<15);
 
     cout << "*SIG001\n"
+         << "  points:   " << N << "\n"
          << "  dt:       " << dt << "\n"
          << "  t0:       " << 0 << "\n"
          << "  chan: A "   << sc << " 0\n"

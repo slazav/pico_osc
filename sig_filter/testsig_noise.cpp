@@ -36,7 +36,7 @@ main(int argc, char *argv[]){
       switch (c){
         case '?':
         case ':': continue; /* error msg is printed by getopt*/
-        case 'N': N   = atoi(optarg); break;
+        case 'N': N   = atof(optarg); break;
         case 'D': dt  = atof(optarg); break;
         case 'A': A = atof(optarg); break;
         case 'c': C = atof(optarg); break;
@@ -61,6 +61,7 @@ main(int argc, char *argv[]){
     double sc = (a0 + std::max(a1,a2))/(1<<15);
 
     cout << "*SIG001\n"
+         << "  points:   " << N << "\n"
          << "  dt:       " << dt << "\n"
          << "  t0:       " << 0 << "\n"
          << "  chan: A "   << sc << " 0\n"
