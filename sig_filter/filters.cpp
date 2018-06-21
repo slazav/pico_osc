@@ -829,15 +829,19 @@ lockin(ostream & ff, const Signal & s, const int argc, char **argv) {
   const char *name = "lockin";
 
   double fmin=0, fmax=+HUGE_VAL;
+  int ch_sig = 0;
+  int ch_ref = 1;
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:");
+    int c = getopt(argc, argv, "+F:G:s:r:");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
       case ':': throw Err() << name << ": no argument: -" << (char)optopt;
       case 'F': fmin = atof(optarg); break;
       case 'G': fmax = atof(optarg); break;
+      case 's': ch_sig = atoi(optarg); break;
+      case 'r': ch_ref = atoi(optarg); break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
@@ -845,9 +849,7 @@ lockin(ostream & ff, const Signal & s, const int argc, char **argv) {
   int N  = s.get_n();
   int cN  = s.get_ch();
   if (N<1) return;
-  if (cN<2) throw Err() << "at least two channels are needed";
-  int ch_sig = 0;
-  int ch_ref = 1;
+  if (cN<ch_ref || cN<ch_sig) throw Err() << "Signal or reference channel exeeds total number of channels";
 
   // get frequncy and phase of the reference signal
   vector<double> ret = ::fit_signal(
@@ -866,6 +868,66 @@ lockin(ostream & ff, const Signal & s, const int argc, char **argv) {
      << setprecision(6)  << 2*ss2/N << "\n";
 
 }
+
+/******************************************************************/
+void
+slockin(ostream & ff, const Signal & s, const int argc, char **argv) {
+  const char *name = "slockin";
+
+  double fmin=0, fmax=+HUGE_VAL;
+  int win = 1024;
+  int ch_sig = 0;
+  int ch_ref = 1;
+  double fre = 0;
+  double ph  = 0;
+  // parse options (opterr==0, optint==1)
+  while(1){
+    int c = getopt(argc, argv, "+F:G:w:r:s:f:p:");
+    if (c==-1) break;
+    switch (c){
+      case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
+      case ':': throw Err() << name << ": no argument: -" << (char)optopt;
+      case 'F': fmin = atof(optarg); break;
+      case 'G': fmax = atof(optarg); break;
+      case 'w': win  = atof(optarg); break;
+      case 's': ch_sig = atoi(optarg); break;
+      case 'r': ch_ref = atoi(optarg); break;
+      case 'f': fre    = atof(optarg); break;
+      case 'p': ph     = M_PI/180.0*atof(optarg); break;
+    }
+  }
+  if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
+
+
+  int N  = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1) return;
+  if (cN<ch_sig) throw Err() << "Signal channel exeeds total number of channels";
+
+  // if frequency is not set, extract frequency and phase from reference channel:
+  if (fre==0) {
+    if (cN<ch_ref) throw Err() << "Reference channel exeeds total number of channels";
+
+    vector<double> ret = ::fit_signal(
+      s.chan[ch_ref].data(), N, s.chan[ch_ref].sc, s.dt, s.t0, fmin, fmax);
+    fre = ret[0];
+    ph  = ret[3];
+  }
+
+  /// for each window
+  for (int iw=0; iw<N-win; iw+=win){
+    double ss1=0, ss2=0;
+    for (int i=iw; i<iw+win; i++){
+      double v = s.chan[ch_sig][i]*s.chan[ch_sig].sc;
+      ss1+= v*sin(2*M_PI*fre*s.dt*i + ph);
+      ss2+= v*cos(2*M_PI*fre*s.dt*i + ph);
+    }
+    ff << s.t0 + s.dt*(iw+win/2) << " "
+       << setprecision(6)  << 2*ss1/win << " "
+       << setprecision(6)  << 2*ss2/win << "\n";
+  }
+}
+
 
 /******************************************************************/
 void

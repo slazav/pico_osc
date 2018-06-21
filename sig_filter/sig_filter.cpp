@@ -104,12 +104,26 @@ void help(){
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
           "       -G <value>  -- high frequency limit\n"
-          "     lockin        -- Detect signal in channel 1 use channel 2 as a reference.\n"
+          "     lockin        -- Detect signal using another channel as reference.\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
           "       -G <value>  -- high frequency limit\n"
+          "       -s <value>  -- signal channel (default: 0)\n"
+          "       -r <value>  -- reference channel (default: 1)\n"
+          "     slockin       -- Sliding lockin.\n"
+          "       Options:\n"
+          "       -F <value>  -- low frequency limit\n"
+          "       -G <value>  -- high frequency limit\n"
+          "       -s <value>  -- signal channel (default: 0)\n"
+          "       -r <value>  -- reference channel (default: 1)\n"
+          "       -w <value>  -- window length (points)\n"
+          "       -f <value>  -- manually set frequency, do not use reference channel\n"
+          "       -p <value>  -- manually set phase (works only with -f, degrees, default: 0)\n"
           "     minmax        -- Print min/max values for each channel.\n"
           "     sigf          -- Print SIGF file (fft with frequency filtering).\n"
+          "       Options:\n"
+          "       -F <value>  -- low frequency limit\n"
+          "       -G <value>  -- high frequency limit\n"
           "     sig           -- Print SIG file.\n"
           "     wav           -- Print WAV file.\n"
   ;
@@ -170,6 +184,7 @@ main(int argc, char *argv[]){
     else if (strcasecmp(flt, "fit")==0)               fit(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "fit2")==0)              fit2(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "lockin")==0)            lockin(std::cout, sig, argc, argv);
+    else if (strcasecmp(flt, "slockin")==0)           slockin(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "minmax")==0)            minmax(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sigf")==0)              flt_sigf(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sig")==0)               flt_sig(std::cout, sig, argc, argv);
