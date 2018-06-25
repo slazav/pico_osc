@@ -7,25 +7,12 @@
 
 #include "signal.h"
 #include "filters.h"
+#include "str2vec.h"
 
 
 // unpack data written by pico_rec into x-y text table
 
 using namespace std;
-
-// convert a string with comma/space separated integer numbers into an integer vector
-vector<int> str2ivec(const char *str){
-  char *s, *t, *saveptr;
-  const char * delim="\n\t ,";
-  int j;
-  vector<int> ret;
-  for (j = 1, s = (char*)str; ; j++, s = NULL) {
-    t = strtok_r(s, delim, &saveptr);
-    if (t == NULL) break;
-    ret.push_back(atoi(t));
-  }
-  return ret;
-}
 
 // print help
 void help(){
@@ -38,7 +25,7 @@ void help(){
           "              Different filters use different number of channels.\n"
           " -T <num>  -- min time (default -infinity)\n"
           " -U <num>  -- max time (default +infinity)\n"
-          "              The signal is cut to the specified time range before filtering.\n"
+          "              If -T or -U is set the signal is cut to the specified time range before filtering.\n"
           "Filters:\n"
           "     txt -- Print a text table with all channels.\n"
           "       No filter options.\n"
@@ -79,6 +66,12 @@ void help(){
           "       -G <value>  -- high frequency limit\n"
           "       -w <value>  -- Window length (points)\n"
           "       -t <value>  -- Threshold (deefault 2.5)\n"
+          "     sfft_peak -- Sliding fft with Blackman window, detect peak near some line.\n"
+          "       Options:\n"
+          "       -T <value>  -- time array (comma- or space-separated)\n"
+          "       -F <value>  -- frequency array (comma- or space-separated)\n"
+          "       -w <value>  -- Window length (points)\n"
+          "       -f <value>  -- frequency window (default 20/dt/window)\n"
           "     sfft_pnm      -- Sliding fft with Blackman window, pnm picture\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
@@ -142,7 +135,7 @@ main(int argc, char *argv[]){
     /* parse  options */
     opterr=0;
     while(1){
-      int c = getopt(argc, argv, "+hf:c:T:U:");
+      int c = getopt(argc, argv, "+hf:c:T:U:C:D:");
       if (c==-1) break;
       switch (c){
         case '?': throw Err() << "Unknown option: -" << (char)optopt;
@@ -179,6 +172,7 @@ main(int argc, char *argv[]){
     else if (strcasecmp(flt, "sfft_int")==0)          flt_sfft_int(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_diff")==0)         flt_sfft_diff(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_peaks")==0)        flt_sfft_peaks(std::cout, sig, argc, argv);
+    else if (strcasecmp(flt, "sfft_peak")==0)         flt_sfft_peak(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_pnm")==0)          flt_sfft_pnm(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_pnm_ad")==0)       flt_sfft_pnm_ad(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "fit")==0)               fit(std::cout, sig, argc, argv);

@@ -1,6 +1,8 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <map>
+#include <algorithm>
 #include <stdint.h>
 #include <cstdlib> // atof
 #include <cstring>
@@ -18,6 +20,7 @@
 #include "fft.h"
 #include "fit_signal.h"
 #include "dimage.h"
+#include "str2vec.h"
 
 #define FTYPE double
 
@@ -564,6 +567,104 @@ flt_sfft_peaks(ostream & ff, const Signal & s, const int argc, char **argv) {
   }
 }
 
+/******************************************************************/
+
+void
+flt_sfft_peak(ostream & ff, const Signal & s, const int argc, char **argv) {
+  const char *name = "sfft_peak";
+
+  vector<double> tvec, fvec;
+  int win = 1024;
+  double fwin = 0;
+  // parse options (opterr==0, optint==1)
+  while(1){
+    int c = getopt(argc, argv, "+F:T:w:f:");
+    if (c==-1) break;
+    switch (c){
+      case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
+      case ':': throw Err() << name << ": no argument: -" << (char)optopt;
+      case 'F': fvec = str2dvec(optarg); break;
+      case 'T': tvec = str2dvec(optarg); break;
+      case 'w': win  = atof(optarg); break;
+      case 'f': fwin = atof(optarg); break;
+    }
+  }
+  if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
+
+  if (fwin==0) fwin = 20.0/(win*s.dt);
+
+  // Put fvec and tvec into a vector of double pairs, sort it
+  vector<pair<double,double> > hints;
+  vector<double>::const_iterator it1,it2;
+  for (it1=tvec.begin(),  it2=fvec.begin();
+       it1!=tvec.end() && it2!=fvec.end(); it1++, it2++){
+    hints.push_back(make_pair(*it1, *it2));
+  }
+  sort(hints.begin(), hints.end());
+  if (hints.size()<2) throw Err() << name
+    << ": lists of times and frequencies are expected (-T and -F options)";
+
+//  vector<pair<double,double> >::const_iterator i;
+//  for (i=hints.begin(); i!=hints.end(); i++){
+//    ff << "> " << i->first << " " << i->second << "\n";
+//  }
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int ch=0;
+
+  // find time indices
+  int i1 = ceil((hints.begin()->first - s.t0) / s.dt - win/2.0);
+  int i2 = floor((hints.rbegin()->first - s.t0) / s.dt + win/2.0);
+  if (i1<0) i1=0;
+  if (i2>=N) i2=N-1;
+  if (i2-i1 < win) throw Err() << name
+    << ": too short time range";
+
+  // find min/max freq
+  double fmin = *min_element(fvec.begin(), fvec.end());
+  double fmax = *max_element(fvec.begin(), fvec.end());
+  if (fmin<=0) throw Err() << name << ": negative or zero frequency";
+
+
+  FFT fft(win);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+
+
+  // for each time bin do fft and find peaks
+  for (int iw=i1; iw<i2-win; iw+=win){
+    fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
+
+    // get frequency for this time (linear interpolation of hints array)
+    double t0 = s.t0 + s.dt*(iw+win/2);
+    double f0 = 0;
+    vector<pair<double,double> >::const_iterator it;
+    for (it=hints.begin(); it!=hints.end()-1; it++){
+      if (it->first > t0 || (it+1)->first <= t0) continue;
+      f0 = it->second + ((it+1)->second - it->second)/
+                        ((it+1)->first - it->first)*(t0-it->first);
+    }
+    if (f0==0) throw Err() << name << ": can't get frequency for t=" << t0;
+
+    // frequency indices for the window around f0
+    int iw1f = (f0-fwin/2)/df;
+    int iw2f = (f0+fwin/2)/df;
+    if (iw1f<i1f) iw1f=i1f;
+    if (iw2f>=i2f) iw2f=i2f;
+
+    // find peak position (just a maximum)
+    double pind = iw1f;
+    for (int i=iw1f; i<iw2f; i++){
+      if (fft.abs(pind) < fft.abs(i)) pind=i;
+    }
+
+    std::cerr << t0 << " " << pind*df << " " << fft.abs(pind) << "\n";
+  }
+
+}
 
 
 /******************************************************************/
