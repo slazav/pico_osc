@@ -1006,24 +1006,27 @@ slockin(ostream & ff, const Signal & s, const int argc, char **argv) {
   int cN  = s.get_ch();
   if (N<1) return;
   if (cN<ch_sig) throw Err() << "Signal channel exeeds total number of channels";
+  bool use_ref = (fre==0);
 
-  // if frequency is not set, extract frequency and phase from reference channel:
-  if (fre==0) {
-    if (cN<ch_ref) throw Err() << "Reference channel exeeds total number of channels";
-
-    vector<double> ret = ::fit_signal(
-      s.chan[ch_ref].data(), N, s.chan[ch_ref].sc, s.dt, s.t0, fmin, fmax);
-    fre = ret[0];
-    ph  = ret[3];
-  }
 
   /// for each window
   for (int iw=0; iw<N-win; iw+=win){
+
+    // if frequency is not set, extract frequency and phase from reference channel:
+    if (use_ref) {
+      if (cN<ch_ref) throw Err() << "Reference channel exeeds total number of channels";
+
+      vector<double> ret = ::fit_signal(
+        s.chan[ch_ref].data()+iw, win, s.chan[ch_ref].sc, s.dt, 0, fmin, fmax);
+      fre = ret[0];
+      ph  = ret[3];
+    }
+
     double ss1=0, ss2=0;
     for (int i=iw; i<iw+win; i++){
       double v = s.chan[ch_sig][i]*s.chan[ch_sig].sc;
-      ss1+= v*sin(2*M_PI*fre*s.dt*i + ph);
-      ss2+= v*cos(2*M_PI*fre*s.dt*i + ph);
+      ss1+= v*sin(2*M_PI*fre*s.dt*(i-iw) + ph);
+      ss2+= v*cos(2*M_PI*fre*s.dt*(i-iw) + ph);
     }
     ff << s.t0 + s.dt*(iw+win/2) << " "
        << setprecision(6)  << 2*ss1/win << " "
