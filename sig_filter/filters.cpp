@@ -575,10 +575,11 @@ flt_sfft_peak(ostream & ff, const Signal & s, const int argc, char **argv) {
 
   vector<double> tvec, fvec;
   int win = 1024;
+  int stp = 0;
   double fwin = 0;
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:T:w:f:");
+    int c = getopt(argc, argv, "+F:T:w:f:s:");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -586,12 +587,14 @@ flt_sfft_peak(ostream & ff, const Signal & s, const int argc, char **argv) {
       case 'F': fvec = str2dvec(optarg); break;
       case 'T': tvec = str2dvec(optarg); break;
       case 'w': win  = atof(optarg); break;
+      case 's': stp  = atof(optarg); break;
       case 'f': fwin = atof(optarg); break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
 
   if (fwin==0) fwin = 20.0/(win*s.dt);
+  if (stp==0) stp = win;
 
   // Put fvec and tvec into a vector of double pairs, sort it
   vector<pair<double,double> > hints;
@@ -603,11 +606,6 @@ flt_sfft_peak(ostream & ff, const Signal & s, const int argc, char **argv) {
   sort(hints.begin(), hints.end());
   if (hints.size()<2) throw Err() << name
     << ": lists of times and frequencies are expected (-T and -F options)";
-
-//  vector<pair<double,double> >::const_iterator i;
-//  for (i=hints.begin(); i!=hints.end(); i++){
-//    ff << "> " << i->first << " " << i->second << "\n";
-//  }
 
   int N = s.get_n();
   int cN  = s.get_ch();
@@ -623,8 +621,8 @@ flt_sfft_peak(ostream & ff, const Signal & s, const int argc, char **argv) {
     << ": too short time range";
 
   // find min/max freq
-  double fmin = *min_element(fvec.begin(), fvec.end());
-  double fmax = *max_element(fvec.begin(), fvec.end());
+  double fmin = *min_element(fvec.begin(), fvec.end()) - fwin/2;
+  double fmax = *max_element(fvec.begin(), fvec.end()) + fwin/2;
   if (fmin<=0) throw Err() << name << ": negative or zero frequency";
 
 
@@ -633,9 +631,8 @@ flt_sfft_peak(ostream & ff, const Signal & s, const int argc, char **argv) {
   double df;
   fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
 
-
   // for each time bin do fft and find peaks
-  for (int iw=i1; iw<i2-win; iw+=win){
+  for (int iw=i1; iw<i2-win; iw+=stp){
     fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
 
     // get frequency for this time (linear interpolation of hints array)
@@ -654,15 +651,28 @@ flt_sfft_peak(ostream & ff, const Signal & s, const int argc, char **argv) {
     int iw2f = (f0+fwin/2)/df;
     if (iw1f<i1f) iw1f=i1f;
     if (iw2f>=i2f) iw2f=i2f;
-
     // find peak position (just a maximum)
     double pind = iw1f;
-    for (int i=iw1f; i<iw2f; i++){
+    for (int i=iw1f+1; i<iw2f-1; i++){
       if (fft.abs(pind) < fft.abs(i)) pind=i;
     }
 
-    ff << t0 << " " << pind*df << " "
-       << fft.abs(pind) << " "
+    double x1=(pind-1)*df, x2=pind*df, x3=(pind+1)*df;
+    double y1=fft.abs(pind-1), y2=fft.abs(pind), y3=fft.abs(pind+1);
+
+    //3-pt quadratic fit
+    double D = x1*x1*(x2-x3) + x3*x3*(x1-x2) + x2*x2*(x3-x1);
+    if (D==0) continue;
+    double A = (y1*(x2-x3) + y3*(x1-x2) + y2*(x3-x1)) / D;
+    double B = (x1*x1*(y2-y3) + x3*x3*(y1-y2) + x2*x2*(y3-y1)) / D;
+    double C = (x1*x1*(x2*y3-x3*y2) + x3*x3*(x1*y2-x2*y1) + x2*x2*(x3*y1-x1*y3)) / D;
+
+    double x0 = -B/(2*A);
+    double y0 = A*x0*x0 + B*x0 + C;
+
+    if (x0<x1 || x0>x3) {x0=x2; y0=y2;}
+
+    ff << t0 << " " << x0 << " " << (y1+y2+y3)/3 << " "
        << (fft.abs(iw1f)+fft.abs(iw2f))/2 << "\n";
   }
 
