@@ -1,9 +1,12 @@
 #!/usr/bin/python3
 # Command-line interface to PicoLog ADC24 data logger
+# It implements SPP command-line interface:
+#  https://github.com/slazav/tcl-device
 
 libname = "libpicohrdl.so.2"
 
-# try to open device, write error if it fails
+# First we try to open device, write #Error if it fails
+# and #OK otherwise.
 try:
   from sys import stdin
   import ctypes as ct
@@ -16,19 +19,25 @@ try:
   if dev==0: raise Exception("no device found")
   if dev<0: raise Exception("failed to open device")
 
-# can't open device
+# Can't load library, open device etc.
 except Exception as e:
   print("#Error: " + e.args[0])
   exit(0)
 
 print("#OK")
 
-# command loop
+# Command loop. At each step it reads a command and prints
+# either #Error or #OK. It stops when stdin channel is closed.
 for cmd in stdin:
   cmd = cmd.rstrip('\n')
   try:
+
+    # *IDN? command, just to check that client is working with
+    # a correct program.
     if (cmd == "*idn?"):
       print("pico_log program")
+
+    # INFO? command. Prints some information about the device.
     elif (cmd == "info?"):
       s = ct.create_string_buffer(10)
       names = ("Driver Version","USB Version","Hardware Version",\
@@ -37,17 +46,20 @@ for cmd in stdin:
       for n, name in zip(range(0,len(names)),names):
         ps.HRDLGetUnitInfo(dev,s,8,n)
         print(name + ": " + s.value.decode("utf-8"))
+
+    # Unknown command
     else:
       raise Exception("unknown command:" + cmd)
 
-    # if everything is fine
+    # If everything is fine, then print #OK
     print("#OK")
 
-  # if something is wrong
+  # If something is wrong (unknown command, or device errors),
+  # print Error
   except Exception as e:
     print("#Error: " + e.args[0])
 
-# silently close device
+# When channel is cloised just silently close device
 try:
   status = ps.HRDLCloseUnit(dev)
 except Exception as e:
