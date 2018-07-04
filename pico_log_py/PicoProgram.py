@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 author:willm2
@@ -16,13 +17,13 @@ class Application(tk.Frame):
 
         tk.Frame.__init__(self, master)
         #some attributes
-        
+
         print("Init")
         #create Layout
-        self.grid()  
+        self.grid()
 
         self.createWidgets()
-        
+
     def __enter__(self):
         print("Enter")
         self.DeviceOpenCheck()
@@ -74,7 +75,7 @@ class Application(tk.Frame):
     def DeviceOpenCheck(self):#checks if a device is connected and set button to green
         global Pico1
         Pico1 = DF.OpenDevice()
-        
+
         if Pico1==1:#green button if device connected/red if disconnected
             self.ConnectedDeviceButton_text.set("device %s connected"%Pico1)#,height=50
             #self.ConnectedDeviceButton.bg("green")
@@ -83,10 +84,10 @@ class Application(tk.Frame):
            #self.OpenCheck.bg("red")
            self.ConnectedDeviceButton_text.set("ERROR %s, no device connected"%Pico1)
            self.ConnectedDeviceButton.config(bg="red")
-           #self.OpenCheck.create_text(25,5,anchor="w",text="ERROR %s, no device connected"%Pico1,fill="red") 
-       
+           #self.OpenCheck.create_text(25,5,anchor="w",text="ERROR %s, no device connected"%Pico1,fill="red")
+
 #run the frame/application
 with Application() as app:
 #app = Application()
     app.mainloop()
-   
+

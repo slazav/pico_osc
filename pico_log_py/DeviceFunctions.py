@@ -4,7 +4,7 @@
 Created on Tue Apr 17 17:28:13 2018
 
 @author: willm2
-For this 
+For this
 """
 
 import ctypes as ct
@@ -19,9 +19,9 @@ def OpenDevice():
         print("Device opened with handle %s" % Pico1)
     elif Pico1 == 0:
         print("No device found.")
-    elif Pico1 == -1:    
+    elif Pico1 == -1:
         print("Failed to open device.")
-    return Pico1    
+    return Pico1
 
 def PrintInfo():#just prints spme information of the picolog
     global Pico1
@@ -32,7 +32,7 @@ def PrintInfo():#just prints spme information of the picolog
     for n in range(0,6):#getting the info from the driver function
         ps.HRDLGetUnitInfo(Pico1,Pico1Info,8,n)
         InfoString += InfoOption[n]+Pico1Info.value.decode("utf-8")+"\n"
-    return InfoString    
+    return InfoString
 
 def CloseDevice(device):#closes the device
     global Pico1
@@ -43,9 +43,9 @@ def CloseDevice(device):#closes the device
         print("Device %s closed."%Pico1)
     elif Status== 0:
         print("No device closed.")
-    elif Status == -1:    
-        print("All devices closed.")    
-    
+    elif Status == -1:
+        print("All devices closed.")
+
 def Printer(self):#some dummy function
     print(self)
     #some dummy function calls of the driver
