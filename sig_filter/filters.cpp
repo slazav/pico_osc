@@ -661,9 +661,9 @@ flt_sfft_peak(ostream & ff, const Signal & s, const int argc, char **argv) {
       if (fft.abs(pind) < fft.abs(i)) pind=i;
     }
 
-    std::cerr << t0 << " " << pind*df << " "
-              << fft.abs(pind) << " "
-              << (fft.abs(iw1f)+fft.abs(iw2f))/2 << "\n";
+    ff << t0 << " " << pind*df << " "
+       << fft.abs(pind) << " "
+       << (fft.abs(iw1f)+fft.abs(iw2f))/2 << "\n";
   }
 
 }
