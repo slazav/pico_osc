@@ -1,0 +1,54 @@
+#!/usr/bin/python3
+# Command-line interface to PicoLog ADC24 data logger
+
+libname = "libpicohrdl.so.2"
+
+# try to open device, write error if it fails
+try:
+  from sys import stdin
+  import ctypes as ct
+
+  # load library
+  ps = ct.CDLL(libname)
+
+  #open device
+  dev = ps.HRDLOpenUnit()
+  if dev==0: raise Exception("no device found")
+  if dev<0: raise Exception("failed to open device")
+
+# can't open device
+except Exception as e:
+  print("#Error: " + e.args[0])
+  exit(0)
+
+print("#OK")
+
+# command loop
+for cmd in stdin:
+  cmd = cmd.rstrip('\n')
+  try:
+    if (cmd == "*idn?"):
+      print("pico_log program")
+    elif (cmd == "info?"):
+      s = ct.create_string_buffer(10)
+      names = ("Driver Version","USB Version","Hardware Version",\
+               "Variant Info","Batch and Serial","Calibration Date",\
+               "Kernel driver Version")
+      for n, name in zip(range(0,len(names)),names):
+        ps.HRDLGetUnitInfo(dev,s,8,n)
+        print(name + ": " + s.value.decode("utf-8"))
+    else:
+      raise Exception("unknown command:" + cmd)
+
+    # if everything is fine
+    print("#OK")
+
+  # if something is wrong
+  except Exception as e:
+    print("#Error: " + e.args[0])
+
+# silently close device
+try:
+  status = ps.HRDLCloseUnit(dev)
+except Exception as e:
+  exit(0)
