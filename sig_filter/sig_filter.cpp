@@ -116,6 +116,7 @@ void help(){
           "       -w <value>  -- window length (points)\n"
           "       -f <value>  -- manually set frequency, do not use reference channel\n"
           "       -p <value>  -- manually set phase (works only with -f, degrees, default: 0)\n"
+          "     dc            -- Print mean value for each channel.\n"
           "     minmax        -- Print min/max values for each channel.\n"
           "     sigf          -- Print SIGF file (fft with frequency filtering).\n"
           "       Options:\n"
@@ -183,6 +184,7 @@ main(int argc, char *argv[]){
     else if (strcasecmp(flt, "fit2")==0)              fit2(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "lockin")==0)            lockin(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "slockin")==0)           slockin(std::cout, sig, argc, argv);
+    else if (strcasecmp(flt, "dc")==0)                dc(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "minmax")==0)            minmax(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sigf")==0)              flt_sigf(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sig")==0)               flt_sig(std::cout, sig, argc, argv);
