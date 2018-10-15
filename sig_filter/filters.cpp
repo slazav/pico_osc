@@ -1044,6 +1044,25 @@ slockin(ostream & ff, const Signal & s, const int argc, char **argv) {
   }
 }
 
+/******************************************************************/
+void
+dc(ostream & ff, const Signal & s, const int argc, char **argv) {
+  const char *name = "dc";
+  if (argc>1) throw Err() << name << ": extra argument found: " << argv[1];
+
+  int N  = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+
+  for (int c = 0; c<cN; c++){
+    double avr = 0;
+    for (int i=0; i<N; i++){
+      avr += s.chan[c][i]*s.chan[c].sc;
+    }
+    ff << setprecision(6)  << avr/N << "\n";
+  }
+}
+
 
 /******************************************************************/
 void
