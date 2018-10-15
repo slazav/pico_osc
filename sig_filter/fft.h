@@ -12,7 +12,7 @@
 // fft wrapper
 class FFT{
   // blackman window parameters
-  const static double a0=0.42659, a1=0.49656, a2=0.076849;
+  constexpr static double a0=0.42659, a1=0.49656, a2=0.076849;
 
   fftw_complex *cbuf;
   fftw_plan     plan;
