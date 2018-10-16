@@ -880,18 +880,20 @@ fit(ostream & ff, const Signal & s, const int argc, char **argv) {
 
 /******************************************************************/
 void
-fit2(ostream & ff, const Signal & s, const int argc, char **argv) {
-  const char *name = "fit2";
+fitn(ostream & ff, const Signal & s, const int argc, char **argv) {
+  const char *name = "fitn";
 
   double fmin=0, fmax=+HUGE_VAL;
+  int NS = 1; // number of signals to fit
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:");
+    int c = getopt(argc, argv, "+F:G:N:");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
       case ':': throw Err() << name << ": no argument: -" << (char)optopt;
       case 'F': fmin = atof(optarg); break;
+      case 'N': NS = atoi(optarg); break;
       case 'G': fmax = atof(optarg); break;
     }
   }
@@ -902,38 +904,49 @@ fit2(ostream & ff, const Signal & s, const int argc, char **argv) {
   if (N<1 || cN<1) return;
   int ch = 0;
 
-  // find first signal (largest amplitude)
-  vector<double> ret1 = ::fit_signal(
-    s.chan[ch].data(), N, s.chan[ch].sc, s.dt, s.t0, fmin, fmax);
 
-  double f1 = ret1[0];
-  double r1 = ret1[1];
-  double a1 = ret1[2]/2;
-  double p1 = ret1[3];
+  std::vector<int> ind; // indices for sorting
+  std::vector<double> fre, rel, amp, ph;
 
-  // subtract it
-  Signal s1 = s;
-  for (int i=0; i<s1.get_n(); i++){
-    double t = s1.t0+i*s1.dt;
-    s1.set_val(ch,i, s1.get_val(ch,i) - a1*exp(-t*r1)*sin(2*M_PI*f1*t+p1) );
+
+  Signal s1 = s; // copy of the signal
+  for (int is = 0; is <NS; is++){
+    // find signal (largest amplitude)
+    vector<double> ret = ::fit_signal(
+      s1.chan[ch].data(), N, s1.chan[ch].sc, s1.dt, s1.t0, fmin, fmax);
+
+    ind.push_back(is);
+    fre.push_back(ret[0]);
+    rel.push_back(ret[1]);
+    amp.push_back(ret[2]/2);
+    ph.push_back(ret[3]);
+
+    // subtract it
+    for (int i=0; i<s1.get_n(); i++){
+      double t = s1.t0+i*s1.dt;
+      s1.set_val(ch,i, s1.get_val(ch,i) - ret[2]/2.0*exp(-t*ret[1])*sin(2*M_PI*ret[0]*t+ret[3]) );
+    }
   }
 
-  // find second signal
-  vector<double> ret2 = ::fit_signal(
-    s1.chan[ch].data(), N, s1.chan[ch].sc, s1.dt, s1.t0, fmin, fmax);
+  // sort results by frequency
 
-  // sort by frequency
-  if (ret1[2] < ret2[2]) ret1.swap(ret2);
+  class sort_indices{
+    private:
+      std::vector<double> mparr;
+    public:
+      sort_indices(std::vector<double> parr) : mparr(parr) {}
+      bool operator()(int i, int j) const { return mparr[i]<mparr[j]; }
+  };
+  std::sort(ind.begin(), ind.end(), sort_indices(fre));
 
-  ff << s.t0abs << " "
-     << setprecision(12) << ret1[0] << " "
-     << setprecision(6)  << ret1[1] << " "
-     << setprecision(6)  << ret1[2] << " "
-     << setprecision(6)  << ret1[3] << " "
-     << setprecision(12) << ret2[0] << " "
-     << setprecision(6)  << ret2[1] << " "
-     << setprecision(6)  << ret2[2] << " "
-     << setprecision(6)  << ret2[3] << "\n";
+  for (int i=0; i< fre.size(); i++){
+    ff << s.t0abs << " "
+       << setprecision(12) << fre[ind[i]] << " "
+       << setprecision(6)  << rel[ind[i]] << " "
+       << setprecision(6)  << amp[ind[i]] << " "
+       << setprecision(6)  << ph[ind[i]] << "\n";
+  }
+
 }
 
 /******************************************************************/

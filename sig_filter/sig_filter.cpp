@@ -93,14 +93,15 @@ void help(){
           "       -B <value>  -- high amplitude limit\n"
           "       -W <value>  -- image width, pixels (default: 1024)\n"
           "       -H <value>  -- image height, pixels (default: 768)\n"
-          "     fit           -- Fit fork signal (exponential decay, constant frequency).\n"
+          "     fit -- Fit fork signal (exponential decay, constant frequency).\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
           "       -G <value>  -- high frequency limit\n"
-          "     fit2          -- Fit two fork signal (sort by frequency).\n"
+          "     fitn -- Fit N fork signals (sort by frequency).\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
           "       -G <value>  -- high frequency limit\n"
+          "       -N <value>  -- number of signals (default 1)\n"
           "     lockin        -- Detect signal using another channel as reference.\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
@@ -181,7 +182,7 @@ main(int argc, char *argv[]){
     else if (strcasecmp(flt, "sfft_pnm")==0)          flt_sfft_pnm(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_pnm_ad")==0)       flt_sfft_pnm_ad(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "fit")==0)               fit(std::cout, sig, argc, argv);
-    else if (strcasecmp(flt, "fit2")==0)              fit2(std::cout, sig, argc, argv);
+    else if (strcasecmp(flt, "fitn")==0)              fitn(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "lockin")==0)            lockin(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "slockin")==0)           slockin(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "dc")==0)                dc(std::cout, sig, argc, argv);
