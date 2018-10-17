@@ -1,1 +1,1 @@
-../sig_filter/sig_filter -T 3e-6 -f fitn five_forks.sig -F 20000 -G 40000 -N 5
+../sig_filter/sig_filter -T 3e-6 -f fitn five_forks1.sig -F 20000 -G 40000 -N 5
