@@ -150,12 +150,12 @@ PicoInt::cmd(const vector<string> & args){
 
     double t0 = get_trig() - npre*dt + T.del*dt; // time of the first sample from the trigger (usually negative)
     double tlen = dt*N; // signal length from trigger to the end in seconds
-    long ds = round(tlen); // second correction
-    long dns = round(1e9*(tlen-ds)); // nanosecond correction
+    long ds = floor(tlen); // second correction
+    long dns = floor(1e9*(tlen-ds)); // nanosecond correction
+
     t0abs.tv_sec -= ds;
     t0abs.tv_nsec -= dns;
-    while (t0abs.tv_nsec<0){ t0abs.tv_sec+=1; t0abs.tv_nsec+=1e9; }
-
+    while (t0abs.tv_nsec<0){ t0abs.tv_sec-=1; t0abs.tv_nsec+=1e9; }
 
     ff << "*SIG001\n";
     ff << "# " << ctime(&(t0abs.tv_sec)) << "\n";
