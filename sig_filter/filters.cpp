@@ -871,7 +871,7 @@ fit(ostream & ff, const Signal & s, const int argc, char **argv) {
   vector<double> ret = ::fit_signal(
     s.chan[ch].data(), N, s.chan[ch].sc, s.dt, s.t0, fmin, fmax);
 
-  ff << s.t0abs << " "
+  ff << s.t0abs_str << " "
      << setprecision(12) << ret[0] << " "
      << setprecision(6)  << ret[1] << " "
      << setprecision(6)  << ret[2] << " "
@@ -940,7 +940,7 @@ fitn(ostream & ff, const Signal & s, const int argc, char **argv) {
   std::sort(ind.begin(), ind.end(), sort_indices(fre));
 
   for (int i=0; i< fre.size(); i++){
-    ff << s.t0abs << " "
+    ff << s.t0abs_str << " "
        << setprecision(12) << fre[ind[i]] << " "
        << setprecision(6)  << rel[ind[i]] << " "
        << setprecision(6)  << amp[ind[i]] << " "

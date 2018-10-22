@@ -22,7 +22,8 @@ class Signal{
     };
 
     double t0,dt; // time shift, time step
-    time_t t0abs; // absolute time
+    time_t t0abs; // absolute time (integer seconds)
+    std::string t0abs_str; // absolute time (as a string)
     std::vector<Channel> chan;
 
     // constructor

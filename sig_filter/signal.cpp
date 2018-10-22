@@ -136,6 +136,7 @@ Signal read_sig(istream & ff){
     if (key == "t0abs"){
       if (valw.size()<1) throw Err() << "Broken file: " << line;
       sig.t0abs = atoi(valw[0].c_str());
+      sig.t0abs_str = valw[0];
     }
 
     // channel parameters: name sc overflow
