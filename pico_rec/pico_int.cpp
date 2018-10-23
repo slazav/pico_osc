@@ -107,6 +107,8 @@ PicoInt::cmd(const vector<string> & args){
     if (args.size()!=6) throw Err()
       << "Usage: block <ch> <npre> <npost> <dt> <file>";
     string chans = args[1];
+
+    // use atof to parse values like 1e6, then convert to int.
     uint32_t  npre  = atof(args[2].c_str());
     uint32_t  npost = atof(args[3].c_str());
     float     dt    = atof(args[4].c_str());
@@ -147,6 +149,7 @@ PicoInt::cmd(const vector<string> & args){
 
     int16_t ov;
     get_block(0, &N, &ov);
+
 
     double t0 = get_trig() - npre*dt + T.del*dt; // time of the first sample from the trigger (usually negative)
     double tlen = dt*N; // signal length from trigger to the end in seconds
