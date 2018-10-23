@@ -176,7 +176,6 @@ class Pico4224 : public PicoInt {
   // destructor: close device
   ~Pico4224(){
     int16_t res = ps4000CloseUnit(h);
-    if (res!=PICO_OK) throw Err() << "CloseUnit error: " << pico_err(res);
   }
 
 
