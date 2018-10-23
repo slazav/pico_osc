@@ -46,7 +46,7 @@ PicoInt::cmd_help() const {
 
 //save signal to a file
 void PicoInt::save_signal(const std::string &fname) {
-  if (fname=="") return;
+  if (fname=="" || fname=="-") return;
 
   // check that trigger is configured
   if (trconf.size()!=1) throw Err() << "Trigger is not configured";

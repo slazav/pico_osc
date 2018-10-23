@@ -59,6 +59,7 @@ block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)
    file  -- output file
    Answer: OK when trigger can be run. To wait until the signal is
    recorded and written to a file use wait command after the block command.
+   If filename is "-" then file is not written (useful in averaging).
 
 wait -- wait until the oscilloscope is ready
 
