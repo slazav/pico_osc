@@ -26,13 +26,40 @@ struct TrConf{
   int32_t del;
 };
 
+// block configuration
+struct BlConf{
+  // block settings:
+  std::string chans;    // channels to be recorded "A", "BA" ...
+  uint32_t npre, npost; // pre/post-trigger points
+  float dtset;          // timestap
+  std::string fname;    // filename
+  // parameters of the recorded signal:
+  time_t sec;           // system time of the trigger position (s)
+  long nsec;            // same, ns part
+  uint32_t N;           // actual number of recorded points
+  int16_t ov;           // overload flags
+  float dt, t0;         // actual timestep and relative time of the first point
+};
+
+struct AvrBuf{
+  std::vector<int32_t> buf;
+};
+
 // oscilloscope interface
 class PicoInt{
   private:
     std::map<char, ChConf> chconf; // channel configuration
     std::vector<TrConf>    trconf; // trigger configuration
+    std::vector<BlConf>    blconf; // block configuration
+    int navr; // average counter: averaging is off if navr<0
+    std::map<char, AvrBuf> avrbuf; // buffer for averaging;
+    // Note that number of averages should by < 2^16 to keep
+    // the sum in the int32_t buffer.
 
   public:
+
+  PicoInt(): navr(-1) {}
+  void save_signal(const std::string &fname);
 
   // High-level commands.
   // return true if #OK should be printed

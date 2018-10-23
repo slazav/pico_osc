@@ -61,7 +61,18 @@ block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)
    recorded and written to a file use wait command after the block command.
 
 wait -- wait until the oscilloscope is ready
+
+avr_start -- start averaging
+   If averging is on, sum of all recorded signals is collected in a separate buffer.
+   Number of points of all signals should be the same.
+   Use avr_start to reset buffers and start averaging.
+
+avr_stop -- stop averaging, reset averaging buffers
+
+avr_save <fname> -- save averaged signal (should be done before avr_start or avr_stop)
+
 filter <file> <args> -- run sig_filter program
+
 *idn? -- write id string: "pico_rec <VERSION>"
 
 `

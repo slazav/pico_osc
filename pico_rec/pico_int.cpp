@@ -44,6 +44,69 @@ PicoInt::cmd_help() const {
   ;
 }
 
+//save signal to a file
+void PicoInt::save_signal(const std::string &fname) {
+  if (fname=="") return;
+
+  // check that trigger is configured
+  if (trconf.size()!=1) throw Err() << "Trigger is not configured";
+  TrConf T = trconf[0];
+
+  // check that block is configured
+  if (blconf.size()!=1) throw Err() << "Block reader is not configured";
+  BlConf B = blconf[0];
+
+  ofstream ff(fname);
+  if (ff.fail()) throw Err() << "Can't open output file: " << B.fname;
+
+  ff << "*SIG001\n";
+  ff << "# " << ctime(&(B.sec)) << "\n";
+  ff << "\n# Oscilloscope settings:\n";
+  ff << scientific;
+  map<char,ChConf>::iterator ic;
+  for (ic = chconf.begin(); ic!= chconf.end(); ic++){
+    char ch = ic->first;
+    ChConf C = ic->second;
+    ff << "  chan_set: " << ch << " " << C.en << " " << C.cpl << " " << C.rng << "\n";
+  }
+  ff << "  trig_set: " << T.src << " " << T.lvl << " " << T.dir << " " << T.del << "\n";
+  ff << "  block:    " << B.chans << " " << B.npre << " " << B.npost << " "
+                       << B.dtset << " " << B.fname << "\n";
+
+  ff << "\n# Signal parameters:\n";
+  ff << "  points:   " << B.N  << "  # number of points\n"
+     << "  dt:       " << B.dt << "  # time step\n"
+     << "  t0:       " << B.t0 << "  # relative time of the first sample\n"
+     << "  t0abs:    " << B.sec << "."
+                       << setw(9) << setfill('0') << B.nsec
+                       << "  # system time of trigger position\n";
+  if (navr>=0) ff << "  navr:     " << navr << "  # numbel of averaged signals";
+
+  ff << "\n# Data channels (osc channel, scale factor, overload):\n";
+  for (int j=0; j<B.chans.size(); j++){
+    char ch = B.chans[j];
+    ic = chconf.find(ch);
+    double sc = ic->second.rng/get_max_val();
+    bool o = false;
+    if (ch=='a' || ch=='A') o = (bool)(B.ov&1);
+    if (ch=='b' || ch=='B') o = (bool)(B.ov&2);
+    if (ch=='c' || ch=='C') o = (bool)(B.ov&4);
+    if (ch=='d' || ch=='D') o = (bool)(B.ov&8);
+    ff << "  chan: " << " " << ch << " " << sc << " " << o << "\n";
+  }
+
+  ff << "\n*\n";
+  for (int i = 0; i<B.N; i++){
+    for (int j=0; j<B.chans.size(); j++){
+      ic = chconf.find(B.chans[j]);
+      if (ic == chconf.end() || ic->second.buf.size()<B.N)
+        throw Err() << "Buffer error for channel " << B.chans[j];
+      ff.write((const char*)(ic->second.buf.data()+i), sizeof(int16_t));
+    }
+  }
+}
+
+
 bool
 PicoInt::cmd(const vector<string> & args){
   if (args.size()<1) return false;
@@ -106,14 +169,16 @@ PicoInt::cmd(const vector<string> & args){
   if (is_cmd(args, "block")) {
     if (args.size()!=6) throw Err()
       << "Usage: block <ch> <npre> <npost> <dt> <file>";
-    string chans = args[1];
+    BlConf B;
+    B.chans = args[1];
 
     // use atof to parse values like 1e6, then convert to int.
-    uint32_t  npre  = atof(args[2].c_str());
-    uint32_t  npost = atof(args[3].c_str());
-    float     dt    = atof(args[4].c_str());
-    const char *fname = args[5].c_str();
-    uint32_t  N     = npre+npost;
+    B.npre  = atof(args[2].c_str());
+    B.npost = atof(args[3].c_str());
+    B.dtset = atof(args[4].c_str());
+    B.fname = args[5];
+    B.N     = B.npre + B.npost;
+    B.dt    = B.dtset;
 
     // check that trigger is configured
     if (trconf.size()!=1) throw Err() << "Trigger is not configured";
@@ -123,92 +188,109 @@ PicoInt::cmd(const vector<string> & args){
     map<char,ChConf>::iterator ic;
     for (ic = chconf.begin(); ic!= chconf.end(); ic++) ic->second.buf.clear();
 
+    // averaging start/stop: clear buffers
+    if (navr <= 0) avrbuf.clear();
+
     // set up and register all needed channel buffers
-    for (int i=0;i<chans.size();i++){
-      char chc = chans[i];
+    for (int i=0;i<B.chans.size();i++){
+      char chc = B.chans[i];
       string ch = string() + chc;
       ic = chconf.find(chc);
       if (ic == chconf.end()) throw Err() << "Channel " << ch << " is not configured";
       if (ic->second.buf.size()>0) continue; // already configured
-      ic->second.buf.resize(N);
+      ic->second.buf.resize(B.N);
       set_buf(ch.c_str(), ic->second.buf.data(), ic->second.buf.size());
+      // averaging start: make buffer for each channel, fill with zeros
+      if (navr == 0) avrbuf[chc].buf = std::vector<int32_t>(B.N, 0);
     }
 
-    ofstream ff(fname);
-    if (ff.fail()) throw Err() << "Can't open output file: " << fname;
 
     // start collecting data
-    run_block(npre, npost, &dt);
-    usleep(npre*dt*1e6);
+    run_block(B.npre, B.npost, &(B.dt));
+    usleep(B.npre*B.dt*1e6);
     cout << "#OK\n" << flush;
-    usleep(npost*dt*1e6);
+    usleep(B.npost*B.dt*1e6);
     while (!is_ready()) usleep(1000);
     struct timespec t0abs;
     if (clock_gettime(CLOCK_REALTIME, &t0abs)!=0)
       throw Err() << "Can't get system time";
 
-    int16_t ov;
-    get_block(0, &N, &ov);
+    get_block(0, &(B.N), &(B.ov));
 
-
-    double t0 = get_trig() - npre*dt + T.del*dt; // time of the first sample from the trigger (usually negative)
-    double tlen = dt*N; // signal length from trigger to the end in seconds
+    B.t0 = get_trig() - B.npre*B.dt + T.del*B.dt; // time of the first sample from the trigger (usually negative)
+    double tlen = B.dt*B.npost; // signal length from trigger to the end in seconds
     long ds = floor(tlen); // second correction
     long dns = floor(1e9*(tlen-ds)); // nanosecond correction
-
     t0abs.tv_sec -= ds;
     t0abs.tv_nsec -= dns;
     while (t0abs.tv_nsec<0){ t0abs.tv_sec-=1; t0abs.tv_nsec+=1e9; }
+    B.sec = t0abs.tv_sec;
+    B.nsec = t0abs.tv_nsec;
 
-    ff << "*SIG001\n";
-    ff << "# " << ctime(&(t0abs.tv_sec)) << "\n";
-    ff << "\n# Oscilloscope settings:\n";
-    ff << scientific;
-    for (ic = chconf.begin(); ic!= chconf.end(); ic++){
-      char ch = ic->first;
-      ChConf C = ic->second;
-      ff << "  chan_set: " << ch << " " << C.en << " " << C.cpl << " " << C.rng << "\n";
-    }
-    ff << "  trig_set: " << T.src << " " << T.lvl << " " << T.dir << " " << T.del << "\n";
-    ff << "  block:    " << args[1] << " " << args[2] << " " << args[3] << " "
-                       << args[4] << " " << args[5] << "\n";
-
-    ff << "\n# Signal parameters:\n";
-    ff << "  points:   " << N  << "  # number of points\n"
-       << "  dt:       " << dt << "  # time step\n"
-       << "  t0:       " << t0 << "  # relative time of the first sample\n"
-       << "  t0abs:    " << t0abs.tv_sec << "."
-                         << setw(9) << setfill('0') << t0abs.tv_nsec
-                         << "  # system time of trigger position\n";
-
-    ff << "\n# Data channels (osc channel, scale factor, overload):\n";
-    for (int j=0; j<chans.size(); j++){
-      char ch = chans[j];
-      ic = chconf.find(ch);
-      double sc = ic->second.rng/get_max_val();
-      bool o = false;
-      if (ch=='a' || ch=='A') o = (bool)(ov&1);
-      if (ch=='b' || ch=='B') o = (bool)(ov&2);
-      if (ch=='c' || ch=='C') o = (bool)(ov&4);
-      if (ch=='d' || ch=='D') o = (bool)(ov&8);
-      ff << "  chan: " << " " << ch << " " << sc << " " << o << "\n";
-    }
-
-    ff << "\n*\n";
-    for (int i = 0; i<N; i++){
-      for (int j=0; j<chans.size(); j++){
-        ic = chconf.find(chans[j]);
-        if (ic == chconf.end() || ic->second.buf.size()<N)
-          throw Err() << "Buffer error for channel " << chans[j];
-        ff.write((const char*)(ic->second.buf.data()+i), sizeof(int16_t));
+    // averaging: add recorded data to averaging buffers
+    if (navr >= 0) {
+      for (int c=0;c<B.chans.size();c++){
+        char ch = B.chans[c];
+        map<char,ChConf>::iterator ic = chconf.find(ch);
+        if (ic == chconf.end())
+          throw Err() << "No buffer for channel: " << ch;
+        map<char,AvrBuf>::iterator ia = avrbuf.find(ch);
+        if (ia == avrbuf.end())
+          throw Err() << "No averaging buffer for channel: " << ch;
+        if (ic->second.buf.size() != ia->second.buf.size())
+          throw Err() << "Number of points changed during averaging";
+        for (int i = 0; i<ic->second.buf.size(); i++)
+          ia->second.buf[i] += ic->second.buf[i];
       }
+      navr++;
+      if (navr > (1<<16)) throw Err() << "Too many averages (buffer overflow is possible)";
     }
+
+    blconf.clear();
+    blconf.push_back(B);
+    save_signal(B.fname);
     return false;
   }
+
 
   // wait until osc is ready
   if (is_cmd(args, "wait")) {
     if (args.size()!=1) throw Err() << "Usage: wait";
+    return true;
+  }
+
+  // start averaging
+  if (is_cmd(args, "avr_start")) {
+    if (args.size()!=1) throw Err() << "Usage: avr_start";
+    navr=0;
+    return true;
+  }
+
+  // stop averaging
+  if (is_cmd(args, "avr_stop")) {
+    if (args.size()!=1) throw Err() << "Usage: avr_stop";
+    navr=-1;
+    return true;
+  }
+
+  // save average signal
+  if (is_cmd(args, "avr_save")) {
+    if (args.size()!=2) throw Err() << "Usage: avr_save <file>";
+    string fname = args[1];
+    if (navr<1) throw Err() << "No averaging have been done yet";
+
+    // do averaging and save the result in channel buffers
+    map<char,AvrBuf>::iterator ia;
+    for (ia = avrbuf.begin(); ia!=avrbuf.end(); ia++){
+      map<char,ChConf>::iterator ic = chconf.find(ia->first);
+      if (ic == chconf.end())
+        throw Err() << "No buffer for channel: " << ia->first;
+      int N = ia->second.buf.size();
+      ic->second.buf.resize(N);
+      for (int i = 0; i<N; i++) ic->second.buf[i] = ia->second.buf[i]/navr;
+    }
+    // save the signal
+    save_signal(fname);
     return true;
   }
 
