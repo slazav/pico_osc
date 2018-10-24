@@ -1,1 +1,5 @@
-../sig_filter/sig_filter -T 3e-6 -f fitn five_forks1.sig -F 20000 -G 40000 -N 5
+echo "1st mode"
+../sig_filter/sig_filter -T 3e-6 -f fitn five_forks_avr200.sig -F 20000 -G 40000 -N 5
+
+echo "2nd mode"
+../sig_filter/sig_filter -T 3e-6 -f fitn five_forks_avr200.sig -F 100000 -G 300000 -N 5
