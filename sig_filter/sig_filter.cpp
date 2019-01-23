@@ -119,6 +119,7 @@ void help(){
           "       -p <value>  -- manually set phase (works only with -f, degrees, default: 0)\n"
           "     dc            -- Print mean value for each channel.\n"
           "     minmax        -- Print min/max values for each channel.\n"
+          "     overload      -- Print overload flag for each channel.\n"
           "     sigf          -- Print SIGF file (fft with frequency filtering).\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
@@ -187,6 +188,7 @@ main(int argc, char *argv[]){
     else if (strcasecmp(flt, "slockin")==0)           slockin(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "dc")==0)                dc(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "minmax")==0)            minmax(std::cout, sig, argc, argv);
+    else if (strcasecmp(flt, "overload")==0)          overload(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sigf")==0)              flt_sigf(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sig")==0)               flt_sig(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "wav")==0)               flt_wav(std::cout, sig, argc, argv);
