@@ -70,7 +70,14 @@ main(int argc, char *argv[]){
         if (cin.eof()) break;
         if (osc.cmd(read_cmd())) cout << "#OK\n" << flush;
       }
-      catch (Err E){ cout << "#Error: " << E.str() << "\n" << flush; }
+      catch (Err E){
+        // during waiting errors go to the block_err buffer
+        if (!osc.is_waiting())
+          cout << "#Error: " << E.str() << "\n" << flush;
+        else{
+          osc.set_block_err(E.str());
+        }
+      }
     }
 
   }

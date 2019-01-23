@@ -56,15 +56,25 @@ class PicoInt{
     // Note that number of averages should by < 2^16 to keep
     // the sum in the int32_t buffer.
 
+    // There is a problem with block command:
+    // block returns OK before recording the signal. An exception
+    // can appear after that. It will be treated as an answer for
+    // the next wait command).
+    bool waiting;
+    std::string block_err;
+
   public:
 
-  PicoInt(): navr(-1) {}
+  PicoInt(): navr(-1), waiting(false) {}
   void save_signal(const std::string &fname);
 
   // High-level commands.
-  // return true if #OK should be printed
+  // return true if #OK should be printed (any command except empty or block)
   bool cmd(const std::vector<std::string> & args);
   const char * cmd_help() const; // return command help
+
+  bool is_waiting() const {return waiting;}
+  void set_block_err(const std::string & msg) { block_err = msg; waiting = false;}
 
   /*****************************************************************************/
   // low-level oscilloscope interface commands defined somewhere else

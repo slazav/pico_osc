@@ -166,6 +166,13 @@ PicoInt::cmd(const vector<string> & args){
     return true;
   }
 
+  // wait command (should be run after block command)
+  if (is_cmd(args, "wait")){
+    if (args.size()!=1) throw Err() << "Usage: wait";
+    if (block_err != "") throw Err() << block_err;
+    return true;
+  }
+
   if (is_cmd(args, "block")) {
     if (args.size()!=6) throw Err()
       << "Usage: block <ch> <npre> <npost> <dt> <file>";
@@ -208,7 +215,7 @@ PicoInt::cmd(const vector<string> & args){
     // start collecting data
     run_block(B.npre, B.npost, &(B.dt));
     usleep(B.npre*B.dt*1e6);
-    cout << "#OK\n" << flush;
+    cout << "#OK\n" << flush; waiting = true; block_err.clear();
     usleep(B.npost*B.dt*1e6);
     while (!is_ready()) usleep(1000);
     struct timespec t0abs;
@@ -249,14 +256,8 @@ PicoInt::cmd(const vector<string> & args){
     blconf.clear();
     blconf.push_back(B);
     save_signal(B.fname);
+    waiting = false;
     return false;
-  }
-
-
-  // wait until osc is ready
-  if (is_cmd(args, "wait")) {
-    if (args.size()!=1) throw Err() << "Usage: wait";
-    return true;
   }
 
   // start averaging
