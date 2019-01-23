@@ -38,7 +38,11 @@ PicoInt::cmd_help() const {
   "   npost -- number of posttrigger samples\n"
   "   dt    -- time step, seconds\n"
   "   file  -- output file\n"
-  "wait  -- wait until osc is ready (use after block command)\n"
+  "   The block command returns #OK when recording is set up and\n"
+  "   trigger can be fired (if needed). When wait command should be used\n"
+  "   to wait until the recording will be completed and get its status.\n"
+  "wait  -- wait until osc is ready and return status of last block command.\n"
+  "   Should be used after the block command\n"
   "filter <file> <args> -- run sig_filter program"
   "*idn? -- write id string: \"pico_rec " VERSION "\"\n";
   ;

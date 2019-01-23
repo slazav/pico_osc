@@ -60,7 +60,8 @@ block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)
    Answer: OK when trigger can be run. To wait until the signal is
    recorded and written to a file use wait command after the block command.
 
-wait -- wait until the oscilloscope is ready
+wait -- wait until the oscilloscope is ready and return status
+   of last block command.
 
 avr_start -- start averaging
    If averging is on, sum of all recorded signals is collected in a separate buffer.
