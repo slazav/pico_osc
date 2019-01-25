@@ -23,15 +23,22 @@ PicoInt::cmd_help() const {
   "ranges <ch> -- show possible ranges\n"
   "   ch  -- select channel: A,B\n"
   "chan_set <ch> <en> <cpl> <rng> -- set channel parameters\n"
-  "   ch  -- select channel: A,B\n"
+  "   ch  -- select channel: A,B,AB etc.\n"
   "   en  -- enable channel: 1,0\n"
   "   cpl -- coupling: AC, DC\n"
   "   rng -- input range, volts (see ranges command)\n"
+  "chan_get <ch>  -- get channel parameters\n"
+  "   ch  -- select channel: A,B,AB etc.\n"
+  "   Returns a line with four words: <ch> <en> <cpl> <rng> for each channel.\n"
+  "   If the channel is not set returns channel name with 'undef' word.\n"
   "trig_set <src> <lvl> <dir> <del> -- set channel parameters\n"
   "   src -- source: A,B,EXT,NONE\n"
   "   lvl -- threshold level, ratio of full range, -1..1\n"
   "   dir -- direction: RISING,FALLING,ABOVE,BELOW,RISING_OR_FALLING\n"
   "   del -- delay, samples\n"
+  "trig_get  -- get trigger parameters\n"
+  "   Returns a line with four words: <src> <lvl> <dir> <del>.\n"
+  "   If the trigger is not set returns 'undef' word.\n"
   "block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)\n"
   "   ch    -- channels to record: A,B,AB,BA, etc."
   "   npre  -- number of pretrigger samples\n"
@@ -154,6 +161,25 @@ PicoInt::cmd(const vector<string> & args){
     return true;
   }
 
+  // get channel parameters
+  if (is_cmd(args, "chan_get")) {
+    if (args.size()!=2) throw Err()
+      << "Usage: chan_get <ch>";
+    for (int i=0; i<args[1].length(); i++){
+      string ch; ch+=args[1][i]; // channel as a string
+      char chc = args[1][i];  // channel as a single char
+      if (chconf.find(chc)==chconf.end()){
+        cout << chc << " undef\n";
+        continue;
+      }
+      cout << chc << " "
+           << chconf[chc].en << " "
+           << chconf[chc].cpl << " "
+           << chconf[chc].rng << "\n";
+    }
+    return true;
+  }
+
   // set trigger parameters
   if (is_cmd(args, "trig_set")) {
     if (args.size()!=5) throw Err()
@@ -167,6 +193,21 @@ PicoInt::cmd(const vector<string> & args){
     // save trigger configuration
     trconf.clear();
     trconf.push_back(T);
+    return true;
+  }
+
+  // get trigger parameters
+  if (is_cmd(args, "trig_get")) {
+    if (args.size()!=1) throw Err()
+      << "Usage: trig_get";
+    if (trconf.size()<1){
+      cout << "undef\n";
+      return true;
+    }
+    cout << trconf[0].src << " "
+         << trconf[0].lvl << " "
+         << trconf[0].dir << " "
+         << trconf[0].del << "\n";
     return true;
   }
 
