@@ -23,6 +23,9 @@ pico_rec - record signals with Picoscope PS4224 and process them
 %setup -q
 
 %build
+%make
+
+%install
 %makeinstall
 
 %files
