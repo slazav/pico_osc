@@ -166,5 +166,6 @@ pico_err(int n){
   i2s_case(DEVICE_TIME_STAMP_RESET);
   i2s_case(WATCHDOGTIMER);
   }
+  return "Unknown error";
 }
 
