@@ -44,7 +44,7 @@ PicoInt::cmd_help() const {
   "   npre  -- number of pretrigger samples\n"
   "   npost -- number of posttrigger samples\n"
   "   dt    -- time step, seconds\n"
-  "   file  -- output file\n"
+  "   file  -- output file (do not write anything if file is -)\n"
   "   The block command returns #OK when recording is set up and\n"
   "   trigger can be fired (if needed). When wait command should be used\n"
   "   to wait until the recording will be completed and get its status.\n"
@@ -300,7 +300,7 @@ PicoInt::cmd(const vector<string> & args){
 
     blconf.clear();
     blconf.push_back(B);
-    save_signal(B.fname);
+    if (B.fname != "-") save_signal(B.fname);
     waiting = false;
     return false;
   }

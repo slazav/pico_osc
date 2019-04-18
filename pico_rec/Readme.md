@@ -65,7 +65,7 @@ block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)
    npre  -- number of pretrigger samples
    npost -- number of posttrigger samples
    dt    -- time step, seconds
-   file  -- output file
+   file  -- output file (do not write anything if file is -)
    Answer: OK when trigger can be run. To wait until the signal is
    recorded and written to a file use wait command after the block command.
 
