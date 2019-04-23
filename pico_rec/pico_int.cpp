@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <cmath>
 #include <time.h>
+#include <sys/time.h> // gettimeofday
+#include <chrono>
 #include "pico_int.h"
 #include "err.h"
 
@@ -40,7 +42,7 @@ PicoInt::cmd_help() const {
   "   Returns a line with four words: <src> <lvl> <dir> <del>.\n"
   "   If the trigger is not set returns 'undef' word.\n"
   "block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)\n"
-  "   ch    -- channels to record: A,B,AB,BA, etc."
+  "   ch    -- channels to record: A,B,AB,BA, etc.\n"
   "   npre  -- number of pretrigger samples\n"
   "   npost -- number of posttrigger samples\n"
   "   dt    -- time step, seconds\n"
@@ -50,8 +52,9 @@ PicoInt::cmd_help() const {
   "   to wait until the recording will be completed and get its status.\n"
   "wait  -- wait until osc is ready and return status of last block command.\n"
   "   Should be used after the block command\n"
-  "filter <file> <args> -- run sig_filter program"
-  "*idn? -- write id string: \"pico_rec " VERSION "\"\n";
+  "filter <file> <args> -- run sig_filter program\n"
+  "*idn? -- write id string: \"pico_rec " VERSION "\"\n"
+  "get_time -- print current time (unix seconds with ms precision)\n";
   ;
 }
 
@@ -122,6 +125,14 @@ bool
 PicoInt::cmd(const vector<string> & args){
   if (args.size()<1) return false;
 
+  // print time
+  if (is_cmd(args, "get_time")){
+    if (args.size()!=1) throw Err() << "Usage: get_time";
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    cout << tv.tv_sec << "." << setfill('0') << setw(6) << tv.tv_usec << "\n";
+    return true;
+  }
 
   // print id
   if (is_cmd(args, "*idn?")){

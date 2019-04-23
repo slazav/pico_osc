@@ -85,4 +85,5 @@ filter <file> <args> -- run sig_filter program
 
 *idn? -- write id string: "pico_rec <VERSION>"
 
+get_time -- print current time (unix seconds with ms precision)
 `
