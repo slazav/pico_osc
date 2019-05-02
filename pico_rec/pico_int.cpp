@@ -52,6 +52,9 @@ PicoInt::cmd_help() const {
   "   to wait until the recording will be completed and get its status.\n"
   "wait  -- wait until osc is ready and return status of last block command.\n"
   "   Should be used after the block command\n"
+  "avr_start -- start averaging\n"
+  "avr_stop  -- stop averaing\n"
+  "avr_save <file> -- save average buffer\n"
   "filter <file> <args> -- run sig_filter program\n"
   "*idn? -- write id string: \"pico_rec " VERSION "\"\n"
   "get_time -- print current time (unix seconds with ms precision)\n";
