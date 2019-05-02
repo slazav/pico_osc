@@ -731,14 +731,12 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
       double v1 = fft.abs(fi);
       double v2 = fft.abs(fi+1);
       double v = (v1 + (f/df-fi)*(v2-v1))/win;
-      v=log(v);
-// if (x>0) v-=pic.get(0,y);
       pic.set(x,y,v);
     }
   }
 
 //for (int y = 0; y<H; y++) pic.set(0,y,0);
-  pic.print_pnm(ff);
+  pic.print_pnm(ff, 1);
 }
 
 
@@ -837,10 +835,10 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, const int argc, char **argv) {
       double v1 = fft.abs(fi);
       double v2 = fft.abs(fi+1);
       double v = (v1 + (f/df-fi)*(v2-v1))/win;
-      for (int x=x1; x<x2; x++) pic.set(x,y,log(v));
+      for (int x=x1; x<x2; x++) pic.set(x,y,v);
     }
   }
-  pic.print_pnm(ff);
+  pic.print_pnm(ff, 1);
 }
 
 /******************************************************************/

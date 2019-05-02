@@ -19,14 +19,16 @@ class dImage:std::vector<double> {
   double get(int x, int y) const {return (*this)[w*y+x];}
   void   set(int x, int y, double v) { (*this)[w*y+x] = v;}
 
-  void print_pnm(std::ostream & ff) const{
+  void print_pnm(std::ostream & ff, bool uselog = false) const{
     // find data range
     double cmin=get(0,0);
     double cmax=cmin;
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
-        if (get(x,y) > cmax) cmax = get(x,y);
-        if (get(x,y) < cmin) cmin = get(x,y);
+        double v = get(x,y);
+        if (uselog) v = log(v);
+        if (v > cmax) cmax = v;
+        if (v < cmin) cmin = v;
       }
     }
     std::cerr << "picture min: " << cmin << " max: " << cmax << "\n";
@@ -37,7 +39,9 @@ class dImage:std::vector<double> {
     ff << "P6\n" << w << " " << h << "\n255\n";
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
-        int32_t col = R.get(get(x,y));
+        double v = get(x,y);
+        if (uselog) v = log(v);
+        int32_t col = R.get(v);
         char *cc = (char *)&col;
         ff << cc[2] << cc[1] << cc[0];
       }
