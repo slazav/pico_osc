@@ -4,9 +4,6 @@
 #include <getopt.h>
 #include "err/err.h"
 
-
-// unpack data written by pico_rec into x-y text table
-
 using namespace std;
 
 void help(){
