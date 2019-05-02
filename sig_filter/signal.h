@@ -6,7 +6,7 @@
 #include <vector>
 #include <cmath>
 #include <stdint.h>
-#include "../pico_rec/err.h"
+#include "err/err.h"
 
 /***********************************************************/
 // Signal object.

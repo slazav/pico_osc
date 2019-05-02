@@ -1,14 +1,14 @@
-LDLIBS=-lBLT -ltk -lfftw3
-LDFLAGS=-shared -Wl,-rpath /usr/lib64/tcl
-CPPFLAGS=-O9 -fPIC
-CC=g++
+LDLIBS += -lBLT -ltk -lfftw3
+CXXFLAGS += -shared -O9 -fPIC
 
-all: sig_load.so
+ALL_SOURCES = sig_load.cpp
 
-sig_load.so: sig_load.o ../sig_filter/signal.o
-	${CC} -shared ${LDFLAGS} $^ ${LDLIBS} -o $@
+MODDIR = ../modules
+include $(MODDIR)/Makefile.inc
 
-sig_load.o: sig_load.cpp
+make_nodeps: sig_load.so
+sig_load.so: sig_load.cpp ../sig_filter/signal.cpp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ ${LDLIBS} -o $@
 
 clean:
 	rm -f *.o *.so

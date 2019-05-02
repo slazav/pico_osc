@@ -1,13 +1,14 @@
-LDLIBS = -lm -lps4000 -lfftw3
-CPPFLAGS = -g
-CC=g++
+PROGRAMS = pico_rec
 
-all: pico_rec
+LDLIBS += -lm -lps4000 -lfftw3
 
-pico_rec: pico_rec.o pico_err.o pico_int.o
+# additional sources:
+ALL_SOURCES := pico_4224.h pico_err.h pico_int.h pico_err.cpp pico_int.cpp
 
-pico_rec.o:\
-   err.h pico_4224.h pico_err.h pico_int.h
+MODDIR = ../modules
+include $(MODDIR)/Makefile.inc
 
-clean:
-	rm -f *.o pico_rec unpack_data fft_filter
+# additional dependencied
+pico_rec: pico_rec.o pico_int.o pico_err.o
+pico_rec.o pico_int.o pico_err.o: pico_4224.h pico_err.h pico_int.h
+

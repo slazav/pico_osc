@@ -8,7 +8,7 @@
 #include <sys/time.h> // gettimeofday
 #include <chrono>
 #include "pico_int.h"
-#include "err.h"
+#include "err/err.h"
 
 #define VERSION "2.1"
 

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <getopt.h>
-#include "../pico_rec/err.h"
+#include "err/err.h"
 
 
 // unpack data written by pico_rec into x-y text table

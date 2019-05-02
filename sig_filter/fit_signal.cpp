@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fftw3.h>
 #include <stdint.h>
-#include "../pico_rec/err.h"
+#include "err/err.h"
 
 using namespace std;
 

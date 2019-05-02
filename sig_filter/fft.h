@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include <fftw3.h>
-#include "../pico_rec/err.h"
+#include "err/err.h"
 
 // FFTW documentation:
 // http://www.fftw.org/fftw3_doc/

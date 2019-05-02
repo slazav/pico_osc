@@ -10,7 +10,7 @@
 #include <cstring>  // strtok
 #include <cstdlib>  // atof
 #include "../sig_filter/signal.h"
-#include "../pico_rec/err.h"
+#include "err/err.h"
 
 /*
   This is a library for reading signal data into TCL BLT vectors

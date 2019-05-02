@@ -12,7 +12,7 @@
 #include <complex>
 #include <fftw3.h>
 
-#include "../pico_rec/err.h"
+#include "err/err.h"
 #include "signal.h"
 #include "fft.h"
 #include "fit_signal.h"

@@ -7,7 +7,7 @@
 #include <unistd.h> // usleep
 #include <cstring>  // strcasecmp
 #include <cmath>
-#include "err.h"
+#include "err/err.h"
 #include "pico_err.h"
 #include "pico_int.h"
 
