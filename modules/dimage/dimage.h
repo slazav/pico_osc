@@ -20,12 +20,13 @@ class dImage:std::vector<double> {
   void   set(int x, int y, double v) { (*this)[w*y+x] = v;}
 
   void print_pnm(std::ostream & ff, bool uselog = false) const{
-    // find data range
+    // find data range (for logscale ignore values <=0)
     double cmin=get(0,0);
     double cmax=cmin;
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
         double v = get(x,y);
+        if (uselog && v<=0) continue;
         if (uselog) v = log(v);
         if (v > cmax) cmax = v;
         if (v < cmin) cmin = v;
@@ -40,7 +41,7 @@ class dImage:std::vector<double> {
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
         double v = get(x,y);
-        if (uselog) v = log(v);
+        if (uselog) v = (v<=0)? log(cmin) : log(v);
         int32_t col = R.get(v);
         char *cc = (char *)&col;
         ff << cc[2] << cc[1] << cc[0];
