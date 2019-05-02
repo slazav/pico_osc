@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <vector>
-#include "rainbow.h"
+#include "rainbow/rainbow.h"
 
 /******************************************************************/
 // Strange double image
@@ -32,13 +32,14 @@ class dImage:std::vector<double> {
     std::cerr << "picture min: " << cmin << " max: " << cmax << "\n";
     if (amin!=-HUGE_VAL) cmin=amin;
     if (amax!=+HUGE_VAL) cmax=amax;
-    simple_rainbow sr(cmin, cmax, RAINBOW_BURNING1);
+    Rainbow R(cmin, cmax, "KRYW");
     // print data
     ff << "P6\n" << w << " " << h << "\n255\n";
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
-        int32_t c = sr.get(get(x,y));
-        ff.write((char *)&c, 3);
+        int32_t col = R.get(get(x,y));
+        char *cc = (char *)&col;
+        ff << cc[2] << cc[1] << cc[0];
       }
     }
   }
