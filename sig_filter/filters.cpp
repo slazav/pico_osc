@@ -1102,6 +1102,15 @@ minmax(ostream & ff, const Signal & s, const int argc, char **argv) {
 
 /******************************************************************/
 void
+overload(ostream & ff, const Signal & s, const int argc, char **argv) {
+  const char *name = "overload";
+  if (argc>1) throw Err() << name << ": extra argument found: " << argv[1];
+  int cN  = s.get_ch();
+  for (int c = 0; c<cN; c++) ff << (int)s.chan[c].ov << "\n";
+}
+
+/******************************************************************/
+void
 flt_sigf(ostream & ff, const Signal & s, const int argc, char **argv) {
   const char *name = "sigf";
 

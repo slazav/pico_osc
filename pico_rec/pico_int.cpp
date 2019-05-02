@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <cmath>
 #include <time.h>
+#include <sys/time.h> // gettimeofday
+#include <chrono>
 #include "pico_int.h"
 #include "err.h"
 
@@ -23,24 +25,36 @@ PicoInt::cmd_help() const {
   "ranges <ch> -- show possible ranges\n"
   "   ch  -- select channel: A,B\n"
   "chan_set <ch> <en> <cpl> <rng> -- set channel parameters\n"
-  "   ch  -- select channel: A,B\n"
+  "   ch  -- select channel: A,B,AB etc.\n"
   "   en  -- enable channel: 1,0\n"
   "   cpl -- coupling: AC, DC\n"
   "   rng -- input range, volts (see ranges command)\n"
+  "chan_get <ch>  -- get channel parameters\n"
+  "   ch  -- select channel: A,B,AB etc.\n"
+  "   Returns a line with four words: <ch> <en> <cpl> <rng> for each channel.\n"
+  "   If the channel is not set returns channel name with 'undef' word.\n"
   "trig_set <src> <lvl> <dir> <del> -- set channel parameters\n"
   "   src -- source: A,B,EXT,NONE\n"
   "   lvl -- threshold level, ratio of full range, -1..1\n"
   "   dir -- direction: RISING,FALLING,ABOVE,BELOW,RISING_OR_FALLING\n"
   "   del -- delay, samples\n"
+  "trig_get  -- get trigger parameters\n"
+  "   Returns a line with four words: <src> <lvl> <dir> <del>.\n"
+  "   If the trigger is not set returns 'undef' word.\n"
   "block <ch> <npre> <npost> <dt> <file> -- record signal (block mode)\n"
-  "   ch    -- channels to record: A,B,AB,BA, etc."
+  "   ch    -- channels to record: A,B,AB,BA, etc.\n"
   "   npre  -- number of pretrigger samples\n"
   "   npost -- number of posttrigger samples\n"
   "   dt    -- time step, seconds\n"
-  "   file  -- output file\n"
-  "wait  -- wait until osc is ready (use after block command)\n"
-  "filter <file> <args> -- run sig_filter program"
-  "*idn? -- write id string: \"pico_rec " VERSION "\"\n";
+  "   file  -- output file (do not write anything if file is -)\n"
+  "   The block command returns #OK when recording is set up and\n"
+  "   trigger can be fired (if needed). When wait command should be used\n"
+  "   to wait until the recording will be completed and get its status.\n"
+  "wait  -- wait until osc is ready and return status of last block command.\n"
+  "   Should be used after the block command\n"
+  "filter <file> <args> -- run sig_filter program\n"
+  "*idn? -- write id string: \"pico_rec " VERSION "\"\n"
+  "get_time -- print current time (unix seconds with ms precision)\n";
   ;
 }
 
@@ -111,6 +125,14 @@ bool
 PicoInt::cmd(const vector<string> & args){
   if (args.size()<1) return false;
 
+  // print time
+  if (is_cmd(args, "get_time")){
+    if (args.size()!=1) throw Err() << "Usage: get_time";
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    cout << tv.tv_sec << "." << setfill('0') << setw(6) << tv.tv_usec << "\n";
+    return true;
+  }
 
   // print id
   if (is_cmd(args, "*idn?")){
@@ -150,6 +172,25 @@ PicoInt::cmd(const vector<string> & args){
     return true;
   }
 
+  // get channel parameters
+  if (is_cmd(args, "chan_get")) {
+    if (args.size()!=2) throw Err()
+      << "Usage: chan_get <ch>";
+    for (int i=0; i<args[1].length(); i++){
+      string ch; ch+=args[1][i]; // channel as a string
+      char chc = args[1][i];  // channel as a single char
+      if (chconf.find(chc)==chconf.end()){
+        cout << chc << " undef\n";
+        continue;
+      }
+      cout << chc << " "
+           << chconf[chc].en << " "
+           << chconf[chc].cpl << " "
+           << chconf[chc].rng << "\n";
+    }
+    return true;
+  }
+
   // set trigger parameters
   if (is_cmd(args, "trig_set")) {
     if (args.size()!=5) throw Err()
@@ -163,6 +204,28 @@ PicoInt::cmd(const vector<string> & args){
     // save trigger configuration
     trconf.clear();
     trconf.push_back(T);
+    return true;
+  }
+
+  // get trigger parameters
+  if (is_cmd(args, "trig_get")) {
+    if (args.size()!=1) throw Err()
+      << "Usage: trig_get";
+    if (trconf.size()<1){
+      cout << "undef\n";
+      return true;
+    }
+    cout << trconf[0].src << " "
+         << trconf[0].lvl << " "
+         << trconf[0].dir << " "
+         << trconf[0].del << "\n";
+    return true;
+  }
+
+  // wait command (should be run after block command)
+  if (is_cmd(args, "wait")){
+    if (args.size()!=1) throw Err() << "Usage: wait";
+    if (block_err != "") throw Err() << block_err;
     return true;
   }
 
@@ -208,7 +271,7 @@ PicoInt::cmd(const vector<string> & args){
     // start collecting data
     run_block(B.npre, B.npost, &(B.dt));
     usleep(B.npre*B.dt*1e6);
-    cout << "#OK\n" << flush;
+    cout << "#OK\n" << flush; waiting = true; block_err.clear();
     usleep(B.npost*B.dt*1e6);
     while (!is_ready()) usleep(1000);
     struct timespec t0abs;
@@ -248,15 +311,9 @@ PicoInt::cmd(const vector<string> & args){
 
     blconf.clear();
     blconf.push_back(B);
-    save_signal(B.fname);
+    if (B.fname != "-") save_signal(B.fname);
+    waiting = false;
     return false;
-  }
-
-
-  // wait until osc is ready
-  if (is_cmd(args, "wait")) {
-    if (args.size()!=1) throw Err() << "Usage: wait";
-    return true;
   }
 
   // start averaging
