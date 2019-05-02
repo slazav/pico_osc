@@ -17,8 +17,8 @@ void help(){
           " -D <num>  -- time step, s  (default: 1e-5)\n"
           " -F <num>  -- signal frequency, Hz (default: 32674)\n"
           " -T <num>  -- signal decay time, s (default: 0.325), 0 for non-decaying signal\n"
-          " -A <num>  -- signal amplitude,  V (default: 0.582) (full scale=1V)\n"
-          " -n <num>  -- noise amplitude, V (default: 0)\n"
+          " -A <num>  -- signal amplitude,  Vpp (default: 0.582) (full scale=1V)\n"
+          " -n <num>  -- noise amplitude, Vpp (default: 0)\n"
           " -G <num>  -- frequency change, Hz (default: 0)\n"
           " -U <num>  -- frequency relaxation time, s (default: 0.112)\n"
           " -h        -- write this help message and exit\n";
@@ -74,10 +74,10 @@ main(int argc, char *argv[]){
     for (int i = 0; i<N; i++){
       double t = i*dt;
       double f = f0 + famp*exp(-t/ftau);
-      double y = amp*sin(phi);
+      double y = 0.5*amp*sin(phi);
       if (tau != 0) y *= exp(-t/tau);
 
-      y += noise*(2.0*random()/RAND_MAX-1.0);
+      y += noise*(1.0*random()/RAND_MAX-0.5);
       phi += 2*M_PI*f*dt;
 
       int16_t v = y/sc;

@@ -17,9 +17,9 @@ void help(){
           " -G <num>  -- signal-2 frequency, Hz (default: 32674)\n"
           " -T <num>  -- signal-1 decay time, s (default: 0.325), 0 for non-decaying signal\n"
           " -U <num>  -- signal-2 decay time, s (default: 0.325), 0 for non-decaying signal\n"
-          " -A <num>  -- signal-1 amplitude,  V (default: 0.582) (full scale=1V)\n"
-          " -B <num>  -- signal-2 amplitude,  V (default: 0.582) (full scale=1V)\n"
-          " -n <num>  -- noise amplitude, V (default: 0)\n"
+          " -A <num>  -- signal-1 amplitude,  Vpp (default: 0.582) (full scale=1V)\n"
+          " -B <num>  -- signal-2 amplitude,  Vpp (default: 0.582) (full scale=1V)\n"
+          " -n <num>  -- noise amplitude, Vpp (default: 0)\n"
           " -h        -- write this help message and exit\n";
 }
 
@@ -82,15 +82,15 @@ main(int argc, char *argv[]){
     for (int i = 0; i<N; i++){
       double t = i*dt;
 
-      double y1 = amp1*sin(phi1);
+      double y1 = 0.5*amp1*sin(phi1);
       if (tau1 != 0) y1 *= exp(-t/tau1);
       phi1 += 2*M_PI*fre1*dt;
 
-      double y2 = amp2*sin(phi2);
+      double y2 = 0.5*amp2*sin(phi2);
       if (tau2 != 0) y2 *= exp(-t/tau2);
       phi2 += 2*M_PI*fre2*dt;
 
-      double n = noise*(2.0*random()/RAND_MAX-1.0);
+      double n = noise*(1.0*random()/RAND_MAX-0.5);
 
       int16_t v = (y1+y2+n)/sc;
       cout.write((const char*)&v, sizeof(int16_t));
