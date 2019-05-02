@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <complex>
 
+#include "iofilter/iofilter.h"
 #include "err/err.h"
 #include "fft/fft.h"
 #include "signal.h"
@@ -56,12 +57,36 @@ Signal read_signal(istream & ff){
   const int hsize=4;
   char head[hsize];
   if (ff.fail()) throw Err() << "Can't read file";
-  ff.read(head, hsize);
-  ff.seekg(0, ios::beg);
 
-  if (strncmp(head, "*SIG", hsize)==0) return read_sig(ff);
-  if (strncmp(head, "RIFF", hsize)==0) return read_wav(ff);
-  throw Err() << "unknown format (not SIG or WAV)";
+  // ff can be a non-seakable stream (see gzip format below).
+  // let's try to read 4 characters and then push them back:
+  ff.read(head, hsize);
+  ff.putback(head[3]);
+  ff.putback(head[2]);
+  ff.putback(head[1]);
+  ff.putback(head[0]);
+  if (ff.fail()) throw Err() << "Can't read file: putback error";
+
+  // sig and sigf formats
+  if (strncmp(head, "*SIG", hsize)==0)
+    return read_sig(ff);
+
+  // wav format
+  if (strncmp(head, "RIFF", hsize)==0)
+    return read_wav(ff);
+
+  // flac format
+  if (strncmp(head, "fLaC", hsize)==0) {
+    IFilter flt(ff, "flac -d -s -c -");
+    return read_wav(flt.stream());
+  }
+
+  // gzip format
+  if (head[0] == (char)0x1f && head[1] == (char)0x8b) {
+    IFilter flt(ff, "gunzip");
+    return read_signal(flt.stream());
+  }
+  throw Err() << "unknown format (not SIG, WAV, FLAC or GZ)";
 }
 
 /***********************************************************/
@@ -375,8 +400,10 @@ Signal read_wav(istream & ff){
       if (fmt.wBitsPerSample!=16) throw Err() << "Only 16bits per sample supported";
 
       // skip rest of the chunk
-      ff.seekg(ch_len-sizeof(fmt_t), ios::cur);
+      // note: ff.seekg does not work with streams from iofilter!
+      for (int i=sizeof(fmt_t); i<ch_len; i++) ff.get();
       fmt_read=true;
+
 
       continue;
     }
@@ -415,7 +442,8 @@ Signal read_wav(istream & ff){
     }
 
     // skip unknown chunk and continue reading
-    ff.seekg(ch_len, ios::cur);
+    // (ff.seekg does not work with streams from iofilter)
+    for (int i=0; i<ch_len; i++) ff.get();
   }
 
   return sig;
@@ -468,4 +496,5 @@ void write_wav(ostream & ff, const Signal & sig){
     ff.write(buf, sizeof(buf));
   }
 }
+
 
