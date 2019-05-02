@@ -19,7 +19,8 @@ class dImage:std::vector<double> {
   double get(int x, int y) const {return (*this)[w*y+x];}
   void   set(int x, int y, double v) { (*this)[w*y+x] = v;}
 
-  void print_pnm(std::ostream & ff, bool uselog = false) const{
+  void print_pnm(std::ostream & ff,
+        bool uselog = false, const char *grad = "KRYW") const{
     // find data range (for logscale ignore values <=0)
     double cmin=get(0,0);
     double cmax=cmin;
@@ -35,7 +36,7 @@ class dImage:std::vector<double> {
     std::cerr << "picture min: " << cmin << " max: " << cmax << "\n";
     if (amin!=-HUGE_VAL) cmin=amin;
     if (amax!=+HUGE_VAL) cmax=amax;
-    Rainbow R(cmin, cmax, "KRYW");
+    Rainbow R(cmin, cmax, grad);
     // print data
     ff << "P6\n" << w << " " << h << "\n255\n";
     for (int y=0; y<h; y++){

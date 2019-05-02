@@ -689,9 +689,11 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
   double amin=-HUGE_VAL, amax=+HUGE_VAL;
   int win = 1024;
   int W=1024, H=768;
+  bool l = false;
+  const char *g = "KRYW";
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:A:B:W:H:w:");
+    int c = getopt(argc, argv, "+F:G:A:B:W:H:w:lg:");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -703,6 +705,8 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
       case 'W': W    = atoi(optarg); break;
       case 'H': H    = atoi(optarg); break;
       case 'w': win  = atof(optarg); break;
+      case 'l': l    = true; break;
+      case 'g': g    = optarg; break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
@@ -736,7 +740,7 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
   }
 
 //for (int y = 0; y<H; y++) pic.set(0,y,0);
-  pic.print_pnm(ff, 1);
+  pic.print_pnm(ff, l, g);
 }
 
 
@@ -750,9 +754,11 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, const int argc, char **argv) {
   double amin=-HUGE_VAL, amax=+HUGE_VAL;
   int win = 1024;
   int W=1024, H=768;
+  bool l = false;
+  const char *g = "KRYW";
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:A:B:W:H:");
+    int c = getopt(argc, argv, "+F:G:A:B:W:H:lg:");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -763,6 +769,8 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, const int argc, char **argv) {
       case 'B': amax = atof(optarg); break;
       case 'W': W    = atoi(optarg); break;
       case 'H': H    = atoi(optarg); break;
+      case 'l': l    = true; break;
+      case 'g': g    = optarg; break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
@@ -838,7 +846,7 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, const int argc, char **argv) {
       for (int x=x1; x<x2; x++) pic.set(x,y,v);
     }
   }
-  pic.print_pnm(ff, 1);
+  pic.print_pnm(ff, l, g);
 }
 
 /******************************************************************/
