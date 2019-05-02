@@ -361,7 +361,12 @@ PicoInt::cmd(const vector<string> & args){
       << "Usage: filter <file> <args> ...";
     string cmd = "sig_filter " + args[1];
     for (int i=2; i<args.size(); i++) cmd += " " + args[i];
-    system(cmd.c_str());
+    int ret = system(cmd.c_str());
+    if (ret == -1 || ret == 127)
+      throw Err() << "can'r run program: " << cmd;
+    if (ret != 0)
+      throw Err() << "non-zero exit status: " << cmd;
+
     return true;
   }
 
