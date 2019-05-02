@@ -1,6 +1,7 @@
 #include "pico_int.h"
 #include "pico_4224.h"
 #include "err/err.h"
+#include "read_words/read_words.h"
 #include <unistd.h>
 
 /* record signals using Picoscope */
@@ -11,25 +12,6 @@ using namespace std;
 void list(){
   cout << Pico4224::dev_list() << "\n";
 }
-
-/*********************************************************************/
-// read command from stdin, remove comments,
-// split into words
-vector<string> read_cmd(){
-  // read line
-  string line;
-  getline(cin,line);
-
-  // split into words
-  istringstream ss(line);
-  vector<string> words;
-  while (!ss.eof()){
-    string w; ss>>w;
-    if (w!="") words.push_back(w);
-  }
-  return words;
-}
-
 
 /*********************************************************************/
 int
@@ -68,7 +50,7 @@ main(int argc, char *argv[]){
     while (1){
       try {
         if (cin.eof()) break;
-        if (osc.cmd(read_cmd())) cout << "#OK\n" << flush;
+        if (osc.cmd(read_words(cin))) cout << "#OK\n" << flush;
       }
       catch (Err E){
         // during waiting errors go to the block_err buffer
