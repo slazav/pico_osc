@@ -2,8 +2,6 @@
 #include <cstdlib>
 #include <vector>
 
-// unpack data written by pico_rec into x-y text table
-
 using namespace std;
 
 // convert a string with comma/space separated integer numbers into an integer vector

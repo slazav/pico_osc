@@ -7,7 +7,7 @@ MODDIR = ../modules
 include $(MODDIR)/Makefile.inc
 
 make_nodeps: sig_load.so
-sig_load.so: sig_load.cpp ../sig_filter/signal.cpp
+sig_load.so: sig_load.o $(ADEPS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ ${LDLIBS} -o $@
 
 clean:

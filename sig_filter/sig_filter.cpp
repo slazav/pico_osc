@@ -5,9 +5,9 @@
 #include <cstring>
 #include <cmath>
 
-#include "signal.h"
+#include "signal/signal.h"
+#include "str2vec/str2vec.h"
 #include "filters.h"
-#include "str2vec.h"
 
 
 // unpack data written by pico_rec into x-y text table

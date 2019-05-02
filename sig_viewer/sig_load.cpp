@@ -9,7 +9,7 @@
 #include <iostream>
 #include <cstring>  // strtok
 #include <cstdlib>  // atof
-#include "../sig_filter/signal.h"
+#include "signal/signal.h"
 #include "err/err.h"
 
 /*

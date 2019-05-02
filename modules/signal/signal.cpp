@@ -10,13 +10,10 @@
 #include <cmath>
 #include <iomanip>
 #include <complex>
-#include <fftw3.h>
 
 #include "err/err.h"
+#include "fft/fft.h"
 #include "signal.h"
-#include "fft.h"
-#include "fit_signal.h"
-#include "dimage.h"
 
 #define FTYPE double
 

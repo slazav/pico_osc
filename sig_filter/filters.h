@@ -1,7 +1,7 @@
 #ifndef FILTERS_H
 #define FILTERS_H
 
-#include "signal.h"
+#include "signal/signal.h"
 
 /***********************************************************/
 // "Filters": process a signal and write results

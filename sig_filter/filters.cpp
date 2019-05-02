@@ -16,11 +16,11 @@
 #include <fftw3.h>
 
 #include "err/err.h"
-#include "signal.h"
-#include "fft.h"
-#include "fit_signal.h"
-#include "dimage.h"
-#include "str2vec.h"
+#include "fft/fft.h"
+#include "fit_signal/fit_signal.h"
+#include "dimage/dimage.h"
+#include "str2vec/str2vec.h"
+#include "signal/signal.h"
 
 #define FTYPE double
 

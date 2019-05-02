@@ -3,23 +3,16 @@ PROGRAMS := sig_filter testsig_decay testsig_2decay testsig_noise wav2sig sig2wa
 LDLIBS += -lm -lfftw3
 CPPFLAGS += -g
 
+ALL_SOURCES := filters.cpp filters.h
+
+all: make_deps make_nodeps
+
+# additional dependencied
+sig_filter: sig_filter.o filters.o
 
 MODDIR = ../modules
 include $(MODDIR)/Makefile.inc
 
-# additional dependencied
-sig_filter: sig_filter.o signal.o filters.o rainbow.o fit_signal.o str2vec.o
-testsig: testsig.o
-wav2sig: wav2sig.o signal.o rainbow.o fit_signal.o
-sig2wav: sig2wav.o signal.o rainbow.o fit_signal.o
-sig_filter.o:  signal.h str2vec.h sig_filter.cpp
-wav2sig.o:  signal.h  wav2sig.cpp
-sig2wav.o:  signal.h  sig2wav.cpp
-filters.o:  signal.h  filters.cpp
-str2vec.o: str2vec.h str2vec.cpp
-testsig_decay.o:  testsig_decay.cpp
-testsig_2decay.o: testsig_2decay.cpp
-testsig_noise.o:  testsig_noise.cpp
 
 #f1=../../signals/fork1.dat
 #f2=../../signals/fork2.dat
@@ -43,7 +36,3 @@ testsig_noise.o:  testsig_noise.cpp
 # 
 # #	./sig_filter -f pnm test.dat | pnmtopng > test_raw.png
 # #	./sig_filter -f sfft_txt test.dat > test_sfft.txt
-
-
-
-
