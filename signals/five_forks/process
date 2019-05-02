@@ -1,0 +1,31 @@
+p=../../sig_filter/sig_filter
+
+# fit signals using fitn filter:
+
+f1=10000
+f2=50000
+f3=100000
+f4=250000
+
+echo "1st mode"
+$p -T 3e-6 -f fitn five_forks_avr200.sig -F $f1 -G $f2 -N 5
+
+echo "2nd mode"
+$p -T 3e-6 -f fitn five_forks_avr200.sig -F $f3 -G $f4 -N 5
+
+# plot pictures
+# low-freq excitation
+
+$p -f sfft_pnm five_forks_avr200.sig -F $f1 -G $f2 -w 10000 |\
+   pnmtopng > five_forks1.png
+
+$p -f sfft_pnm five_forks_avr200.sig -F $f1 -G $f4 -w 4000 |\
+   pnmtopng > five_forks2.png
+
+# high-freq excitation
+
+$p -f sfft_pnm five_forks_avr200a.sig -F $f1 -G $f2 -w 10000 |\
+   pnmtopng > five_forks3.png
+
+$p -f sfft_pnm five_forks_avr200a.sig -F $f1 -G $f4 -w 4000 |\
+   pnmtopng > five_forks4.png
