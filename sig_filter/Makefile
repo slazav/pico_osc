@@ -1,14 +1,9 @@
 PROGRAMS := sig_filter testsig_decay testsig_2decay testsig_noise wav2sig sig2wav
+MOD_SOURCES := filters.cpp
+MOD_HEADERS := filters.h
 
 LDLIBS += -lm -lfftw3
 CPPFLAGS += -g
-
-ALL_SOURCES := filters.cpp filters.h
-
-all: make_deps make_nodeps
-
-# additional dependencied
-sig_filter: sig_filter.o filters.o
 
 MODDIR = ../modules
 include $(MODDIR)/Makefile.inc

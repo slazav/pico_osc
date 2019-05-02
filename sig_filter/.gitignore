@@ -1,4 +1,5 @@
 *.o
+*.a
 sig_filter
 testsig_decay
 testsig_noise
