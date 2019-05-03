@@ -1,9 +1,10 @@
 #!/usr/bin/wish
 package require Itcl
 package require xBlt 3
-package require SigLoad 1.0
 
-#load ./sig_load.so
+# shold be replaced by "package require SigLoad"
+# during installation
+load ./sig_load.so
 
 
 itcl::class sig_viewer {
