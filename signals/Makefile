@@ -2,8 +2,8 @@ all: noise.txt fork2.png fork2s.png fork2.txt lockin1.txt
 
 
 noise.txt: noise.dat
-	../sig_filter/sig_filter -f fft_pow_lavr noise.dat > noise.txt
-	../sig_filter/sig_filter -T 0.03 -f fft_pow_lavr noise.dat > noise1.txt
+	../sig_filter/sig_filter -f fft_pow noise.dat > noise.txt
+	../sig_filter/sig_filter -T 0.03 -f fft_pow noise.dat > noise1.txt
 
 fork2.png: fork2.dat
 	../sig_filter/sig_filter -f pnm fork2.dat | pnmtopng > fork2.png
