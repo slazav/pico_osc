@@ -22,8 +22,8 @@ class dImage:std::vector<double> {
   void print_pnm(std::ostream & ff,
         bool uselog = false, const char *grad = "KRYW") const{
     // find data range (for logscale ignore values <=0)
-    double cmin=get(0,0);
-    double cmax=cmin;
+    double cmin=+HUGE_VAL;
+    double cmax=-HUGE_VAL;
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
         double v = get(x,y);
@@ -37,12 +37,13 @@ class dImage:std::vector<double> {
     if (amin!=-HUGE_VAL) cmin=amin;
     if (amax!=+HUGE_VAL) cmax=amax;
     Rainbow R(cmin, cmax, grad);
+
     // print data
     ff << "P6\n" << w << " " << h << "\n255\n";
     for (int y=0; y<h; y++){
       for (int x=0; x<w; x++){
         double v = get(x,y);
-        if (uselog) v = (v<=0)? log(cmin) : log(v);
+        if (uselog) v = (v<=0)? cmin : log(v);
         int32_t col = R.get(v);
         char *cc = (char *)&col;
         ff << cc[2] << cc[1] << cc[0];
