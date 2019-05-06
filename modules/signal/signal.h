@@ -55,6 +55,12 @@ class Signal{
 
     // Select channels ('0', '1,0', '2' etc.)
     void crop_c(const std::vector<int> & channels);
+
+    // Add channels from another signal:
+    // - If the first signal is empty, replace it with new one.
+    // - dt,t0 - used from the first signal, if value is different print a warning.
+    // - If number of points is different signals are cropped to the shortest one.
+    void add(const Signal &other);
 };
 
 /***********************************************************/

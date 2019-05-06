@@ -52,6 +52,35 @@ Signal::crop_c(const std::vector<int> & channels){
   }
 }
 
+void
+Signal::add(const Signal &other){
+  if (chan.size()==0) {
+    *this = other;
+    return;
+  }
+  // use dt,t0 from the first signal, write warning if values are different:
+  if (dt!=other.dt) std::cerr << "Appending signals with different time step: "
+                              << dt << " and " << other.dt << "\n";
+
+  if (t0!=other.t0) std::cerr << "Appending signals with different time shift: "
+                              << t0 << " and " << other.t0 << "\n";
+
+  chan.insert(chan.end(), other.chan.begin(), other.chan.end());
+
+  // check number of points
+  int Nmin=0;
+  for (int c = 0; c<get_ch(); c++) {
+    if (Nmin==0 || Nmin>chan[c].size()) Nmin = chan[c].size();
+  }
+  for (int c = 0; c<get_ch(); c++) {
+    if (Nmin==chan[c].size()) continue;
+    std::cerr << "Appending signals with different number of points, crop: "
+              << chan[c].size() << " to " << Nmin << "\n";
+    chan[c].resize(Nmin);
+  }
+
+}
+
 /***********************************************************/
 Signal read_signal(istream & ff){
   const int hsize=4;
