@@ -386,7 +386,7 @@ Signal read_wav(istream & ff){
     // read chunk id and length
     ff.read(id, id_size);
     ff.read((char *)&ch_len, sizeof(ch_len));
-    cerr << "chunk: " << id << ", length: " << ch_len << "\n";
+    //cerr << "chunk: " << id << ", length: " << ch_len << "\n";
 
     // fmt chunk
     if (strncmp(id, "fmt ", id_size)==0) {
