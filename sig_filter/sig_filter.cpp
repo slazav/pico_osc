@@ -18,6 +18,7 @@ using namespace std;
 void help(){
   cout << "pico_filter -- read and process pico_rec datafiles\n"
           "Usage: pico_filter [options] <filename> [filter options]\n"
+          "       pico_filter [options] -M <filename> ... -- [filter options]\n"
           "Options:\n"
           " -h        -- write this help message and exit\n"
           " -f <name> -- filter name\n"
@@ -26,6 +27,9 @@ void help(){
           " -T <num>  -- min time (default -infinity)\n"
           " -U <num>  -- max time (default +infinity)\n"
           "              If -T or -U is set the signal is cut to the specified time range before filtering.\n"
+          " -M        -- Load multiple signals. Filter options should be separated by '--'.\n"
+          "              Number of points is cropped to that of the shortest signal.\n"
+          "              -c, -T, -U options are applied to each signal before joining.\n"
           "Filters:\n"
           "     txt -- Print a text table with all channels.\n"
           "       No filter options.\n"
@@ -142,11 +146,12 @@ main(int argc, char *argv[]){
     const char *flt = NULL; // filter name
     double tmin = -HUGE_VAL;
     double tmax = +HUGE_VAL;
+    bool mult = false;
 
     /* parse  options */
     opterr=0;
     while(1){
-      int c = getopt(argc, argv, "+hf:c:T:U:C:D:");
+      int c = getopt(argc, argv, "+hf:c:T:U:C:D:M");
       if (c==-1) break;
       switch (c){
         case '?': throw Err() << "Unknown option: -" << (char)optopt;
@@ -156,6 +161,7 @@ main(int argc, char *argv[]){
         case 'c': cn = optarg; break;
         case 'T': tmin = atof(optarg); break;
         case 'U': tmax = atof(optarg); break;
+        case 'M': mult = true; break;
       }
     }
     argc-=optind;
@@ -163,16 +169,22 @@ main(int argc, char *argv[]){
     optind=1;
     if (argc<1) { help(); return 0; }
     if (flt==NULL) throw Err() << "Filter is not specified, use -f option\n";
-    const char *fname = argv[0];
 
-    /* read the signal */
-    std::ifstream ff(fname);
-    Signal sig = read_signal(ff);
+    Signal sig;
+    int i;
+    for (i=0; i<(mult?argc:1); i++){
+      if (mult && strcmp(argv[i],"--")==0) {i++; break;}
+      std::ifstream ff(argv[i]);
+      Signal sig1 = read_signal(ff);
+      /* crop time, rearrange channels */
+      sig1.crop_t(tmin, tmax);
+      if (strlen(cn)>0)  sig1.crop_c(str2ivec(cn));
+      if (sig1.get_n()<1 || sig1.get_ch()<1) throw Err() << "empty signal: " << argv[i];
+      sig.add(sig1);
+    }
+    argc-=i-1;
+    argv+=i-1;
 
-    /* crop time, rearrange channels */
-    sig.crop_t(tmin, tmax);
-    if (strlen(cn)>0)  sig.crop_c(str2ivec(cn));
-    if (sig.get_n()<1 || sig.get_ch()<1) throw Err() << "empty signal";
 
     if (strcasecmp(flt, "txt")==0)                    flt_txt(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "pnm")==0)               flt_pnm(std::cout, sig, argc, argv);
