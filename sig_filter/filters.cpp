@@ -687,7 +687,7 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
 
   double fmin=0, fmax=+HUGE_VAL;
   double amin=-HUGE_VAL, amax=+HUGE_VAL;
-  int win = 1024;
+  int win = 0;
   int W=1024, H=768;
   bool l = false;
   const char *g = "KRYW";
@@ -715,6 +715,20 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
   int cN  = s.get_ch();
   if (N<1 || cN<1) return;
   int ch=0;
+
+  // choose default window in such a way that t and f resolution (Dt and Df) are same:
+  //   Dt = s.dt*win = 2*pi/Df;
+  //   H/W * N * 2*pi/(fmax-fmin)/s.dt) = win^2;
+  // =>  win^2 = N^2 H/W * 2*pi/((fmax-fmin)*s.dt*N).
+  if (win<=0){
+    // same as in fft.get_ind
+    if (fmax<fmin) std::swap(fmax, fmin);
+    if (fmax > 0.5/s.dt) fmax = 0.5/s.dt;
+    if (fmin > 0.5/s.dt) fmin = 0.5/s.dt;
+    if (fmin < 0) fmin = 0;
+    win = N*sqrt(2*M_PI*(double)H/W/((fmax-fmin)*s.dt*N));
+    cerr << "win: " << win << "\n";
+  }
 
   FFT fft(win);
   int i1f, i2f;
