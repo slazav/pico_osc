@@ -123,7 +123,6 @@ Signal read_sig(istream & ff){
 
   if (ff.fail()) throw Err() << "Can't read file";
   Signal sig;
-
   // first line: *SIG001
   string line;
   getline(ff,line);
@@ -215,12 +214,13 @@ Signal read_sig(istream & ff){
   // number of channels
   int num = sig.chan.size();
 
-
   // find data length
   ios::pos_type start_pos = ff.tellg();
   ff.seekg (0, ios::end);
+  if (ff.fail()) throw Err() << "Can't read file: seek error";
   int length = ff.tellg() - start_pos;
   ff.seekg(start_pos, ios::beg);
+  if (ff.fail()) throw Err() << "Can't read file: seek error";
 
   if (!is_fft) {
     if (length != N*num*sizeof(int16_t))
@@ -262,11 +262,11 @@ Signal read_sig(istream & ff){
           FTYPE data[2];
           ff.read((char *)data, 2*sizeof(FTYPE));
           fft.set(i,   data[0],  data[1]);
-          fft.set(N-i, data[0], -data[1]);
+          if (i!=0) fft.set(N-i, data[0], -data[1]);
         }
         else {
           fft.set(i, 0.0, 0.0);
-          fft.set(N-i, 0.0, 0.0);
+          if (i!=0) fft.set(N-i, 0.0, 0.0);
         }
       }
       fft.run();
