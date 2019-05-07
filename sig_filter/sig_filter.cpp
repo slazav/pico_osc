@@ -22,6 +22,9 @@ void help(){
           "Options:\n"
           " -h        -- write this help message and exit\n"
           " -f <name> -- filter name\n"
+          " -P <pars> -- Find pulse and set t0. <pars> are comma- or space-separated values:\n"
+          "              channel (0,1,etc.), threshold (0..1, default 0.9),\n"
+          "              start time, stop time.\n"
           " -c <chan> -- Comma- or space-separated channel numbers (\"0\", \"1\", \"1,0\", etc.).\n"
           "              Different filters use different number of channels.\n"
           " -T <num>  -- min time (default -infinity)\n"
@@ -148,10 +151,16 @@ main(int argc, char *argv[]){
     double tmax = +HUGE_VAL;
     bool mult = false;
 
+    std::vector<double> pulse_pars;
+    double pulse_th = 0.9;
+    int pulse_ch = -1;
+    double pulse_t1 = tmin;
+    double pulse_t2 = tmax;
+
     /* parse  options */
     opterr=0;
     while(1){
-      int c = getopt(argc, argv, "+hf:c:T:U:C:D:M");
+      int c = getopt(argc, argv, "+hf:c:T:U:C:D:P:M");
       if (c==-1) break;
       switch (c){
         case '?': throw Err() << "Unknown option: -" << (char)optopt;
@@ -161,6 +170,12 @@ main(int argc, char *argv[]){
         case 'c': cn = optarg; break;
         case 'T': tmin = atof(optarg); break;
         case 'U': tmax = atof(optarg); break;
+        case 'P': pulse_pars = str2dvec(optarg); 
+                  if (pulse_pars.size()>0) pulse_ch = pulse_pars[0];
+                  if (pulse_pars.size()>1) pulse_th = pulse_pars[1];
+                  if (pulse_pars.size()>2) pulse_t1 = pulse_pars[2];
+                  if (pulse_pars.size()>3) pulse_t2 = pulse_pars[3];
+                  break;
         case 'M': mult = true; break;
       }
     }
@@ -177,6 +192,7 @@ main(int argc, char *argv[]){
       std::ifstream ff(argv[i]);
       Signal sig1 = read_signal(ff);
       /* crop time, rearrange channels */
+      if (pulse_ch>=0) sig1.find_pulse(pulse_ch, pulse_th, pulse_t1, pulse_t2);
       sig1.crop_t(tmin, tmax);
       if (strlen(cn)>0)  sig1.crop_c(str2ivec(cn));
       if (sig1.get_n()<1 || sig1.get_ch()<1) throw Err() << "empty signal: " << argv[i];

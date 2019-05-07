@@ -61,6 +61,10 @@ class Signal{
     // - dt,t0 - used from the first signal, if value is different print a warning.
     // - If number of points is different signals are cropped to the shortest one.
     void add(const Signal &other);
+
+    // Find pulse (first point where signal absolute value > k times
+    // maximum absolute value) and set t0
+    void find_pulse(const int ch, const double k, const double t1, const double t2);
 };
 
 /***********************************************************/

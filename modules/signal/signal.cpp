@@ -97,6 +97,29 @@ Signal::add(const Signal &other){
 
 }
 
+void
+Signal::find_pulse(const int ch, const double k, const double t1, const double t2){
+  if (ch<0 || ch>=get_ch()) throw Err() << "Wrong channel setting: " << ch;
+  if (k<0 || k>1) throw Err() << "Wrong threshold setting (should be between 0 and 1): " << k;
+
+  int N = get_n();
+  // find maximum of absolute value:
+  int16_t max = 0;
+  int i;
+  int i1 = (t1-t0)/dt;
+  int i2 = (t2-t0)/dt;
+  if (i1<0) i1=0;
+  if (i2<0) i2=0;
+  if (i1>N) i1=N;
+  if (i2>N) i2=N;
+
+  for (i=i1; i<i2; i++) { if (max<abs(chan[ch][i])) max = chan[ch][i]; }
+  // find the pulse:
+  for (i=i1; i<i2; i++) { if (abs(chan[ch][i]) > max*k) break;}
+  if (i!=i2) t0 = -i*dt;
+  std::cerr << "find_pulse: " << t0 << "\n";
+}
+
 /***********************************************************/
 Signal read_signal(istream & ff){
   const int hsize=4;
