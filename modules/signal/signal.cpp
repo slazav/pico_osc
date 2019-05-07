@@ -65,9 +65,25 @@ Signal::add(const Signal &other){
   if (t0!=other.t0) std::cerr << "Appending signals with different time shift: "
                               << t0 << " and " << other.t0 << "\n";
 
+  int c1 = chan.size();
+  int c2 = other.chan.size();
+
   chan.insert(chan.end(), other.chan.begin(), other.chan.end());
 
-  // check number of points
+  // erase first points to align t0.
+  if (other.t0>t0){ // crop old channels
+    int skip = (other.t0-t0)/dt;
+    for (int c = 0; c<c1; c++)
+      chan[c].erase(chan[c].begin(), chan[c].begin() + skip);
+    t0 = other.t0;
+  }
+  if (t0>other.t0){ // crop new channels
+    int skip = (t0-other.t0)/other.dt;
+    for (int c = c1; c<c1+c2; c++)
+      chan[c].erase(chan[c].begin(), chan[c].begin() + skip);
+  }
+
+  // erase last points to align N.
   int Nmin=0;
   for (int c = 0; c<get_ch(); c++) {
     if (Nmin==0 || Nmin>chan[c].size()) Nmin = chan[c].size();

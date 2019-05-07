@@ -28,7 +28,7 @@ void help(){
           " -U <num>  -- max time (default +infinity)\n"
           "              If -T or -U is set the signal is cut to the specified time range before filtering.\n"
           " -M        -- Load multiple signals. Filter options should be separated by '--'.\n"
-          "              Number of points is cropped to that of the shortest signal.\n"
+          "              Signals are aligned by t=0 point and cropped to the shortest signal.\n"
           "              -c, -T, -U options are applied to each signal before joining.\n"
           "Filters:\n"
           "     txt -- Print a text table with all channels.\n"
