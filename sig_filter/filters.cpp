@@ -688,13 +688,13 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
   double fmin=0, fmax=+HUGE_VAL;
   double amin=-HUGE_VAL, amax=+HUGE_VAL;
   int win = 0;
-  int W=1024, H=768;
+  int W=1024, H=768, S=16;
   bool l = false;
   const char *g = "KRYW";
   bool avr = false;
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:A:B:W:H:w:lg:a");
+    int c = getopt(argc, argv, "+F:G:A:B:W:H:S:w:lg:a");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -705,6 +705,7 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
       case 'B': amax = atof(optarg); break;
       case 'W': W    = atoi(optarg); break;
       case 'H': H    = atoi(optarg); break;
+      case 'S': S    = atoi(optarg); break;
       case 'w': win  = atof(optarg); break;
       case 'l': l    = true; break;
       case 'g': g    = optarg; break;
@@ -737,6 +738,7 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
   fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
 
   dImage pic(W,H,0, amin, amax);
+  pic.set_vs(S);
 
   int nc = avr?s.get_ch():1;
   for (int ch = 0; ch < nc; ch++){
@@ -771,12 +773,12 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, const int argc, char **argv) {
   double fmin=0, fmax=+HUGE_VAL;
   double amin=-HUGE_VAL, amax=+HUGE_VAL;
   int win = 1024;
-  int W=1024, H=768;
+  int W=1024, H=768, S=16;
   bool l = false;
   const char *g = "KRYW";
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:A:B:W:H:lg:");
+    int c = getopt(argc, argv, "+F:G:A:B:W:H:S:lg:");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -787,6 +789,7 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, const int argc, char **argv) {
       case 'B': amax = atof(optarg); break;
       case 'W': W    = atoi(optarg); break;
       case 'H': H    = atoi(optarg); break;
+      case 'S': S    = atoi(optarg); break;
       case 'l': l    = true; break;
       case 'g': g    = optarg; break;
     }
@@ -843,6 +846,7 @@ flt_sfft_pnm_ad(ostream & ff, const Signal & s, const int argc, char **argv) {
 
   // second pass
   dImage pic(W,H,0, amin, amax);
+  pic.set_vs(S);
   for (int is = 0; is<start.size()-1; is++){
     int win = start[is+1]-start[is];
 
