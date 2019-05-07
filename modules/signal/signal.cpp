@@ -257,7 +257,7 @@ Signal read_sig(istream & ff){
 
     FFT fft(N, FFTW_BACKWARD);
     for (int n=0; n<num; n++){
-      for (int i = 0; i<(N+1)/2; i++){
+      for (int i = 0; i<=N/2; i++){
         if (i>=i1f && i<i2f){
           FTYPE data[2];
           ff.read((char *)data, 2*sizeof(FTYPE));
