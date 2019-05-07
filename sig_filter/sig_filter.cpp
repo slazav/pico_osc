@@ -94,6 +94,7 @@ void help(){
           "       -H <value>  -- image height, pixels (default: 768)\n"
           "       -l          -- use log scale\n"
           "       -g <value>  -- color gradient (default \"KRYW\")\n"
+          "       -a          -- average all channels instead of using the first one\n"
           "     sfft_pnm_ad   -- Adaptive window, no smoothing. Blackman window.\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"

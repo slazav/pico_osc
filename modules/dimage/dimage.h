@@ -18,6 +18,7 @@ class dImage:std::vector<double> {
 
   double get(int x, int y) const {return (*this)[w*y+x];}
   void   set(int x, int y, double v) { (*this)[w*y+x] = v;}
+  void   add(int x, int y, double v) { (*this)[w*y+x] += v;}
 
   void print_pnm(std::ostream & ff,
         bool uselog = false, const char *grad = "KRYW") const{

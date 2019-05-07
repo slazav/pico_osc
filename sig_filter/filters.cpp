@@ -691,9 +691,10 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
   int W=1024, H=768;
   bool l = false;
   const char *g = "KRYW";
+  bool avr = false;
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:A:B:W:H:w:lg:");
+    int c = getopt(argc, argv, "+F:G:A:B:W:H:w:lg:a");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -707,6 +708,7 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
       case 'w': win  = atof(optarg); break;
       case 'l': l    = true; break;
       case 'g': g    = optarg; break;
+      case 'a': avr  = true; break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
@@ -714,7 +716,6 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
   int N = s.get_n();
   int cN  = s.get_ch();
   if (N<1 || cN<1) return;
-  int ch=0;
 
   // choose default window in such a way that t and f resolution (Dt and Df) are same:
   //   Dt = s.dt*win = 2*pi/Df;
@@ -737,19 +738,22 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
 
   dImage pic(W,H,0, amin, amax);
 
-  for (int x = 0; x<W; x++){
-    int il = ((double)(N-win)*x)/(W-1); // be worry about int overfull
-    fft.run(s.chan[ch].data()+il, s.chan[ch].sc, true);
-    for (int y = 0; y<H; y++){
-      // convert y -> f
-      double f = fmin + ((fmax-fmin)*(double)(H-1-y))/H;
-      int fi = floor(f/df);
-      if (fi<0) fi=0;
-      if (fi>win-2) fi=win-2;
-      double v1 = fft.abs(fi);
-      double v2 = fft.abs(fi+1);
-      double v = (v1 + (f/df-fi)*(v2-v1))/win;
-      pic.set(x,y,v);
+  int nc = avr?s.get_ch():1;
+  for (int ch = 0; ch < nc; ch++){
+    for (int x = 0; x<W; x++){
+      int il = ((double)(N-win)*x)/(W-1); // be worry about int overfull
+      fft.run(s.chan[ch].data()+il, s.chan[ch].sc, true);
+      for (int y = 0; y<H; y++){
+        // convert y -> f
+        double f = fmin + ((fmax-fmin)*(double)(H-1-y))/H;
+        int fi = floor(f/df);
+        if (fi<0) fi=0;
+        if (fi>win-2) fi=win-2;
+        double v1 = fft.abs(fi);
+        double v2 = fft.abs(fi+1);
+        double v = (v1 + (f/df-fi)*(v2-v1))/win;
+        pic.add(x,y,v/nc);
+      }
     }
   }
 
