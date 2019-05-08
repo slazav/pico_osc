@@ -488,9 +488,10 @@ flt_sfft_peaks(ostream & ff, const Signal & s, const int argc, char **argv) {
   double fmin=0, fmax=+HUGE_VAL;
   int win = 1024;
   double th = 2.5;
+  bool avr = false;
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:w:t:");
+    int c = getopt(argc, argv, "+F:G:w:t:a");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -499,6 +500,7 @@ flt_sfft_peaks(ostream & ff, const Signal & s, const int argc, char **argv) {
       case 'G': fmax = atof(optarg); break;
       case 'w': win  = atof(optarg); break;
       case 't': th   = atof(optarg); break;
+      case 'a': avr  = true; break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
@@ -507,7 +509,7 @@ flt_sfft_peaks(ostream & ff, const Signal & s, const int argc, char **argv) {
   int N = s.get_n();
   int cN  = s.get_ch();
   if (N<1 || cN<1) return;
-  int ch=0;
+  int maxch = avr? cN:1;
 
   FFT fft(win);
   int i1f, i2f;
@@ -516,7 +518,12 @@ flt_sfft_peaks(ostream & ff, const Signal & s, const int argc, char **argv) {
 
   // for each time bin do fft and find peaks
   for (int iw=0; iw<N-win; iw+=win){
-    fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
+
+    std::vector<double> data(i2f-i1f, 0);
+    for (int ch = 0; ch<maxch; ch++) {
+      fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
+      for (int j = i1f; j<i2f; j++) data[j-i1f] += fft.abs(j)/maxch;
+    }
 
     // array for peak "sizes"
     vector<double> e(i2f-i1f, 0.0);
@@ -528,12 +535,12 @@ flt_sfft_peaks(ostream & ff, const Signal & s, const int argc, char **argv) {
       // for each peak position
       for (int i=i1f+W; i<i2f-W-1; i++){
         double x0 = i*df;
-        double y0 = fft.abs(i);
+        double y0 = data[i-i1f];
         double sum = 0.0;
         int sumn = 0;
         for (int j=-W; j<=W; j++) {
           double x = (i+j)*df;
-          double y = fft.abs(i+j)/y0;
+          double y = data[i+j-i1f]/y0;
           // model peak with width 4*W, f(x)
           // (we will look only at the central part, -W:W)
           double f = 1/(pow(x-x0,2) + pow(4*W,2));
@@ -560,7 +567,7 @@ flt_sfft_peaks(ostream & ff, const Signal & s, const int argc, char **argv) {
       double vp = e[i-i1f+1]/eavr;
       double vn = e[i-i1f-1]/eavr;
       if (v>th && v>vn && v>vp){
-        ff << "\t" << i*df << " " << fft.abs(i);
+        ff << "\t" << i*df << " " << data[i-i1f];
       }
     }
     ff << "\n";
