@@ -38,6 +38,8 @@ class IFilter::Impl{
   std::istream & stream() {return *ostrp;}
 
   ~Impl() {};
+
+  /***********************************************************/
   Impl(std::istream & istr, const std::string & prog){
 
     int fd1[2], fd2[2];
@@ -100,11 +102,54 @@ class IFilter::Impl{
     filebuf = __gnu_cxx::stdio_filebuf<char>(fd2[0], std::ios::in);
     ostrp = std::unique_ptr<std::istream>(new std::istream(&filebuf));
   }
+
+  /***********************************************************/
+  // simple constructor, just read output of the program
+  Impl(const std::string & prog){
+
+    int fd[2];
+    int pid;
+    if (pipe(fd)<0) throw Err() << "iofilter: pipe error";
+
+    if ((pid = fork()) < 0 ) throw Err() << "iofilter: fork2 error";
+
+    /******** child process ********/
+    if (pid == 0) {
+      close(fd[0]);
+      try {
+        // attach stdout to the pipe and execute the program
+        if (fd[1] != STDOUT_FILENO &&
+            dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO)
+              throw Err() << "iofilter: dup2 to stdout error";
+
+        if (execl("/bin/sh", "sh", "-c", prog.c_str(), (char *)0) < 0 )
+           throw Err() << "iofilter: exec error";
+      }
+      catch (Err e) {
+        std::cerr << e.str() << "\n";
+      }
+      close(fd[1]);
+      std::_Exit(0);
+    }
+
+    /******** parent process ********/
+
+    close(fd[1]);
+
+    filebuf = __gnu_cxx::stdio_filebuf<char>(fd[0], std::ios::in);
+    ostrp = std::unique_ptr<std::istream>(new std::istream(&filebuf));
+  }
+
 };
 
+/***********************************************************/
 
 IFilter::IFilter(std::istream & istr, const std::string & prog):
    impl(new Impl(istr, prog)) {}
+
+IFilter::IFilter(const std::string & prog):
+   impl(new Impl(prog)) {}
+
 IFilter::~IFilter() {}
 
 std::istream &
