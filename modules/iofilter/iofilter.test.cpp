@@ -30,6 +30,39 @@ main(){
   }
 
 
-//  std::cerr << "[" << flt.stream().rdbuf() << "]\n";
+  {
+    {
+      std::ofstream ff("test1.tmp");
+      OFilter flt(ff, "tac");
+      flt.stream() << "test1\ntest2\n";
+    }
+
+sleep(1);
+    std::ifstream fi("test1.tmp");
+    std::string l;
+    std::getline(fi, l);
+    assert(l == "test2");
+    std::getline(fi, l);
+    assert(l == "test1");
+    unlink("test1.tmp");
+  }
+
+  {
+    {
+      OFilter flt("tac > test2.tmp");
+      flt.stream() << "test1\ntest2\n";
+    }
+
+sleep(1);
+    std::ifstream fi("test2.tmp");
+    std::string l;
+    std::getline(fi, l);
+    assert(l == "test2");
+    std::getline(fi, l);
+    assert(l == "test1");
+    unlink("test2.tmp");
+  }
+
+
   return 0;
 }
