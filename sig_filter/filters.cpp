@@ -383,6 +383,57 @@ flt_sfft_txt(ostream & ff, const Signal & s, const int argc, char **argv) {
 }
 
 /******************************************************************/
+void
+flt_sfft_pow(ostream & ff, const Signal & s, const int argc, char **argv) {
+  const char *name = "sfft_pow";
+
+  double fmin=0, fmax=+HUGE_VAL;
+  int win = 1024;
+  bool avr = false;
+  // parse options (opterr==0, optint==1)
+  while(1){
+    int c = getopt(argc, argv, "+F:G:w:a");
+    if (c==-1) break;
+    switch (c){
+      case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
+      case ':': throw Err() << name << ": no argument: -" << (char)optopt;
+      case 'F': fmin = atof(optarg); break;
+      case 'G': fmax = atof(optarg); break;
+      case 'w': win  = atof(optarg); break;
+      case 'a': avr  = true; break;
+    }
+  }
+  if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+  int maxch = avr? cN:1;
+
+  FFT fft(win);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+
+  for (int iw=0; iw<N-win; iw+=win){
+    std::vector<double> data(i2f-i1f, 0);
+    for (int ch = 0; ch<maxch; ch++) {
+      fft.run(s.chan[ch].data()+iw, s.chan[ch].sc, true);
+      for (int j = i1f; j<i2f; j++) data[j-i1f] += fft.abs(j)/maxch;
+    }
+
+    // print selected frequency range
+    ff << scientific;
+    for (int j=i1f; j<i2f; j++){
+      ff << s.t0 + s.dt*(iw+win/2) << "\t" << j*df << "\t"
+         << data[j-i1f] << "\n";
+    }
+    ff << "\n";
+  }
+}
+
+
+/******************************************************************/
 
 void
 flt_sfft_int(ostream & ff, const Signal & s, const int argc, char **argv) {

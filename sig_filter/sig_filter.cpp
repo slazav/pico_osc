@@ -57,6 +57,12 @@ void help(){
           "       -F <value>  -- low frequency limit\n"
           "       -G <value>  -- high frequency limit\n"
           "       -w <value>  -- Window length (points)\n"
+          "     sfft_pow      -- Sliding fft with Blackman window, text table (T,F,A).\n"
+          "       Options:\n"
+          "       -F <value>  -- low frequency limit\n"
+          "       -G <value>  -- high frequency limit\n"
+          "       -w <value>  -- Window length (points)\n"
+          "       -a          -- average all channels instead of using the first one\n"
           "     sfft_int      -- Sliding fft with Blackman window, integral\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
@@ -211,6 +217,7 @@ main(int argc, char *argv[]){
     else if (strcasecmp(flt, "fft_pow")==0)           flt_fft_pow(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "fft_pow_corr")==0)      flt_fft_pow_corr(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_txt")==0)          flt_sfft_txt(std::cout, sig, argc, argv);
+    else if (strcasecmp(flt, "sfft_pow")==0)          flt_sfft_pow(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_int")==0)          flt_sfft_int(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_diff")==0)         flt_sfft_diff(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "sfft_peaks")==0)        flt_sfft_peaks(std::cout, sig, argc, argv);
