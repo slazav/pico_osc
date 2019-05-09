@@ -1,8 +1,10 @@
-PROGRAMS := sig_filter testsig_decay testsig_2decay testsig_noise wav2sig sig2wav
+PROGRAMS := sig_filter testsig_decay testsig_2decay testsig_noise\
+            wav2sig sig2wav sig_pnmtopng sig_pnginfo
+
 MOD_SOURCES := filters.cpp
 MOD_HEADERS := filters.h
 
-LDLIBS += -lm -lfftw3
+LDLIBS += -lm -lfftw3 -lpng
 CPPFLAGS += -g
 
 MODDIR = ../modules
