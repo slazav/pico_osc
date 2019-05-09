@@ -1,0 +1,138 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use JSON;
+use lib qw(/home/sla/PROG/exp_scripts/perl/);
+use sigproc;
+
+############################################################
+# Update FIG file for a PNG
+############################################################
+
+foreach my $png (@ARGV) {
+
+  my %pars;
+  open IN, "sig_pnginfo $png |" or die "can't run sig_pnginfo\n";
+  foreach (<IN>){
+    if (/^cmax:\s+(.*)/) {$pars{cmax} = $1; next;}
+    if (/^cmin:\s+(.*)/) {$pars{cmin} = $1; next;}
+    if (/^fmax:\s+(.*)/) {$pars{fmax} = $1; next;}
+    if (/^fmin:\s+(.*)/) {$pars{fmin} = $1; next;}
+    if (/^tmax:\s+(.*)/) {$pars{tmax} = $1; next;}
+    if (/^tmin:\s+(.*)/) {$pars{tmin} = $1; next;}
+    if (/^window:\s+(.*)/)   {$pars{win} = $1; next;}
+    if (/^width:\s+(.*)/)    {$pars{W} = $1; next;}
+    if (/^height:\s+(.*)/)   {$pars{H} = $1; next;}
+    if (/^sc_width:\s+(.*)/) {$pars{S} = $1; next;}
+    if (/^logscale:\s+(.*)/) {$pars{log} = $1; next;}
+    if (/^colors:\s+(.*)/)   {$pars{col} = $1; next;}
+    print "unknown setting: $_\n";
+  }
+  close IN;
+
+  my $fig = $png;
+  $fig =~ s/\.png$//;
+  $fig .= '.fig';
+
+  if ( -f $fig ) { rename $fig, "$fig.bak";}
+  open FIG, "> $fig" or die "Can't open fig file: $!\n";
+
+  # image
+  my $cm2fig = 1200.0 / 1.05 / 2.54;
+  my $px2cm = 0.01;
+  my $X1 = int(0.5 * $cm2fig);
+  my $Y1 = int(0.5 * $cm2fig);
+
+  my $X2 = $X1 + int($pars{W}*$px2cm*$cm2fig);
+  my $X3 = $X2 + int($pars{S}*$px2cm*$cm2fig);
+  my $Y2 = $Y1 + int($pars{H}*$px2cm*$cm2fig);
+
+  my $tl = int(0.2*$cm2fig);  # tick length
+  my $dt = 5;   # time step, seconds
+  my $df = 500; # freq step, hertz
+
+  my $timeS = $pars{tmax}-$pars{tmin}; # signal time span
+  my $freqS = $pars{fmax}-$pars{fmin}; # signal frequency span
+  my @freq2fig = ($Y1 + ($Y2-$Y1)/$freqS*$pars{fmax}, -($Y2-$Y1)/$freqS);
+  my @time2fig = ($X1 - ($X2-$X1)/$freqS*$pars{tmin},  ($X2-$X1)/$timeS);
+
+  # header
+  print FIG "#FIG 3.2\n",
+            "Portrait\nCenter\nMetric\nA4\n100.00\nSingle\n-2\n";
+  print FIG "# X2FIG: $time2fig[0] $time2fig[1]\n";
+  print FIG "# Y2FIG: $freq2fig[0] $freq2fig[1]\n";
+  print FIG "1200 2\n";
+
+  # image frame
+  print FIG "2 2 0 1 0 7 150 -1 -1 0.000 0 0 -1 0 0 5\n",
+            "\t$X1 $Y1  $X2 $Y1  $X2 $Y2  $X1 $Y2 $X1 $Y1\n";
+  print FIG "2 2 0 1 0 7 150 -1 -1 0.000 0 0 -1 0 0 5\n",
+            "\t$X2 $Y1  $X3 $Y1  $X3 $Y2  $X2 $Y2 $X2 $Y1\n";
+  print FIG "2 5 0 1 0 -1 500 -1 -1 0.000 0 0 -1 0 0 5\n",
+            "\t0 $png\n",
+            "\t$X1 $Y1  $X3 $Y1  $X3 $Y2  $X1 $Y2 $X1 $Y1\n";
+
+  sub vlist{
+    my $v1 = shift;
+    my $v2 = shift;
+    $v1 != $v2 or return $v1;
+
+    my $dv = $v2-$v1;
+    my $exp = 1;
+    $exp*=10 while abs($dv*$exp) < 1;
+    $exp/=10 while abs($dv*$exp) >= 10;
+
+    my $step = int($dv*$exp)/10/$exp;
+    my $vv1 = int($v1/$step)*$step;
+    my $vv2 = int($v2/$step)*$step;
+
+
+    my @ret;
+    for (my $v=$vv1; $v<=$vv2; $v+=$step) {
+      push @ret, $v if $v>=$v1 && $v<=$v2;
+    }
+    return @ret;
+  }
+
+  sub mk_vticks{
+    my $x    = shift;
+    my $y1   = shift;
+    my $y2   = shift;
+    my $v1   = shift;
+    my $v2   = shift;
+    my $flip = shift ? -1:+1;
+    my @vv = vlist($v1,$v2);
+    foreach my $v (@vv){
+      my $y = int($y1 + ($v-$v1)/($v2-$v1)*($y2-$y1));
+      my $xl = $x + $flip*100; # tick end
+      my $xt = $x - $flip*50; # text position
+      my $al = $flip>0 ? 2:0;
+      print FIG "2 1 0 1 0 7 150 -1 -1 0.000 0 0 -1 0 0 2\n\t$x $y $xl $y\n",
+                "4 $al 0 50 -1 18 10 0.0000 4 135 375 $xt $y $v\\001\n";
+    }
+  }
+
+  sub mk_hticks{
+    my $y    = shift;
+    my $x1   = shift;
+    my $x2   = shift;
+    my $v1   = shift;
+    my $v2   = shift;
+    my $flip = shift ? -1:+1;
+    my @vv = vlist($v1,$v2);
+    foreach my $v (@vv){
+      my $x = int($x1 + ($v-$v1)/($v2-$v1)*($x2-$x1));
+      my $yl = $y - $flip*100; # tick end
+      my $yt = $y + (($flip>0)?200:-50); # text position
+      print FIG "2 1 0 1 0 7 150 -1 -1 0.000 0 0 -1 0 0 2\n\t$x $y $x $yl\n",
+                "4 1 0 50 -1 18 10 0.0000 4 135 375 $x $yt $v\\001\n";
+    }
+  }
+
+  mk_vticks($X1, $Y2, $Y1, $pars{fmin}, $pars{fmax}, 0);
+  mk_vticks($X3, $Y2, $Y1, $pars{cmin}, $pars{cmax}, 1);
+  mk_hticks($Y2, $X1, $X2, $pars{tmin}, $pars{tmax}, 0);
+  mk_hticks($Y1, $X1, $X2, $pars{tmin}, $pars{tmax}, 1);
+
+}
+

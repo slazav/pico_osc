@@ -1,0 +1,92 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use JSON;
+use lib qw(/home/sla/PROG/exp_scripts/perl/);
+use sigproc;
+
+############################################################
+# Extract data form FIG file written by sig_pngfig.
+# One can add boxes there and get time and freqency ranges.
+# - only boxes with depth 50 are extracted
+# - output format: <file> <xmin> <xmax> <ymin> <ymax> <name>
+############################################################
+
+
+foreach my $fig (@ARGV) {
+
+  my @x2fig = [0,1];
+  my @y2fig = [0,1];
+
+  my $state=-1;
+  my $color=0;
+  my $comm="";
+  my $name="";
+  my @crd = ();
+  my @objects = ();
+  open FIG, $fig or die "can't open $fig\n";
+
+  foreach my $l (<FIG>){
+    # extract conversion parameters:
+    @x2fig = ($1,$2) if $l=~/^# X2FIG:\s+(\S+)\s+(\S+)/;
+    @y2fig = ($1,$2) if $l=~/^# Y2FIG:\s+(\S+)\s+(\S+)/;
+
+    # switch to a scanning state:
+    $state=0 if $l=~/^1200 2/;
+
+    # extract object comments:
+    if ($state == 0 && $l=~/^#\s+(\S+)/) {
+      $comm=$1;
+    }
+
+    # extract object coordinates:
+    if ($state == 1 && $l=~/^\s+\d+/) {
+      $l=~s/^\s*(.*?)\s*$/$1/;
+      my @c = split /\s+/, $l;
+      push(@crd, @c);
+    }
+
+    # read lines with depth=50 and different colors
+    if ($l=~/^\d/) {
+      if ($state==0 && $l=~/^2 2 0 1 (\d+) 7 50/){
+        push @objects, {color=>$color, name=>$name, crd=>[@crd]} if $#crd>=0;
+        @crd = ();
+        $state = 1;
+        $name = $comm;
+        $color = $1;
+      } else {
+        $state = 0;
+      }
+      $comm = "";
+    }
+  }
+  # save old object
+  push @objects, {color=>$color, name=>$name, crd=>[@crd]} if $#crd>=0;
+  close FIG;
+
+  # print data
+  foreach my $o (@objects) {
+    my @crd = @{$o->{crd}};
+    #convert coordinates
+    my ($xmin, $xmax, $ymin, $ymax);
+    for (my $i=0; $i<= $#crd-1; $i+=2 ) {
+      $crd[$i]   = ($crd[$i]-$x2fig[0])/$x2fig[1];
+      $crd[$i+1] = ($crd[$i+1]-$y2fig[0])/$y2fig[1];
+      $xmin=$crd[$i]   if !defined($xmin) || $xmin>$crd[$i];
+      $xmax=$crd[$i]   if !defined($xmax) || $xmax<$crd[$i];
+      $ymin=$crd[$i+1] if !defined($ymin) || $ymin>$crd[$i+1];
+      $ymax=$crd[$i+1] if !defined($ymax) || $ymax<$crd[$i+1];
+    }
+    # print
+    print "$fig $xmin $xmax $ymin $ymax $o->{name}\n";
+  }
+}
+
+
+__END__
+
+
+
+
+
+
