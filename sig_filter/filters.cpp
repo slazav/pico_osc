@@ -817,8 +817,13 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
     }
   }
 
-//for (int y = 0; y<H; y++) pic.set(0,y,0);
-  pic.print_pnm(ff, l, g);
+  Opt opts;
+  opts.put("fmin", fmin);
+  opts.put("fmax", fmax);
+  opts.put("tmin", s.t0);
+  opts.put("tmax", s.t0 + s.dt*N);
+  opts.put("window", win);
+  pic.print_pnm(ff, l, g, opts);
 }
 
 

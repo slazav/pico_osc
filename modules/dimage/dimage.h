@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include "opt/opt.h"
 
 /******************************************************************/
 // Strange double image
@@ -22,7 +23,7 @@ class dImage:std::vector<double> {
   void   set_vs(const double vs_) {vs=vs_;}
 
   void print_pnm(std::ostream & ff,
-        bool uselog = false, const char *grad = "KRYW") const;
+        bool uselog = false, const char *grad = "KRYW", Opt opts = Opt()) const;
 };
 
 #endif
