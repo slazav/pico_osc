@@ -826,8 +826,6 @@ flt_sfft_pnm(ostream & ff, const Signal & s, const int argc, char **argv) {
   pic.print_pnm(ff, l, g, opts);
 }
 
-
-
 /******************************************************************/
 void
 flt_sfft_pnm_ad(ostream & ff, const Signal & s, const int argc, char **argv) {
@@ -1147,6 +1145,66 @@ slockin(ostream & ff, const Signal & s, const int argc, char **argv) {
        << setprecision(6)  << 2*ss2/win << "\n";
   }
 }
+
+/******************************************************************/
+
+void
+peak(ostream & ff, const Signal & s, const int argc, char **argv) {
+  const char *name = "peak";
+
+  double fmin=0, fmax=+HUGE_VAL;
+  bool avr = false;
+  // parse options (opterr==0, optint==1)
+  while(1){
+    int c = getopt(argc, argv, "+F:G:a");
+    if (c==-1) break;
+    switch (c){
+      case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
+      case ':': throw Err() << name << ": no argument: -" << (char)optopt;
+      case 'F': fmin = atof(optarg); break;
+      case 'G': fmax = atof(optarg); break;
+      case 'a': avr  = true; break;
+    }
+  }
+  if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
+
+  int N = s.get_n();
+  int cN  = s.get_ch();
+  if (N<1 || cN<1) return;
+
+  FFT fft(N);
+  int i1f, i2f;
+  double df;
+  fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
+  std::vector<double> data(i2f-i1f, 0);
+  int nc = avr?s.get_ch():1;
+  for (int ch = 0; ch<nc; ch++) {
+    fft.run(s.chan[ch].data(), s.chan[ch].sc);
+    for (int j = i1f; j<i2f; j++) data[j-i1f] += fft.abs(j)/nc;
+  }
+
+  // find maximum
+  double vm = data[0];
+  int im = 0;
+  for (int i = 0; i<i2f-i1f; i++){
+    double v = data[i];
+    if (v>=vm) {vm=v; im=i;}
+  }
+
+  // parabolic fit near maximum
+  if (im<1 || im>=i2f-i1f-1) return;
+  double x1 = -1;
+  double x2 = 0;
+  double x3 = 1;
+  double y1 = data[im-1];
+  double y2 = data[im];
+  double y3 = data[im+1];
+  double A = (y1+y3)/2 - y2;
+  double B = (y3-y1)/2;
+
+  cout << df*(i1f + im - B/2/A) << "\n";
+}
+
 
 /******************************************************************/
 void

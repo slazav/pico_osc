@@ -137,6 +137,11 @@ void help(){
           "       -w <value>  -- window length (points)\n"
           "       -f <value>  -- manually set frequency, do not use reference channel\n"
           "       -p <value>  -- manually set phase (works only with -f, degrees, default: 0)\n"
+          "     peak          -- peak position on FFT absolute value.\n"
+          "       Options:\n"
+          "       -F <value>  -- low frequency limit\n"
+          "       -G <value>  -- high frequency limit\n"
+          "       -a          -- average all channels instead of using the first one\n"
           "     dc            -- Print mean value for each channel.\n"
           "     minmax        -- Print min/max values for each channel.\n"
           "     overload      -- Print overload flag for each channel.\n"
@@ -228,6 +233,7 @@ main(int argc, char *argv[]){
     else if (strcasecmp(flt, "fitn")==0)              fitn(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "lockin")==0)            lockin(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "slockin")==0)           slockin(std::cout, sig, argc, argv);
+    else if (strcasecmp(flt, "peak")==0)              peak(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "dc")==0)                dc(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "minmax")==0)            minmax(std::cout, sig, argc, argv);
     else if (strcasecmp(flt, "overload")==0)          overload(std::cout, sig, argc, argv);
