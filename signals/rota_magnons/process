@@ -1,0 +1,62 @@
+#!/bin/sh
+
+PATH=../../sig_filter:$PATH
+
+## Start from a signal signal.flac. Original signal name is
+## 20140428 69194.757429s_a_li624000.0Hz_pi623507.0Hz0.01V4ncyc_po623507.0Hz0.45V400ncyc_ia2005.68481445mA_om0rs_e1000mA.flac
+## Signal is in channel 1 (!)
+##
+## 1. make PNG (use sig_pnmtopng program instead on pnmtopng to keep some data)
+
+[ -f signal.png ] ||\
+sig_filter -c 1 -f sfft_pnm signal.flac\
+           -F 10 -G 2000 -w 20000 -H 2000 -W 1000 -S 24 |\
+           sig_pnmtopng > signal.png
+
+# 2. make FIG
+
+[ -f signal.fig ] ||\
+sig_pngfig signal.png
+
+# 3. manually mark peaks in fig by boxes (with or without) names
+#    signal.fig -> signal_add.fig
+
+# 4. extract regions (tmin, tmax, fmin, fmax, name) and apply some filters
+
+[ -f signal_add.txt ] ||\
+sig_figdat signal_add.fig > signal_add.txt
+
+# apply filters to these regions
+sig_figdat signal_add.fig |
+while read f x1 x2 y1 y2 n; do
+  # filtered signals
+  sig_filter -T $x1 -U $x2 -c 1 -f sigf signal.flac\
+             -F $y1 -G $y2 > z_$n.sigf
+
+  # fft
+  sig_filter -T $x1 -U $x2 -c 1 -f fft_txt signal.flac\
+             -F $y1 -G $y2 > z_$n.txt
+
+  # picture
+  sig_filter -T $x1 -U $x2 -c 1 -f sfft_pnm signal.flac\
+             -F $y1 -G $y2 -W 256 -H 64 | sig_pnmtopng > z_$n.png
+done
+
+# simple peak detection:
+sig_figdat signal_add.fig |
+while read f x1 x2 y1 y2 n; do
+  echo -n "$n  "
+  sig_filter -T $x1 -U $x2 -c 1 -f peak signal.flac\
+             -F $y1 -G $y2
+done | sort > signal_peaks.txt
+
+# fit:
+sig_figdat signal_add.fig |
+while read f x1 x2 y1 y2 n; do
+  echo -n "$n  "
+  sig_filter -T $x1 -U $x2 -c 1 -f fit signal.flac\
+             -F $y1 -G $y2
+done | sort > signal_fits.txt
+
+
+
