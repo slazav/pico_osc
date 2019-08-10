@@ -31,24 +31,37 @@ int
 main(int argc, char *argv[]){
   try {
 
+    /* default values */
+    const char *dev="";
+    int16_t mainsHz;
+
     /* parse  options */
     while(1){
       opterr=0;
-      int c = getopt(argc, argv, "h");
+      int c = getopt(argc, argv, "hm:d:");
       if (c==-1) break;
       switch (c){
         case '?':
         case ':': throw Err() << "incorrect options, see -h"; /* error msg is printed by getopt*/
+        case 'd': dev = optarg; break;
+        case 'm':
+          mainsHz=atoi(optarg);
+          if (mainsHz != 50 && mainsHz != 60)  throw Err()
+            << "incorrect mains freq. option: should be 50 or 60 Hz";
+          break;
         case 'h':
-          cout << "pico_adc24 -- record values using Pico ADC24\n"
-                  "Usage: pico_adc24 [options]\n"
+          cout << "pico_adc -- record values using Pico ADC\n"
+                  "Usage: pico_adc [options]\n"
                   "Options:\n"
-                  " -h        -- write this help message and exit\n";
+                  " -d <dev> -- device ID (autodetect by default)\n"
+                  " -m <Hz>  -- set mains frequency\n"
+                  " -h       -- write this help message and exit\n";
           return 0;
       }
     }
+
     // open the device
-    ADC24 adc24;
+    ADC24 adc24(dev,mainsHz);
 
     cout << "#SPP001\n"; // a command-line protocol, version 001.
     cout << "Pico ADC24 device is opened. Type help to see command list.\n";
