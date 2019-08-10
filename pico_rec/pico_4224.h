@@ -9,7 +9,7 @@
 #include <cmath>
 #include "err/err.h"
 #include "pico_err.h"
-#include "pico_int.h"
+#include "picoosc_int.h"
 
 // Here all picoscope4224-related functions are incapsuleted.
 // Programs should use PicoInt class which should be device-independent.

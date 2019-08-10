@@ -1,6 +1,6 @@
-#include "adc.h"
-#include "adc_pico24.h"
-#include "err.h"
+#include "picoadc_int.h"
+#include "pico_adc24.h"
+#include "err/err.h"
 #include <unistd.h>
 
 /* SPP-compatable interface to ADC-24 device */
@@ -48,9 +48,7 @@ main(int argc, char *argv[]){
       }
     }
     // open the device
-    int16_t dev = HDRLOpenUnit();
-    if (dev == 0) throw Err() << "Can't find the device";
-    if (dev < 0)  throw Err() << "Device found but can not be opened";
+    ADC24 adc24;
 
     cout << "#SPP001\n"; // a command-line protocol, version 001.
     cout << "Pico ADC24 device is opened. Type help to see command list.\n";

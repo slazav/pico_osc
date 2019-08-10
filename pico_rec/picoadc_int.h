@@ -1,8 +1,9 @@
-#ifndef ADC_H
-#define ADC_H
+#ifndef PICOADC_INT_H
+#define PICOADC_INT_H
 
 // ADC interface
 
+#include <pico/HRDL.h>
 #include <string>
 #include <vector>
 #include <stdint.h>
@@ -20,6 +21,7 @@ public:
   // High-level commands.
   // return true if #OK should be printed
   bool cmd(const std::vector<std::string> & args);
+  bool is_cmd(const std::vector<std::string> & args, const char *name);
   const char * cmd_help() const; // return command help
 
   /*****************************************************************************/

@@ -1,5 +1,5 @@
-#ifndef PICO_INT_H
-#define PICO_INT_H
+#ifndef PICOOSC_INT_H
+#define PICOOSC_INT_H
 
 // device-independent PicoScope interface
 
