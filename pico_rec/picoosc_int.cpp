@@ -7,7 +7,7 @@
 #include <time.h>
 #include <sys/time.h> // gettimeofday
 #include <chrono>
-#include "pico_int.h"
+#include "picoosc_int.h"
 #include "err/err.h"
 
 #define VERSION "2.1"
@@ -58,7 +58,6 @@ PicoInt::cmd_help() const {
   "filter <file> <args> -- run sig_filter program\n"
   "*idn? -- write id string: \"pico_rec " VERSION "\"\n"
   "get_time -- print current time (unix seconds with ms precision)\n";
-  ;
 }
 
 //save signal to a file
