@@ -188,6 +188,8 @@ flt_fft_pow(ostream & ff, const Signal & s, const int argc, char **argv){
   double k = 2*s.dt/N; // convert power to V^2/Hz
 
   FFT fft(N);
+  if (use_bl) k*=fft.blackman_corr();
+
   int i1f, i2f;
   double df;
   fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
@@ -281,6 +283,9 @@ flt_fft_pow_corr(ostream & ff, const Signal & s, const int argc, char **argv){
   double k = 2*s.dt/N; // convert power to V^2/Hz
 
   FFT fft(N);
+  if (use_bl) k*=fft.blackman_corr();
+
+
   int i1f, i2f;
   double df;
   fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);

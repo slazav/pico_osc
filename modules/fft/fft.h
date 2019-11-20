@@ -89,6 +89,17 @@ class FFT{
     fftw_execute(plan);
   }
 
+  // correction for blackman window
+  // see https://www.mathworks.com/matlabcentral/answers/372516-calculate-windowing-correction-factor
+  // ???
+  double blackman_corr(){
+    return 3.2;
+//    double s=0;
+//    for (int i=0; i<len; i++){
+//      s += a0-a1*cos(2*M_PI*i/(len-1))+a2*cos(4*M_PI*i/(len-1));
+//    }
+//    return len/s;
+  }
 
   // find absolute maxinmum
   int find_max(int i1f, int i2f) const{
