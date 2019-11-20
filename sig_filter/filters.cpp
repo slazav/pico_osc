@@ -110,15 +110,17 @@ flt_fft_txt(ostream & ff, const Signal & s, const int argc, char **argv){
   const char *name = "fft_txt";
 
   double fmin=0, fmax=+HUGE_VAL;
+  bool use_bl = false; //use Blackman window
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:");
+    int c = getopt(argc, argv, "+F:G:B");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
       case ':': throw Err() << name << ": no argument: -" << (char)optopt;
       case 'F': fmin = atof(optarg); break;
       case 'G': fmax = atof(optarg); break;
+      case 'B': use_bl = true; break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
@@ -134,7 +136,7 @@ flt_fft_txt(ostream & ff, const Signal & s, const int argc, char **argv){
   fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
   vector<vector<double> > dat_im(cN), dat_re(cN);
   for (int c = 0; c<cN; c++){
-    fft.run(s.chan[c].data(), s.chan[c].sc);
+    fft.run(s.chan[c].data(), s.chan[c].sc, use_bl);
     dat_re[c] = fft.real(i1f,i2f);
     dat_im[c] = fft.imag(i1f,i2f);
   }
@@ -161,9 +163,11 @@ flt_fft_pow(ostream & ff, const Signal & s, const int argc, char **argv){
   double fmin = 0, fmax=+HUGE_VAL;
   double npts = 1024;
   int    log  = 0;
+  bool   use_bl = false; // use blackman window
+
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:N:l");
+    int c = getopt(argc, argv, "+F:G:N:lB");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -171,6 +175,7 @@ flt_fft_pow(ostream & ff, const Signal & s, const int argc, char **argv){
       case 'F': fmin = atof(optarg); break;
       case 'G': fmax = atof(optarg); break;
       case 'N': npts = atof(optarg); break;
+      case 'B': use_bl = true; break;
       case 'l': log = 1; break;
     }
   }
@@ -188,7 +193,7 @@ flt_fft_pow(ostream & ff, const Signal & s, const int argc, char **argv){
   fft.get_ind(s.dt, &fmin, &fmax, &i1f, &i2f, &df);
   vector<vector<double> > dat(cN);
   for (int c = 0; c<cN; c++){
-    fft.run(s.chan[c].data(), s.chan[c].sc);
+    fft.run(s.chan[c].data(), s.chan[c].sc, use_bl);
     dat[c] = fft.abs(i1f,i2f);
   }
 
@@ -250,9 +255,10 @@ flt_fft_pow_corr(ostream & ff, const Signal & s, const int argc, char **argv){
   double fmin = 0, fmax=+HUGE_VAL;
   double npts = 1024;
   int    log  = 0;
+  bool use_bl = false; // use Blackman window
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:N:l");
+    int c = getopt(argc, argv, "+F:G:N:lB");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -261,6 +267,7 @@ flt_fft_pow_corr(ostream & ff, const Signal & s, const int argc, char **argv){
       case 'G': fmax = atof(optarg); break;
       case 'N': npts = atof(optarg); break;
       case 'l': log = 1; break;
+      case 'B': use_bl = true; break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
@@ -280,11 +287,11 @@ flt_fft_pow_corr(ostream & ff, const Signal & s, const int argc, char **argv){
   vector<double> dat1re, dat1im, dat2re, dat2im, dat0re, dat0im;
 
   // run fft on the first channel
-  fft.run(s.chan[0].data(), s.chan[0].sc);
+  fft.run(s.chan[0].data(), s.chan[0].sc, use_bl);
   // copy complex values
   dat1re = fft.real(i1f,i2f);
   dat1im = fft.imag(i1f,i2f);
-  fft.run(s.chan[1].data(), s.chan[1].sc);
+  fft.run(s.chan[1].data(), s.chan[1].sc, use_bl);
   dat2re = fft.real(i1f,i2f);
   dat2im = fft.imag(i1f,i2f);
 
