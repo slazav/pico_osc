@@ -7,13 +7,13 @@
 
 
 info='\
-libp libpicoipp  1.1.2 4r56
-libp libps4000   1.6.0 2r10
-libp libpicohrdl 1.6.0 1r08
+libp libpicoipp  1.3.0 4r21
+libp libps4000   2.1.0 2r570
+libp libpicohrdl 2.0.17 1r1441
 '
 #arches="amd64 i386"
 arches="amd64"
-rpm_ver="1.1"
+rpm_ver="1.2"
 rpm_name="libpico"
 
 for arch in $arches; do
@@ -67,5 +67,5 @@ EOF
 
   rpmbuild -bb libpico.spec
   mv -f /home/sla/RPM/RPMS/x86_64/${rpm_name}-${rpm_ver}-0.x86_64.rpm ${rpm_name}-${rpm_ver}-0.$arch.rpm
-  rm -rf -- ${dest} libpico.spec
+#  rm -rf -- ${dest} libpico.spec
 done
