@@ -38,12 +38,14 @@ main(int argc, char *argv[]){
     /* parse  options */
     while(1){
       opterr=0;
-      int c = getopt(argc, argv, "hm:d:");
+      int c = getopt(argc, argv, "hm:d:l");
       if (c==-1) break;
       switch (c){
         case '?':
         case ':': throw Err() << "incorrect options, see -h"; /* error msg is printed by getopt*/
         case 'd': dev = optarg; break;
+        case 'l': cout << ADC24::dev_list(); return 0;
+
         case 'm':
           mainsHz=atoi(optarg);
           if (mainsHz != 50 && mainsHz != 60)  throw Err()
@@ -53,6 +55,7 @@ main(int argc, char *argv[]){
           cout << "pico_adc -- record values using Pico ADC\n"
                   "Usage: pico_adc [options]\n"
                   "Options:\n"
+                  " -l       -- list all connected devices and exit\n"
                   " -d <dev> -- device ID (autodetect by default)\n"
                   " -m <Hz>  -- set mains frequency\n"
                   " -h       -- write this help message and exit\n";

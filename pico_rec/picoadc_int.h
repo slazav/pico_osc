@@ -48,7 +48,6 @@ private:
   bool waiting;
 
 protected:
-  int16_t h;     // device handle
   bool sixtyHz;  // mains frequency
   bool *chconf_en;
   bool *chconf_sngl;
@@ -57,10 +56,6 @@ protected:
   int16_t chN;
 
 public:
-
-  // constructor and destructor: open/close device, throw errors if any
-  ADCInt();
-  ~ADCInt();
 
   // High-level commands.
   // return true if #OK should be printed

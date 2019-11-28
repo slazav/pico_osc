@@ -18,16 +18,6 @@ ADCInt::is_cmd(const vector<string> & args, const char *name){
   return strcasecmp(args[0].c_str(), name)==0;
 }
 
-ADCInt::ADCInt() {
-  h = HRDLOpenUnit();
-  if (h == 0) throw Err() << "Can't find the device";
-  if (h < 0)  throw Err() << "Device found but can not be opened";
-}
-
-ADCInt::~ADCInt() {
-  HRDLCloseUnit(h);
-}
-
 const char *
 ADCInt::cmd_help() const {
   return

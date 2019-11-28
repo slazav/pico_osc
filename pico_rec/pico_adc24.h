@@ -14,7 +14,8 @@
 
 
 class ADC24 : public ADCInt {
-//  int16_t h; // device handle
+  int16_t devh; // device handle
+  int16_t devn; // device number (1..20)
 
   // convert ms to conversion time
   HRDL_CONVERSION_TIME tconvi2convtime(int16_t t){
@@ -183,13 +184,67 @@ class ADC24 : public ADCInt {
 
 public:
 
-  // constructor and destructor: open/close device, throw errors if any
-  ADC24(const char *name = NULL, int mainsHz = 50){
-    // check device id
-    if (!*name) throw Err()
-      << "undefined pico_adc device id";
-    if (strcasecmp(name,get_unit_id())!=0) throw Err()
-      << "unknown device id: " << name;
+  // return newline-separated list of all connected devices
+  // See code in https://github.com/picotech/picosdk-c-examples/blob/master/picohrdl/picohrdlCon/picohrdlCon.c
+  static std::string dev_list(){
+    std::string ret;
+    int16_t devices[HRDL_MAX_PICO_UNITS];
+    int8_t line[80];
+
+    for (int i = 0; i < HRDL_MAX_UNITS; i++) {
+      devices[i] = HRDLOpenUnit();
+      if (devices[i] > 0) {
+        HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_BATCH_AND_SERIAL);
+        ret += std::string((char*)line) + "\n";
+      }
+      else {
+        HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_ERROR);
+        if (atoi((char*)line) != HRDL_NOT_FOUND)
+          throw Err() << "can't open device " << i << ":" << line;
+      }
+    }
+    // close devices
+    for (int i = 0; i < HRDL_MAX_PICO_UNITS; i++) {
+      if (devices[i] > 0) HRDLCloseUnit(devices[i]);
+    }
+    return ret;
+  }
+
+
+  // Constructor and destructor: open/close device, throw errors if any.
+  // See code in https://github.com/picotech/picosdk-c-examples/blob/master/picohrdl/picohrdlCon/picohrdlCon.c
+  // for their strange way of finding correct device...
+  ADC24(const char *name, int mainsHz = 50){
+
+
+    // open all devices, as in dev_list()
+    int16_t devices[HRDL_MAX_PICO_UNITS];
+    int8_t line[80];
+    devh=-1; devn=-1;
+
+    // initialize device array
+    for (int i = 0; i < HRDL_MAX_UNITS; i++) devices[i] = 0;
+
+    // open all devices, as in dev_list(), find which one to use
+    for (int i = 0; i < HRDL_MAX_UNITS; i++) {
+      devices[i] = HRDLOpenUnit();
+      if (devices[i] > 0) {
+        HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_BATCH_AND_SERIAL);
+        if (name==0 || name[0] == 0 || strcasecmp(name, (char*)line)==0){
+          devh = devices[i]; devn = i; break;
+        }
+      }
+    }
+
+    // close all devices except one
+    for (int i = 0; i < HRDL_MAX_PICO_UNITS; i++) {
+      if (devices[i] > 0 && i!=devn) HRDLCloseUnit(devices[i]);
+    }
+
+    if (devn == -1){
+      if (name==0 || name[0] == 0) throw Err() << "No PicoLog devices found";
+      else throw Err() << "PicoLog device not found: " << name;
+    }
 
     // configure the mains noise rejection
     sixtyHz = (mainsHz == 60);
@@ -231,13 +286,13 @@ public:
   }
 
   void chan_set(int16_t chan, bool enable, bool sngl, float rng) {
-    if (!(HRDLSetAnalogInChannel(h,chan,enable,volt2range(rng),sngl))) throw Err()
+    if (!(HRDLSetAnalogInChannel(devh,chan,enable,volt2range(rng),sngl))) throw Err()
       << "failed to set channel " << chan;
   }
 
   int16_t chan_get_num() {
     int16_t n;
-    if (HRDLGetNumberOfEnabledChannels(h, &n)) return n;
+    if (HRDLGetNumberOfEnabledChannels(devh, &n)) return n;
     throw Err() << "chan_get_num() failed: invalid handle";
   }
 
@@ -245,7 +300,7 @@ public:
     int16_t len=20;
     const char *str;
     str = (char*)malloc(sizeof(char)*20);
-    HRDLGetUnitInfo(h,(int8_t *)str,len,HRDL_BATCH_AND_SERIAL);
+    HRDLGetUnitInfo(devh,(int8_t *)str,len,HRDL_BATCH_AND_SERIAL);
     return str;
   }
 
@@ -256,21 +311,21 @@ public:
 
   // configures the mains noise rejection setting
   void set_mains() {
-    if (!HRDLSetMains(h,sixtyHz)) throw Err() << "failed to set mains";
+    if (!HRDLSetMains(devh,sixtyHz)) throw Err() << "failed to set mains";
   }
 
   // sets the sampling time interval
   void set_interval(int32_t dt, int16_t conv) {
-    if (!HRDLSetInterval(h,dt,tconvi2convtime(conv))) throw Err() << "failed to set time interval";
+    if (!HRDLSetInterval(devh,dt,tconvi2convtime(conv))) throw Err() << "failed to set time interval";
   };
 
   // run block mode
   void run_block(int32_t nvals) {
-    if (!HRDLRun(h,nvals,str2m("block"))) throw Err() << "failed to run block mode";
+    if (!HRDLRun(devh,nvals,str2m("block"))) throw Err() << "failed to run block mode";
   }
 
   // is device ready?
-  bool is_ready() { return HRDLReady(h); }
+  bool is_ready() { return HRDLReady(devh); }
 
   // get the requested number of samples for each enabled channel
   float * get_values(int32_t nvals, int16_t *overflow) {
@@ -278,7 +333,7 @@ public:
     int32_t *dvals = (int32_t*)malloc(sizeof(int32_t)*nch*nvals);
     float   *vals = (float*)malloc(sizeof(float)*nch*nvals);
 
-    int32_t resn = HRDLGetValues(h,dvals,overflow,nvals); // returns actual number of samples
+    int32_t resn = HRDLGetValues(devh,dvals,overflow,nvals); // returns actual number of samples
     float rngs[chN], maxcounts[chN];
     int rs_n=0;
     for (int ch = 0; ch<chN; ++ch) {
@@ -301,7 +356,7 @@ public:
   // get the maximum and minimum ADC count available for the device
   int32_t get_max(int16_t ch) {
     int32_t min,max;
-    if (!HRDLGetMinMaxAdcCounts(h,&min,&max,ch)) throw Err() << "failed to get max ADC count";
+    if (!HRDLGetMinMaxAdcCounts(devh,&min,&max,ch)) throw Err() << "failed to get max ADC count";
     return max;
   }
 };
