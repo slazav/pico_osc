@@ -1,5 +1,5 @@
-#include "picoadc_int.h"
-#include "pico_adc24.h"
+#include "device.h"
+#include "deviceADC24.h"
 #include "err/err.h"
 #include <unistd.h>
 

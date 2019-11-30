@@ -7,8 +7,9 @@
 #include <time.h>
 #include <sys/time.h> // gettimeofday
 #include <chrono>
-#include "picoosc_int.h"
 #include "err/err.h"
+
+#include "device.h"
 
 #define VERSION "2.1"
 
@@ -19,7 +20,7 @@ is_cmd(const vector<string> & args, const char *name){
   return strcasecmp(args[0].c_str(), name)==0; }
 
 const char *
-PicoInt::cmd_help() const {
+PicoOsc::cmd_help() const {
   return
   "help -- show command list\n"
   "ranges <ch> -- show possible ranges\n"
@@ -61,7 +62,7 @@ PicoInt::cmd_help() const {
 }
 
 //save signal to a file
-void PicoInt::save_signal(const std::string &fname) {
+void PicoOsc::save_signal(const std::string &fname) {
   if (fname=="" || fname=="-") return;
 
   // check that trigger is configured
@@ -124,7 +125,7 @@ void PicoInt::save_signal(const std::string &fname) {
 
 
 bool
-PicoInt::cmd(const vector<string> & args){
+PicoOsc::cmd(const vector<string> & args){
   if (args.size()<1) return false;
 
   // print time

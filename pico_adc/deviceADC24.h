@@ -1,5 +1,5 @@
-#ifndef PICO_ADC24_H
-#define PICO_ADC24_H
+#ifndef DEVICE_ADC24_H
+#define DEVICE_ADC24_H
 
 #include <pico/HRDL.h>
 #include <string>
@@ -8,10 +8,10 @@
 #include <cstring>  // strcasecmp
 #include <cmath>
 #include "err/err.h"
-#include "pico_err.h"
-#include "picoadc_int.h"
 
+#include "device.h"
 
+/// Low-level commands for the device interface
 
 class ADC24 : public ADCInt {
   int16_t devh; // device handle
@@ -346,7 +346,7 @@ public:
     int32_t v=0;
     for (int n=0; n<resn; ++n) {
       for (int ri=0; ri<rs_n; ++ri ) {
-        vals[v]=rngs[ri]*dvals[v]/maxcounts[ri]*0.001; // Votls
+        vals[v]=rngs[ri]*dvals[v]/maxcounts[ri]*0.001; // Volts
         v++;
       }
     }

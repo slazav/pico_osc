@@ -1,7 +1,7 @@
-#ifndef PICOOSC_INT_H
-#define PICOOSC_INT_H
+#ifndef DEVICE_H
+#define DEVICE_H
 
-// device-independent PicoScope interface
+// Base class for PicoScope devices
 
 #include <string>
 #include <vector>
@@ -46,7 +46,7 @@ struct AvrBuf{
 };
 
 // oscilloscope interface
-class PicoInt{
+class PicoOsc{
   private:
     std::map<char, ChConf> chconf; // channel configuration
     std::vector<TrConf>    trconf; // trigger configuration
@@ -65,7 +65,7 @@ class PicoInt{
 
   public:
 
-  PicoInt(): navr(-1), waiting(false) {}
+  PicoOsc(): navr(-1), waiting(false) {}
   void save_signal(const std::string &fname);
 
   // High-level commands.

@@ -1,7 +1,7 @@
-#ifndef PICOADC_INT_H
-#define PICOADC_INT_H
+#ifndef DEVICE_H
+#define DEVICE_H
 
-// ADC interface
+// Base class for ADC devices
 
 #include <pico/HRDL.h>
 #include <string>
@@ -25,20 +25,6 @@ struct DChConf{
   bool sngl;
   float rng;
   std::vector<int16_t> buf;
-};
-
-struct BlConf{
-  // block settings:
-//  std::string chans;    // channels to be recorded "A", "BA" ...
-//  uint32_t npre, npost; // pre/post-trigger points
-//  float dtset;          // timestep
-//  std::string fname;    // filename
-  // parameters of the recorded signal:
-//  time_t sec;           // system time of the trigger position (s)
-//  long nsec;            // same, ns part
-//  uint32_t N;           // actual number of recorded points
-//  int16_t ov;           // overload flags
-//  float dt, t0;         // actual timestep and relative time of the first point
 };
 
 class ADCInt{

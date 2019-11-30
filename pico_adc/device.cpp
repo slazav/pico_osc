@@ -6,8 +6,9 @@
 #include <bitset>
 #include <iomanip>    // setfill
 #include <sys/time.h> // gettimeofday
-#include "picoadc_int.h"
 #include "err/err.h"
+
+#include "device.h"
 
 #define VERSION "1.0"
 
@@ -149,7 +150,6 @@ ADCInt::cmd(const vector<string> & args){
       std::cout << vals[i];
     }
     std::cout <<"\n";
-//    cout << "#OK\n";
     return true;
   }
 

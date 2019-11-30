@@ -1,0 +1,11 @@
+PROGRAMS = pico_adc
+
+
+MOD_HEADERS := deviceADC24.h device.h
+MOD_SOURCES := device.cpp
+
+LDLIBS += -lm -lpicohrdl
+
+MODDIR = ../modules
+include $(MODDIR)/Makefile.inc
+

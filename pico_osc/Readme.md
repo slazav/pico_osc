@@ -1,4 +1,4 @@
-## pico_rec -- record signals using Picoscope
+## pico_osc -- record signals using Picoscope
 
 Source code: `https://github.com/slazav/graphene`
 
@@ -6,7 +6,7 @@ E-mail: `Vladislav Zavjalov <slazav@altlinux.org>`
 
 Now only PS4224 model is supported.
 
-###Usage: pico_rec [options] < commands
+###Usage: pico_osc [options] < commands
 
 ###Options:
 `
@@ -30,7 +30,7 @@ returns two "#OK" lines: one then the device is ready for the signal
 recording, and second then the recording is done and the signal is
 written to a file. User should care about reading both of them.
 
-###Commands (see pico_rec -h):
+###Commands (see pico_osc -h):
 `
 help -- show command list
 
@@ -84,7 +84,7 @@ avr_save <fname> -- save averaged signal (should be done before avr_start or avr
 
 filter <file> <args> -- run sig_filter program
 
-*idn? -- write id string: "pico_rec <VERSION>"
+*idn? -- write id string: "pico_osc <VERSION>"
 
 get_time -- print current time (unix seconds with ms precision)
 `

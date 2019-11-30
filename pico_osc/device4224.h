@@ -1,5 +1,5 @@
-#ifndef PICO_4224_H
-#define PICO_4224_H
+#ifndef DEVICE_4224_H
+#define DEVICE_4224_H
 
 #include <pico/ps4000Api.h>
 #include <string>
@@ -8,13 +8,14 @@
 #include <cstring>  // strcasecmp
 #include <cmath>
 #include "err/err.h"
-#include "pico_err.h"
-#include "picoosc_int.h"
+
+#include "device.h"
+#include "errors.h"
 
 // Here all picoscope4224-related functions are incapsuleted.
 // Programs should use PicoInt class which should be device-independent.
 
-class Pico4224 : public PicoInt {
+class Pico4224 : public PicoOsc {
   int16_t h; // device handle
 
   /**********************************************************/

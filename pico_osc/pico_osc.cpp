@@ -1,8 +1,10 @@
-#include "picoosc_int.h"
-#include "pico_4224.h"
+#include <unistd.h>
+
 #include "err/err.h"
 #include "read_words/read_words.h"
-#include <unistd.h>
+
+#include "device.h"
+#include "device4224.h"
 
 /* record signals using Picoscope */
 
