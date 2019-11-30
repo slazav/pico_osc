@@ -80,10 +80,9 @@ void PicoOsc::save_signal(const std::string &fname) {
   ff << "# " << ctime(&(B.sec)) << "\n";
   ff << "\n# Oscilloscope settings:\n";
   ff << scientific;
-  map<char,ChConf>::iterator ic;
-  for (ic = chconf.begin(); ic!= chconf.end(); ic++){
-    char ch = ic->first;
-    ChConf C = ic->second;
+  for (auto const & ic:chconf){
+    char ch = ic.first;
+    ChConf C = ic.second;
     ff << "  chan_set: " << ch << " " << C.en << " " << C.cpl << " " << C.rng << "\n";
   }
   ff << "  trig_set: " << T.src << " " << T.lvl << " " << T.dir << " " << T.del << "\n";
@@ -102,7 +101,7 @@ void PicoOsc::save_signal(const std::string &fname) {
   ff << "\n# Data channels (osc channel, scale factor, overload):\n";
   for (int j=0; j<B.chans.size(); j++){
     char ch = B.chans[j];
-    ic = chconf.find(ch);
+    auto ic = chconf.find(ch);
     double sc = ic->second.rng/get_max_val();
     bool o = false;
     if (ch=='a' || ch=='A') o = (bool)(B.ov&1);
@@ -115,7 +114,7 @@ void PicoOsc::save_signal(const std::string &fname) {
   ff << "\n*\n";
   for (int i = 0; i<B.N; i++){
     for (int j=0; j<B.chans.size(); j++){
-      ic = chconf.find(B.chans[j]);
+      auto ic = chconf.find(B.chans[j]);
       if (ic == chconf.end() || ic->second.buf.size()<B.N)
         throw Err() << "Buffer error for channel " << B.chans[j];
       ff.write((const char*)(ic->second.buf.data()+i), sizeof(int16_t));
@@ -251,8 +250,7 @@ PicoOsc::cmd(const vector<string> & args){
     TrConf T = trconf[0];
 
     // reset all channel buffers
-    map<char,ChConf>::iterator ic;
-    for (ic = chconf.begin(); ic!= chconf.end(); ic++) ic->second.buf.clear();
+    for (auto & ic:chconf) ic.second.buf.clear();
 
     // averaging start/stop: clear buffers
     if (navr <= 0) avrbuf.clear();
@@ -261,7 +259,7 @@ PicoOsc::cmd(const vector<string> & args){
     for (int i=0;i<B.chans.size();i++){
       char chc = B.chans[i];
       string ch = string() + chc;
-      ic = chconf.find(chc);
+      auto ic = chconf.find(chc);
       if (ic == chconf.end()) throw Err() << "Channel " << ch << " is not configured";
       if (ic->second.buf.size()>0) continue; // already configured
       ic->second.buf.resize(B.N);
@@ -297,10 +295,10 @@ PicoOsc::cmd(const vector<string> & args){
     if (navr >= 0) {
       for (int c=0;c<B.chans.size();c++){
         char ch = B.chans[c];
-        map<char,ChConf>::iterator ic = chconf.find(ch);
+        auto ic = chconf.find(ch);
         if (ic == chconf.end())
           throw Err() << "No buffer for channel: " << ch;
-        map<char,AvrBuf>::iterator ia = avrbuf.find(ch);
+        auto ia = avrbuf.find(ch);
         if (ia == avrbuf.end())
           throw Err() << "No averaging buffer for channel: " << ch;
         if (ic->second.buf.size() != ia->second.buf.size())
@@ -340,14 +338,13 @@ PicoOsc::cmd(const vector<string> & args){
     if (navr<1) throw Err() << "No averaging have been done yet";
 
     // do averaging and save the result in channel buffers
-    map<char,AvrBuf>::iterator ia;
-    for (ia = avrbuf.begin(); ia!=avrbuf.end(); ia++){
-      map<char,ChConf>::iterator ic = chconf.find(ia->first);
+    for (auto const & ia:avrbuf){
+      auto ic = chconf.find(ia.first);
       if (ic == chconf.end())
-        throw Err() << "No buffer for channel: " << ia->first;
-      int N = ia->second.buf.size();
+        throw Err() << "No buffer for channel: " << ia.first;
+      int N = ia.second.buf.size();
       ic->second.buf.resize(N);
-      for (int i = 0; i<N; i++) ic->second.buf[i] = ia->second.buf[i]/navr;
+      for (int i = 0; i<N; i++) ic->second.buf[i] = ia.second.buf[i]/navr;
     }
     // save the signal
     save_signal(fname);
