@@ -1,30 +1,14 @@
+#include <unistd.h>
+
+#include "err/err.h"
+#include "read_words/read_words.h"
+
 #include "device.h"
 #include "deviceADC24.h"
-#include "err/err.h"
-#include <unistd.h>
 
 /* SPP-compatable interface to ADC-24 device */
 
 using namespace std;
-
-/*********************************************************************/
-// read command from stdin, remove comments,
-// split into words
-vector<string> read_cmd(){
-  // read line
-  string line;
-  getline(cin,line);
-
-  // split into words
-  istringstream ss(line);
-  vector<string> words;
-  while (!ss.eof()){
-    string w; ss>>w;
-    if (w!="") words.push_back(w);
-  }
-  return words;
-}
-
 
 /*********************************************************************/
 int
@@ -72,7 +56,7 @@ main(int argc, char *argv[]){
     while (1){
       try {
         if (cin.eof()) break;
-        if (adc24.cmd(read_cmd())) cout << "#OK\n" << flush;
+        if (adc24.cmd(read_words(cin))) cout << "#OK\n" << flush;
       }
       catch (Err E){ cout << "#Error: " << E.str() << "\n" << flush; }
     }
