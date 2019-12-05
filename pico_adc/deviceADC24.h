@@ -364,7 +364,6 @@ public:
   std::string get_info(){
     const int16_t ui_buflen=1024;
     char ui_v[ui_buflen],ui_n[ui_buflen];
-    int16_t res;
     if (!HRDLGetUnitInfo(devh,(int8_t *)ui_v,ui_buflen, HRDL_VARIANT_INFO) ||
         !HRDLGetUnitInfo(devh,(int8_t *)ui_n,ui_buflen, HRDL_BATCH_AND_SERIAL))
       throw Err() << "failed to get unit info";
