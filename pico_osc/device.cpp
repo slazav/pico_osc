@@ -58,7 +58,8 @@ PicoOsc::cmd_help() const {
   "avr_save <file> -- save average buffer\n"
   "filter <file> <args> -- run sig_filter program\n"
   "*idn? -- write id string: \"pico_rec " VERSION "\"\n"
-  "get_time -- print current time (unix seconds with ms precision)\n";
+  "get_time -- print current time (unix seconds with ms precision)\n"
+  "get_info -- print unit info\n";
 }
 
 //save signal to a file
@@ -147,6 +148,13 @@ PicoOsc::cmd(const vector<string> & args){
   if (is_cmd(args, "help")){
     if (args.size()!=1) throw Err() << "Usage: help";
     cout << cmd_help();
+    return true;
+  }
+
+  // print device info
+  if (is_cmd(args, "get_info")){
+    if (args.size()!=1) throw Err() << "Usage: get_info";
+    cout << "pico_osc " << get_info() << "\n";
     return true;
   }
 

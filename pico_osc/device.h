@@ -127,6 +127,9 @@ class PicoOsc{
   virtual int16_t get_max_val() const = 0;
   virtual int16_t get_min_val() const = 0;
 
+  // get device info
+  virtual std::string get_info() = 0;
+
 };
 
 

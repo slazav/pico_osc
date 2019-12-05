@@ -307,6 +307,17 @@ class Pico4224 : public PicoOsc {
   int16_t get_max_val() const { return PS4000_MAX_VALUE; }
   int16_t get_min_val() const { return PS4000_MIN_VALUE; }
 
+  // get device info
+  std::string get_info(){
+    const int16_t ui_buflen=1024;
+    char ui_v[ui_buflen],ui_n[ui_buflen];
+    int16_t res,ui_len;
+    res = ps4000GetUnitInfo(h,(int8_t *)ui_v,ui_buflen,&ui_len, PICO_VARIANT_INFO);
+    if (res!=PICO_OK) throw Err() << "GetUnitInfo error: " << pico_err(res);
+    res = ps4000GetUnitInfo(h,(int8_t *)ui_n,ui_buflen,&ui_len, PICO_BATCH_AND_SERIAL);
+    if (res!=PICO_OK) throw Err() << "GetUnitInfo error: " << pico_err(res);
+    return std::string(ui_v)+" "+std::string(ui_n);
+  }
 };
 
 
