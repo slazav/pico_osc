@@ -89,6 +89,9 @@ public:
   // get the maximum and minimum ADC count available for the device
   virtual int32_t get_max(int16_t ch) = 0;
 
+  // get device info
+  virtual std::string get_info() = 0;
+
 };
 
 #endif

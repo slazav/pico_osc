@@ -359,6 +359,16 @@ public:
     if (!HRDLGetMinMaxAdcCounts(devh,&min,&max,ch)) throw Err() << "failed to get max ADC count";
     return max;
   }
+
+  // get device info
+  std::string get_info(){
+    const int16_t ui_buflen=1024;
+    char ui_v[ui_buflen],ui_n[ui_buflen];
+    if (!HRDLGetUnitInfo(devh,(int8_t *)ui_v,ui_buflen, HRDL_VARIANT_INFO) ||
+        !HRDLGetUnitInfo(devh,(int8_t *)ui_n,ui_buflen, HRDL_BATCH_AND_SERIAL))
+      throw Err() << "failed to get unit info";
+    return std::string(ui_v)+" "+std::string(ui_n);
+  }
 };
 
 #endif
