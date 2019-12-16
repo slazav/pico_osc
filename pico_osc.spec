@@ -13,7 +13,7 @@ License:      GPL
 Packager:     Vladislav Zavjalov <slazav@altlinux.org>
 
 Source:       %name-%version.tar
-BuildRequires: libfftw3-devel
+BuildRequires: libfftw3-devel libjansson-devel libpng-devel tcl-blt-devel
 Requires:      libfftw3 tcl-xblt
 
 %description
