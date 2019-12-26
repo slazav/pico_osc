@@ -1,0 +1,4 @@
+*.dat
+*.o
+mk_res_sig
+split_sweeps

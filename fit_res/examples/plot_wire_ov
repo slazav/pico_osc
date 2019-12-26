@@ -1,0 +1,40 @@
+#!/usr/bin/gnuplot
+
+file = "wire_ov.dat"
+
+A  = 1.14966238783069e-04
+B  = -7.60473400025780e-05
+C  = -1.61793188002281e-01
+D  = -1.33925762054206e+00
+f0 = 1.09769110677181e+03
+df = 2.96768686138105e+00
+
+A  =  1.08639349503655e-04
+B  = -7.96697345344945e-05
+C  =  4.56372765075504e-02
+D  = -1.40412170633463e+00
+f0 =  1.09754352623431e+03
+df =  2.07463939912798e+00
+
+
+X(w) = A + (C*(f0**2-w**2) + D*w*df) / ((f0**2-w**2)**2 + (w*df)**2)
+Y(w) = B + (D*(f0**2-w**2) - C*w*df) / ((f0**2-w**2)**2 + (w*df)**2)
+
+
+set nokey
+set samples 1000
+
+plot\
+  file using 2:3 with points lc 3 pt 7 ps 1,\
+  file using 2:4 with points lc 6 pt 7 ps 1,\
+  X(x) lc 2, Y(x) lc 0,\
+
+pause -1
+
+set parametric
+plot [1082:1112]\
+  file using 3:4 with points lc 2 pt 7 ps 1,\
+  X(t), Y(t) lc 0,\
+
+
+pause -1

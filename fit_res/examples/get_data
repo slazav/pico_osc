@@ -1,0 +1,5 @@
+
+d1=$(date +%s -d '2019-12-25 23:27:56')
+d2=$(date +%s -d '2019-12-25 23:32:58')
+
+ssh -T f4a -- device -d db -cmd "'get_range wire_mc_cont $d1 $d2'" > wire_ov.dat

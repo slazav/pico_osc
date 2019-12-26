@@ -1,0 +1,32 @@
+#!/usr/bin/gnuplot
+
+file = "wire2.dat"
+
+A  = 1.089275e-04
+B  = -8.003296e-05
+C  = 3.876585e-02
+D  = -1.401328e+00
+f0 = 1.096880e+03
+df = 6.061935e+00
+
+X(w) = A + (C*(f0**2-w**2) + D*w*df) / ((f0**2-w**2)**2 + (w*df)**2)
+Y(w) = B + (D*(f0**2-w**2) - C*w*df) / ((f0**2-w**2)**2 + (w*df)**2)
+
+
+set nokey
+set samples 1000
+
+plot\
+  file using 2:3 with points lc 3 pt 7 ps 1,\
+  file using 2:4 with points lc 6 pt 7 ps 1,\
+  X(x) lc 2, Y(x) lc 0,\
+
+pause -1
+
+set parametric
+plot [1082:1112]\
+  file using 3:4 with points lc 2 pt 7 ps 1,\
+  X(t), Y(t) lc 0,\
+
+
+pause -1
