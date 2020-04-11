@@ -1,9 +1,6 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use JSON;
-use lib qw(/home/sla/PROG/exp_scripts/perl/);
-use sigproc;
 
 ############################################################
 # Extract data form FIG file written by sig_pngfig.
