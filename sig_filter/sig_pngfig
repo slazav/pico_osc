@@ -51,7 +51,7 @@ foreach my $png (@ARGV) {
   my $timeS = $pars{tmax}-$pars{tmin}; # signal time span
   my $freqS = $pars{fmax}-$pars{fmin}; # signal frequency span
   my @freq2fig = ($Y1 + ($Y2-$Y1)/$freqS*$pars{fmax}, -($Y2-$Y1)/$freqS);
-  my @time2fig = ($X1 - ($X2-$X1)/$freqS*$pars{tmin},  ($X2-$X1)/$timeS);
+  my @time2fig = ($X1 - ($X2-$X1)/$timeS*$pars{tmin},  ($X2-$X1)/$timeS);
 
   # header
   print FIG "#FIG 3.2\n",
