@@ -13,6 +13,10 @@ Usage: sig_pngfig [options] <PNG> <FIG>
 
 Options:
 
+-m | --mode  -- mode: put_data, get_data, get_cnv, update (default)
+
+-p | --png   -- set png file (for update mode)
+
 -W | --figw  -- Set image width in xfig (cm). Default: 10.
 
 -H | --fight -- Set image height in xfig (cm).
@@ -45,6 +49,8 @@ Old fig file will be renamed to \*.bak if it exists.
   exit 1;
 }
 
+my $mode = 'update';
+my $png = '';
 my $figw = 10;
 my $figh = -1;
 my $figx = 1;
@@ -53,6 +59,7 @@ my $ticklen = 0.1;
 my $textsp  = 0.1;
 my $textpts  = 10;
 my $help = 0;
+my $verb = 0;
 
 my $df = 0;
 my $dt = 0;
@@ -67,6 +74,8 @@ my $mind = 50;
 my $maxd = 50;
 
 GetOptions(
+  "m|mode=s"         => \$mode,
+  "p|png=s"          => \$png,
   "W|figw=s"         => \$figw,
   "H|figh=s"         => \$figh,
   "X|figx=s"         => \$figx,
@@ -79,116 +88,261 @@ GetOptions(
   "mind=i"           => \$mind,
   "maxd=i"           => \$maxd,
   "h|help"           => \$help,
+  "v|verb"           => \$verb,
 ) or usage();
 usage() if $help;
 
-usage() if scalar(@ARGV) != 2;
-my $png = $ARGV[0];
-my $fig = $ARGV[1];
+usage() if scalar(@ARGV) != 1;
+my $fig = $ARGV[0];
 
+my $cm2fig = 1200.0 / 1.05 / 2.54;
+my $texth = int($textpts/72*2.54 *$cm2fig); #text height
+$textsp  = int($textsp*$cm2fig); #text spacing, convert to fig units
+$ticklen = int($ticklen*$cm2fig);  # tick length
 
+############################################################
 ############################################################
 # Get info from png file
-
-my %pars;
-open IN, "sig_pnginfo $png |" or die "can't run sig_pnginfo\n";
-foreach (<IN>){
-  if (/^cmax:\s+(.*)/) {$pars{cmax} = $1; next;}
-  if (/^cmin:\s+(.*)/) {$pars{cmin} = $1; next;}
-  if (/^fmax:\s+(.*)/) {$pars{fmax} = $1; next;}
-  if (/^fmin:\s+(.*)/) {$pars{fmin} = $1; next;}
-  if (/^tmax:\s+(.*)/) {$pars{tmax} = $1; next;}
-  if (/^tmin:\s+(.*)/) {$pars{tmin} = $1; next;}
-  if (/^window:\s+(.*)/)   {$pars{win} = $1; next;}
-  if (/^width:\s+(.*)/)    {$pars{W} = $1; next;}
-  if (/^height:\s+(.*)/)   {$pars{H} = $1; next;}
-  if (/^sc_width:\s+(.*)/) {$pars{S} = $1; next;}
-  if (/^logscale:\s+(.*)/) {$pars{log} = $1; next;}
-  if (/^colors:\s+(.*)/)   {$pars{col} = $1; next;}
-  print "unknown setting: $_\n";
+sub get_png_info {
+  my $png = shift;
+  my $pars;
+  die "can't find PNG file: $png" unless (-f $png);
+  open IN, "sig_pnginfo $png |" or die "can't run sig_pnginfo\n";
+  foreach (<IN>){
+    if (/^cmax:\s+(.*)/) {$pars->{cmax} = $1; next;}
+    if (/^cmin:\s+(.*)/) {$pars->{cmin} = $1; next;}
+    if (/^fmax:\s+(.*)/) {$pars->{fmax} = $1; next;}
+    if (/^fmin:\s+(.*)/) {$pars->{fmin} = $1; next;}
+    if (/^tmax:\s+(.*)/) {$pars->{tmax} = $1; next;}
+    if (/^tmin:\s+(.*)/) {$pars->{tmin} = $1; next;}
+    if (/^window:\s+(.*)/)   {$pars->{win} = $1; next;}
+    if (/^width:\s+(.*)/)    {$pars->{W} = $1; next;}
+    if (/^height:\s+(.*)/)   {$pars->{H} = $1; next;}
+    if (/^sc_width:\s+(.*)/) {$pars->{S} = $1; next;}
+    if (/^logscale:\s+(.*)/) {$pars->{log} = $1; next;}
+    if (/^colors:\s+(.*)/)   {$pars->{col} = $1; next;}
+    print "unknown setting: $_\n";
+  }
+  close IN;
+  return $pars;
 }
-close IN;
-
-$pars{fmin} -= $df;
-$pars{fmax} -= $df;
-$pars{tmin} -= $dt;
-$pars{tmax} -= $dt;
-
-print STDERR "$pars{fmin} $pars{fmax} $df\n";
 
 ############################################################
-# Calculate image dimensions in FIG file
-# $pars{S} - width of colorbar, it is not included int $figw!
-
-  my $cm2fig = 1200.0 / 1.05 / 2.54;
-  my $X1 = $figx*$cm2fig;
-  my $Y1 = $figy*$cm2fig;
-
-  $figh = $figw * 1.0*$pars{H}/$pars{W} if $figh<=0;
-  my $figs = $figw * 1.0*$pars{S}/$pars{W}; # width of colorbar
-
-  my $X2 = int($X1 + $figw*$cm2fig);
-  my $X3 = int($X2 + $figs*$cm2fig);
-  my $Y2 = int($Y1 + $figh*$cm2fig);
-  $X1 = int($X1);
-  $Y1 = int($Y1);
-
-  my $tl = int($ticklen*$cm2fig);  # tick length
-
-  my $texth = int($textpts/72*2.54 *$cm2fig); #text height
-  $textsp = int($textsp*$cm2fig); #text spacing, convert to fig units
-
 ############################################################
-# Get information from old fig file, rename it to *.bak
+# read user data from a fig-file, return text representation
+sub get_data {
+  my $fig = shift;
+  my $mind = shift;
+  my $maxd = shift;
 
-  my @old_objs;
-  if ( -f $fig ) {
-    # extract old objects
-    open IN, "sig_figdat --mind $mind --maxd $maxd $fig |"
-      or die "can't run sig_figref: $!";
-    foreach (<IN>) {
-      my @a = split /\s+/;
-      next if scalar @a < 7;
-      my $comm = '';
-      my (@x,@y);
-      for (my $i=3; $i<=$#a; $i++){
-        if ($a[$i] eq '#') {
-          $comm = $a[$i+1] if $i<$#a;
-          last;
-        }
-        push @x, $a[$i]-$dt if $i%2==1;
-        push @y, $a[$i]-$df if $i%2==0;
-      }
-      push @old_objs, {
-        type  => $a[0],
-        color => $a[1],
-        depth => $a[2],
-        x     => [@x],
-        y     => [@y],
-        comm  => $comm,
-      };
+  my $state='init';
+  my $color=0;
+  my $depth=0;
+  my $comm="";
+  my $comm1="";
+  my $type="";
+  my @crd = ();
+  my @objects = ();
+
+  open FIG, $fig or die "can't open $fig\n";
+
+  foreach my $l (<FIG>){
+
+    # switch to a scanning state:
+    $state='scan' if $l=~/^1200 2/;
+
+    # Extract object comments:
+    if ($state ne 'init' && $l=~/^#\s+(\S+)/) {
+      $comm=$1; next;
     }
-    close IN;
-    rename $fig, "$fig.bak";
+
+    # Start reading an object
+    if ($state ne 'init' && $l=~/^\d/){
+
+      # save old object if needed
+      push @objects, {color=>$color, depth=>$depth, comm=>$comm1, crd=>[@crd], type=>$type}
+        if $#crd>=0 && $type;
+      @crd=();
+      $comm1 = $comm;
+      $comm = "";
+      $type = "";
+      $color = 0;
+      $depth = 0;
+
+      # image
+      if ($l=~/^2 5/){
+        $state = 'image';
+        $type = 'image';
+        next;
+      }
+
+      # BOX
+      if ($l=~/^2 2 0 1 (\d+) \d+ (\d+)/){
+        next if $2 < $mind || $2 > $maxd;
+        $state = 'crd';
+        $type = 'BOX';
+        $color = $1;
+        $depth = $2;
+        next;
+      }
+
+      # LINE/POINT
+      if ($l=~/^2 1 0 1 (\d+) \d+ (\d+) .* (\d+)$/){
+        next if $2 < $mind || $2 > $maxd;
+        $state = 'crd';
+        $type = $3==1? 'POINT':'LINE';
+        $color = $1;
+        $depth = $2;
+        next;
+      }
+
+      next;
+    }
+
+    # image, second line
+    if ($state eq 'image' && $l=~/\s+\d+\s+(.*\.png)$/){
+      $state = 'crd';
+      $comm1 = $1; # use comm field for filename!
+      next;
+    }
+
+    # extract object coordinates:
+    if ($state eq 'crd' && $l=~/^\s+\d+/) {
+      $l=~s/^\s*(.*?)\s*$/$1/;
+      push(@crd, split /\s+/, $l);
+      next;
+    }
+
+    $state='scan' if $state ne 'init';
   }
 
 
-  open FIG, "> $fig" or die "Can't open fig file: $!\n";
+  # save old object
+  push @objects, {color=>$color, depth=>$depth, comm=>$comm1, crd=>[@crd], type=>$type}
+    if $#crd>=0 && $type;
+  close FIG;
 
-  # header
-  print FIG "#FIG 3.2\n",
-            "Portrait\nCenter\nMetric\nA4\n100.00\nSingle\n-2\n";
-  print FIG "1200 2\n";
+  ############################################################
+  # find image object
 
-  # image frame
-  print FIG "2 2 0 1 0 7 $fdepth -1 -1 0.000 0 0 -1 0 0 5\n",
-            "\t$X1 $Y1  $X2 $Y1  $X2 $Y2  $X1 $Y2 $X1 $Y1\n";
-  print FIG "2 2 0 1 0 7 $fdepth -1 -1 0.000 0 0 -1 0 0 5\n",
-            "\t$X2 $Y1  $X3 $Y1  $X3 $Y2  $X2 $Y2 $X2 $Y1\n";
-  print FIG "2 5 0 1 0 -1 $idepth -1 -1 0.000 0 0 -1 0 0 5\n",
-            "\t0 $png\n",
-            "\t$X1 $Y1  $X3 $Y1  $X3 $Y2  $X1 $Y2 $X1 $Y1\n";
+  my $img;
+  foreach (@objects) {$img=$_ if $_->{type} eq 'image'; }
 
+  die "can't extract image coordinates for $fig" if !$img || scalar(@{$img->{crd}}) != 10;
+  my @c = @{$img->{crd}};
+  # get xmin, xmax, ymin, ymax
+  my ($xmin, $xmax, $ymin, $ymax) = ($c[0],$c[0],$c[1],$c[1]);
+  for (my $i = 0; $i<9; $i+=2) {
+    $xmin = $c[$i] if $xmin > $c[$i];
+    $xmax = $c[$i] if $xmax < $c[$i];
+    $ymin = $c[$i+1] if $ymin > $c[$i+1];
+    $ymax = $c[$i+1] if $ymax < $c[$i+1];
+  }
+
+  # add fig file path to png file:
+  my $path = $fig; $path =~ s/[^\/]*$//;
+  my $file = $path . $img->{comm};
+
+  ## read PNG, extract PNG parameters:
+  print STDERR "reading information from png file: $file\n" if $verb;
+  my $pars = get_png_info($file);
+
+  my $df = $pars->{fmax}-$pars->{fmin};
+  my $dt = $pars->{tmax}-$pars->{tmin};
+  my $dy = $ymax-$ymin;
+  my $dx = $xmax-$xmin;
+
+  # exclude sidebar size
+  $dx = $dx*$pars->{W}/($pars->{W}+$pars->{S});
+  $xmax = $xmin + $dx;
+
+  # conversion coeffitients time->x, freq->y
+  my $X0 = $xmin - $dx/$dt*$pars->{tmin}; my $KX = $dx/$dt;
+  my $Y0 = $ymin + $dy/$df*$pars->{fmax}; my $KY = -$dy/$df;
+
+  # print data
+  my $ret;
+  foreach my $o (@objects) {
+
+    # convert coordinates, find min and max
+    my @crd = @{$o->{crd}};
+    my ($xmin, $xmax, $ymin, $ymax);
+    for (my $i=0; $i<= $#crd-1; $i+=2 ) {
+      $crd[$i]   = ($crd[$i]-$X0)/$KX;
+      $crd[$i+1] = ($crd[$i+1]-$Y0)/$KY;
+      $xmin=$crd[$i]   if !defined($xmin) || $xmin>$crd[$i];
+      $xmax=$crd[$i]   if !defined($xmax) || $xmax<$crd[$i];
+      $ymin=$crd[$i+1] if !defined($ymin) || $ymin>$crd[$i+1];
+      $ymax=$crd[$i+1] if !defined($ymax) || $ymax<$crd[$i+1];
+    }
+
+    if ($o->{type} eq 'BOX') {
+      push @{$ret}, "$o->{type} $o->{color} $o->{depth} $xmin $ymin $xmax $ymax # "
+           . ($o->{comm} || '');
+      next;
+    }
+
+    if ($o->{type} eq 'LINE' || $o->{type} eq 'POINT') {
+      push @{$ret}, "$o->{type} $o->{color} $o->{depth} " . join(' ', @crd) . " # "
+           . ($o->{comm} || '');
+      next;
+    }
+  }
+  return $X0, $KX, $Y0, $KY, $ret;
+}
+
+############################################################
+############################################################
+## add data line to a fig file
+
+sub add_data {
+  my $fd = shift;
+  my $line = shift;
+  my $x0 = shift;
+  my $kx = shift;
+  my $y0 = shift;
+  my $ky = shift;
+
+  my @a = split /\s+/, $line;
+  next if scalar @a < 7;
+
+  my $type  = $a[0];
+  my $color = $a[1];
+  my $depth = $a[2];
+  my $comm = '';
+  my (@x,@y);
+  for (my $i=3; $i<=$#a; $i++){
+    if ($a[$i] eq '#') {
+      $comm = $a[$i+1] if $i<$#a;
+      last;
+    }
+    push @x, $a[$i] if $i%2==1;
+    push @y, $a[$i] if $i%2==0;
+  }
+
+  # convert coordinates
+  $_ = int($_*$kx + $x0) foreach (@x);
+  $_ = int($_*$ky + $y0) foreach (@y);
+
+  if ($type eq 'BOX'){
+    print $fd "# $comm\n" if $comm;
+    print $fd "2 2 0 1 $color 7 $depth -1 -1 0.000 0 0 -1 0 0 5\n";
+    print $fd "	 $x[0] $y[0] $x[1] $y[0] $x[1] $y[1] $x[0] $y[1] $x[0] $y[0]\n";
+    return;
+  }
+
+  if ($type eq 'POINT' || $type eq 'LINE'){
+    my $n = scalar @x;
+    print $fd "# $comm\n" if $comm;
+    print $fd "2 1 0 1 $color 7 $depth -1 -1 0.000 0 0 -1 0 0 $n\n";
+    for (my $i=0; $i < $n; $i++){
+      print $fd "	 $x[$i] $y[$i]\n";
+    }
+    return;
+  }
+}
+
+############################################################
 ############################################################
 # Create ticks and labels
   sub vlist{
@@ -223,7 +377,7 @@ print STDERR "$pars{fmin} $pars{fmax} $df\n";
     foreach my $v (@vv){
       my $yl = int($y1 + ($v-$v1)/($v2-$v1)*($y2-$y1));
       my $yt = int($yl + $texth/2);
-      my $xl = $x + $flip*$tl; # tick end
+      my $xl = $x + $flip*$ticklen; # tick end
       my $xt = $x - $flip*$textsp; # text position
       my $al = $flip>0 ? 2:0;
       print FIG "2 1 0 1 0 7 $tdepth -1 -1 0.000 0 0 -1 0 0 2\n\t$x $yl $xl $yl\n",
@@ -241,60 +395,97 @@ print STDERR "$pars{fmin} $pars{fmax} $df\n";
     my @vv = vlist($v1,$v2);
     foreach my $v (@vv){
       my $x = int($x1 + ($v-$v1)/($v2-$v1)*($x2-$x1));
-      my $yl = $y - $flip*$tl; # tick end
+      my $yl = $y - $flip*$ticklen; # tick end
       my $yt = $y + int(($flip>0)? $texth+$textsp : -$textsp); # text position
       print FIG "2 1 0 1 0 7 $tdepth -1 -1 0.000 0 0 -1 0 0 2\n\t$x $y $x $yl\n",
                 "4 1 0 $ldepth -1 18 $textpts 0.0000 4 135 375 $x $yt $v\\001\n";
     }
   }
 
-  mk_vticks($X1, $Y2, $Y1, $pars{fmin}, $pars{fmax}, 0);
-  mk_vticks($X3, $Y2, $Y1, $pars{cmin}, $pars{cmax}, 1);
-  mk_hticks($Y2, $X1, $X2, $pars{tmin}, $pars{tmax}, 0);
-  mk_hticks($Y1, $X1, $X2, $pars{tmin}, $pars{tmax}, 1);
-
-  my $kx = ($X2-$X1)/($pars{tmax}-$pars{tmin});
-  my $x0 = $X1 - $pars{tmin}*$kx;
-
-  my $ky = ($Y1-$Y2)/($pars{fmax}-$pars{fmin});
-  my $y0 = $Y2 - $pars{fmin}*$ky;
-
 ############################################################
-## add old user data
-
-  foreach my $o (@old_objs){
-
-    # convert coordinates
-    $_ = int($_*$kx + $x0) foreach (@{$o->{x}});
-    $_ = int($_*$ky + $y0) foreach (@{$o->{y}});
-
-    if ($o->{type} eq 'BOX'){
-      my $x1 = ${$o->{x}}[0];
-      my $x2 = ${$o->{x}}[1];
-      my $y1 = ${$o->{y}}[0];
-      my $y2 = ${$o->{y}}[1];
-
-      print FIG "# $o->{comm}\n" if $o->{comm};
-      print FIG "2 2 0 1 $o->{color} 7 $o->{depth} -1 -1 0.000 0 0 -1 0 0 5\n";
-      print FIG "	$x1 $y1 $x2 $y1 $x2 $y2 $x1 $y2 $x1 $y1\n";
-
-      next;
-    }
-
-    if ($o->{type} eq 'POINT' || $o->{type} eq 'LINE'){
-      my $n = scalar @{$o->{x}};
-      print FIG "# $o->{comm}\n" if $o->{comm};
-      print FIG "2 1 0 1 $o->{color} 7 $o->{depth} -1 -1 0.000 0 0 -1 0 0 $n\n";
-      for (my $i=0; $i < $n; $i++){
-        my $x = ${$o->{x}}[$i];
-        my $y = ${$o->{y}}[$i];
-        print FIG "	$x $y\n";
-      }
-      next;
-    }
-
-  }
-
-
 ############################################################
-   close FIG;
+
+
+# process old file
+my ($X0, $KX, $Y0, $KY, $old_data) = (0,1,0,1,[]);
+if ( -f $fig ) {
+  print STDERR "reading information from fig file: $fig\n" if $verb;
+  ($X0, $KX, $Y0, $KY, $old_data) = get_data($fig, $mind, $maxd);
+}
+
+if ($mode eq 'get_cnv'){
+  print "$X0 $KX $Y0 $KY\n";
+  exit;
+}
+
+if ($mode eq 'get_data'){
+  print "$_\n" foreach @{$old_data};
+  exit;
+}
+
+
+if ($mode eq 'update'){
+
+  rename $fig, "$fig.bak" if (-f $fig);
+  my $pars = get_png_info($png);
+
+  # Calculate image dimensions in FIG file
+  # $pars->{S} - width of colorbar, it is not included in $figw!
+
+  my $X1 = $figx*$cm2fig;
+  my $Y1 = $figy*$cm2fig;
+
+  $figh = $figw * 1.0*$pars->{H}/$pars->{W} if $figh<=0;
+  my $figs = $figw * 1.0*$pars->{S}/$pars->{W}; # width of colorbar
+
+  my $X2 = int($X1 + $figw*$cm2fig);
+  my $X3 = int($X2 + $figs*$cm2fig);
+  my $Y2 = int($Y1 + $figh*$cm2fig);
+  $X1 = int($X1);
+  $Y1 = int($Y1);
+
+  # rewrite fig file
+  open FIG, "> $fig" or die "Can't open fig file: $!\n";
+
+  # header
+  print FIG "#FIG 3.2\n",
+            "Portrait\nCenter\nMetric\nA4\n100.00\nSingle\n-2\n";
+  print FIG "1200 2\n";
+
+  # image frame
+  print FIG "2 2 0 1 0 7 $fdepth -1 -1 0.000 0 0 -1 0 0 5\n",
+            "\t$X1 $Y1  $X2 $Y1  $X2 $Y2  $X1 $Y2 $X1 $Y1\n";
+  print FIG "2 2 0 1 0 7 $fdepth -1 -1 0.000 0 0 -1 0 0 5\n",
+            "\t$X2 $Y1  $X3 $Y1  $X3 $Y2  $X2 $Y2 $X2 $Y1\n";
+  print FIG "2 5 0 1 0 -1 $idepth -1 -1 0.000 0 0 -1 0 0 5\n",
+            "\t0 $png\n",
+            "\t$X1 $Y1  $X3 $Y1  $X3 $Y2  $X1 $Y2 $X1 $Y1\n";
+
+  # ticks and labels
+  mk_hticks($Y2, $X1, $X2, $pars->{tmin}-$dt, $pars->{tmax}-$dt, 0);
+#  mk_hticks($Y1, $X1, $X2, $pars->{tmin}-$dt, $pars->{tmax}-$dt, 1);
+  mk_vticks($X1, $Y2, $Y1, $pars->{fmin}-$df, $pars->{fmax}-$df, 0);
+  mk_vticks($X3, $Y2, $Y1, $pars->{cmin}, $pars->{cmax}, 1);
+
+  $KX = ($X2-$X1)/($pars->{tmax}-$pars->{tmin});
+  $X0 = $X1 - $pars->{tmin}*$KX;
+
+  $KY = ($Y1-$Y2)/($pars->{fmax}-$pars->{fmin});
+  $Y0 = $Y2 - $pars->{fmin}*$KY;
+
+  add_data(*FIG, $_, $X0, $KX, $Y0, $KY)
+     foreach @{$old_data};
+  close FIG;
+  exit;
+}
+
+
+if ($mode eq 'put_data'){
+  open FIG, ">> $fig" or die "Can't open fig file: $!\n";
+  add_data(*FIG, $_, $X0, $KX, $Y0, $KY) foreach <STDIN>;
+  close FIG;
+  exit;
+}
+
+
+die "unknown mode: $mode";

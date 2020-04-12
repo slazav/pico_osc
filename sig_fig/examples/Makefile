@@ -4,6 +4,8 @@ all: sig1.txt sig2.txt
 
 # sigf files are FFT of signals with cropped frequency range (to reduce file size).
 
+# sig_filter, sig_pnmtopng, sig_pnginfo programs should be installed in the system!
+
 
 # create png files
 sig1.png: sig1.sigf
@@ -15,11 +17,11 @@ sig2.png: sig2.sigf
 
 # create fig files
 sig1.fig: sig1.png
-	sig_pngfig $< $@
+	../sig_pngfig $< $@
 
 sig2.fig: sig2.png
-	sig_pngfig --df 44462.0415438 $< $@
+	../sig_pngfig -p $< --df 44462.0415438 $@
 
 # information from fig files:
 %.txt: %.fig
-	sig_figdat $< > $@
+	../sig_pngfig -m get_data $< > $@
