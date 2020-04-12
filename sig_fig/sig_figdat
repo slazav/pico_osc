@@ -17,6 +17,7 @@ sub usage {
 Usage: sig_figdat [options] <FIG>
 
 Options:
+  -C, --printcnv -- print conversion coefficients (x0, kx, y0, ky).
   --mind <d> -- Extract only objects with depth >= d. Default: 50
   --maxd <d> -- Extract only objects with depth <= d. Default: 50
   -h | --help  -- show help message
@@ -31,10 +32,15 @@ Example of the program output:
   POINT 2 50 43.6242836506804 44454.5658666667 # 
   BOX 0 50 12.3527577919227 22.0935422656936 43914.2418666667 44994.8898666667 # comment2
 
+How to use conversion coefficients:
+  x = x0 + time*kx;
+  y = y0 + freq*ky;
+
 *;
   exit 1;
 }
 
+my $printcnv = 0;
 my $mind = 50;
 my $maxd = 50;
 my $help = 0;
@@ -42,6 +48,7 @@ my $help = 0;
 GetOptions(
   "mind=i"           => \$mind,
   "maxd=i"           => \$maxd,
+  "printcnv"         => \$printcnv,
   "h|help"           => \$help,
 ) or usage();
 usage() if $help;
@@ -193,8 +200,10 @@ my $fig = $ARGV[0];
   my $X0 = $xmin - $dx/$dt*$tmin; my $KX = $dx/$dt;
   my $Y0 = $ymin + $dy/$df*$fmax; my $KY = -$dy/$df;
 
-#  printf "CNVX $X0 $KX\n";
-#  printf "CNVY $Y0 $KY\n";
+  if ($printcnv){
+    printf "$X0 $KX $Y0 $KY\n";
+    exit;
+  }
 
   # print data
   foreach my $o (@objects) {
