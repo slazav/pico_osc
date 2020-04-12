@@ -16,7 +16,7 @@ install: all
 	mkdir -p ${bindir} ${libdir}/tcl/ ${datadir}/tcl/${name}-${ver}
 	install -m755 pico_osc/pico_osc pico_adc/pico_adc ${bindir}
 	install -m755 sig_filter/{sig_filter,sig_pnmtopng,sig_pnginfo} ${bindir}
-	install -m755 sig_fig/{sig_pngfig,sig_figdat} ${bindir}
+	install -m755 sig_pngfig/sig_pngfig ${bindir}
 	install -m755 fit_res/fit_res ${bindir}
 	install -m644 sig_viewer/sig_load.so ${libdir}/tcl/
 	sed 's|%LIB_DIR%|${dir}|' sig_viewer/pkgIndex.tcl > ${datadir}/tcl/${name}-${ver}/pkgIndex.tcl
