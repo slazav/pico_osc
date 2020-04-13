@@ -124,6 +124,12 @@ sub get_png_info {
     print "unknown setting: $_\n";
   }
   close IN;
+  # check that we have all needed information
+  die "Can't get signal information from png file"
+    unless exists($pars->{fmax}) && exists($pars->{fmin}) &&
+           exists($pars->{tmax}) && exists($pars->{tmin}) &&
+           exists($pars->{W}) && exists($pars->{H}) &&
+           exists($pars->{S});
   return $pars;
 }
 
