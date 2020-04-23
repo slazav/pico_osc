@@ -68,7 +68,7 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   for (int i = i1f; i<i2f; i++){
     double x = df*i-fre;
     complex<double> y = amp0/complex<double>(cbuf[i][0], cbuf[i][1]);
-    double w = pow(1.0/(x*x+rtau), 4.0);
+    double w = pow(1.0/abs(y), 4.0);
     sx2 += x*x*w;
     sx1 += x*w;
     sx0 += w;
