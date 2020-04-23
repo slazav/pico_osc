@@ -3,6 +3,12 @@ Fit harmonic signals (A*exp(iw*t + t/tau))
 ==================================================
 Changelog:
 
+2020.04.23: V.Zavjalov, v2.0
+- improve fit weighting function
+- add fit_signal_fitfre() function for fixing problem with
+  "too pure" signals (if freq = 1/tmax then there is only
+  one component in fft and it is not possible to fit it)
+
 2018.01.12: V.Zavjalov, v1.3
 - throw error if fit_signal fails
 
