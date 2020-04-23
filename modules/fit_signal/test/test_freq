@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+
+# test find_freq functions
+
+import os
+import numpy
+import matplotlib.pyplot as plt
+
+tmax = 300
+pts = 30000
+freq0 = 4.1234212
+noise = 0.1
+dfreq = 1/tmax # fft frequency resolution
+
+# use different frequencies freq0..freq0+freq_res
+fnum = 6
+cols = 'rgbcmyk'
+for fi in range(fnum):
+
+  freq = int(freq0/dfreq)*dfreq + fi/fnum*dfreq
+
+  os.system('rm -f test_freq.txt')
+
+  # use different noise values 0..1
+  nnum = 30
+  nmax = 2
+  noise = numpy.linspace(0,nmax,nnum)
+  for ni in range(nnum):
+    os.system('../../../sig_filter/testsig_decay ' +
+         '-N %d -D %f -F %f -T 0 -A 1 -n %f > test_freq.sig'%\
+        (pts, tmax/(pts-1), freq, noise[ni]))
+
+    os.system('../../../sig_filter/sig_filter -f fit test_freq.sig >> test_freq.txt')
+
+  (f,t,a,p) = numpy.loadtxt('test_freq.txt', usecols=(0,1,2,3), unpack=True)
+
+  os.system('rm -f test_freq.sig')
+  os.system('rm -f test_freq.txt')
+
+  plt.plot(noise, f-freq, 'b.-')
+
+plt.ylabel('frequency')
+plt.xlabel('noise/signal ratio')
+plt.legend()
+plt.savefig('test_freq.png')
