@@ -969,7 +969,7 @@ fit(ostream & ff, const Signal & s, const int argc, char **argv) {
   if (N<1 || cN<1) return;
   int ch = 0;
 
-  vector<double> ret = ::fit_signal(
+  vector<double> ret = ::fit_signal_fixfre(
     s.chan[ch].data(), N, s.chan[ch].sc, s.dt, s.t0, fmin, fmax);
 
   ff << s.t0abs_str << " "
@@ -1013,7 +1013,7 @@ fitn(ostream & ff, const Signal & s, const int argc, char **argv) {
   Signal s1 = s; // copy of the signal
   for (int is = 0; is <NS; is++){
     // find signal (largest amplitude)
-    vector<double> ret = ::fit_signal(
+    vector<double> ret = ::fit_signal_fixfre(
       s1.chan[ch].data(), N, s1.chan[ch].sc, s1.dt, s1.t0, fmin, fmax);
 
     ind.push_back(is);
@@ -1079,7 +1079,7 @@ lockin(ostream & ff, const Signal & s, const int argc, char **argv) {
   if (cN<ch_ref || cN<ch_sig) throw Err() << "Signal or reference channel exeeds total number of channels";
 
   // get frequncy and phase of the reference signal
-  vector<double> ret = ::fit_signal(
+  vector<double> ret = ::fit_signal_fixfre(
     s.chan[ch_ref].data(), N, s.chan[ch_ref].sc, s.dt, s.t0, fmin, fmax);
   double fre = ret[0];
   double ph  = ret[3];
@@ -1140,7 +1140,7 @@ slockin(ostream & ff, const Signal & s, const int argc, char **argv) {
     if (use_ref) {
       if (cN<ch_ref) throw Err() << "Reference channel exeeds total number of channels";
 
-      vector<double> ret = ::fit_signal(
+      vector<double> ret = ::fit_signal_fixfre(
         s.chan[ch_ref].data()+iw, win, s.chan[ch_ref].sc, s.dt, 0, fmin, fmax);
       fre = ret[0];
       ph  = ret[3];
