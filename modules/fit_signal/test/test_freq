@@ -15,31 +15,41 @@ dfreq = 1/tmax # fft frequency resolution
 # use different frequencies freq0..freq0+freq_res
 fnum = 6
 cols = 'rgbcmyk'
+tau = [0, 100, 300]
+rtau = [0,1/100.0, 1/300.0]
+
+fig, ax = plt.subplots(2,1, figsize=(5, 8))
+
+
+freq = numpy.linspace(0,dfreq,fnum) + int(freq0/dfreq)*dfreq
 for fi in range(fnum):
 
-  freq = int(freq0/dfreq)*dfreq + fi/fnum*dfreq
-
-  os.system('rm -f test_freq.txt')
-
+  os.system('rm -f test_freq?.txt')
   # use different noise values 0..1
   nnum = 30
   nmax = 2
   noise = numpy.linspace(0,nmax,nnum)
   for ni in range(nnum):
-    os.system('../../../sig_filter/testsig_decay ' +
-         '-N %d -D %f -F %f -T 0 -A 1 -n %f > test_freq.sig'%\
-        (pts, tmax/(pts-1), freq, noise[ni]))
+    for k in [0,1,2]:
+      os.system('../../../sig_filter/testsig_decay ' +
+           '-N %d -D %f -F %f -T %f -A 1 -n %f > test_freq%d.sig'%\
+          (pts, tmax/(pts-1), freq[fi], tau[k], noise[ni], k))
 
-    os.system('../../../sig_filter/sig_filter -f fit test_freq.sig >> test_freq.txt')
+      os.system('../../../sig_filter/sig_filter -f fit test_freq%d.sig >> test_freq%d.txt'%\
+          (k,k))
 
-  (f,t,a,p) = numpy.loadtxt('test_freq.txt', usecols=(0,1,2,3), unpack=True)
+  for k in [0,1,2]:
+    (f,rt,a,p) = numpy.loadtxt('test_freq%d.txt'%(k), usecols=(0,1,2,3), unpack=True)
+    ax[0].plot(noise, (f-freq[fi]), cols[k]+'.-')
+    ax[1].plot(noise, (rt-rtau[k]), cols[k]+'.-')
+  os.system('rm -f test_freq?.sig')
+  os.system('rm -f test_freq?.txt')
 
-  os.system('rm -f test_freq.sig')
-  os.system('rm -f test_freq.txt')
 
-  plt.plot(noise, f-freq, 'b.-')
-
-plt.ylabel('frequency')
-plt.xlabel('noise/signal ratio')
+ax[0].set_ylabel('f-f0')
+ax[1].set_ylabel('tau-tau0')
+ax[0].set_xlabel('noise/signal ratio')
+ax[1].set_xlabel('noise/signal ratio')
 plt.legend()
 plt.savefig('test_freq.png')
+
