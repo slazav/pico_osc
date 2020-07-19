@@ -18,11 +18,11 @@
  and prints a line with 14 values to stdout:
    - time -- center of the time range
    - function error -- mean square difference between data and fit
-   - A, A_error, B, E_error -- shift in x and y component
+   - A, A_error, B, B_error -- shift in x and y component
    - C, C_error, D, D_error -- driving force (not amplitude!
-   - w, w_error == resonance frequency (in Hz or rad/s dependind on input data)
+   - w0, w0_error == resonance frequency (in Hz or rad/s depending on input data)
    - dw, dw_error -- width at 1/2 height of amplitude curve,
-     or (appoximately) distance between dispersion minimum
+     or (approximately) distance between dispersion minimum
      and maximum. If frequency data is in rad/s then df=2/tau,
      if data in Hz then df = pi/tau
 
