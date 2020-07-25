@@ -8,6 +8,9 @@
 
 using namespace std;
 
+
+
+
 vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, double t0=0,
                           double fmin=0, double fmax=+HUGE_VAL){
   // signal parameters:
@@ -68,7 +71,7 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   for (int i = i1f; i<i2f; i++){
     double x = df*i-fre;
     complex<double> y = amp0/complex<double>(cbuf[i][0], cbuf[i][1]);
-    double w = pow(1.0/(x*x+rtau), 4.0);
+    double w = pow(1.0/abs(y), 4.0);
     sx2 += x*x*w;
     sx1 += x*w;
     sx0 += w;
@@ -106,3 +109,36 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   return ret;
 }
 
+// fix problem with 'pure signals' where F = 1/tmax and only one fft component is
+// large
+vector<double> fit_signal_fixfre(const int16_t *buf, int len, double sc, double dt, double t0=0,
+                          double fmin=0, double fmax=+HUGE_VAL){
+
+  // run fit_signal
+  vector<double> ret = fit_signal(buf, len, sc, dt, t0, fmin, fmax);
+
+  // frequency resolution:
+  double df = 1/(dt*len);
+
+  // line is wider then frequency resolution, no need for the fix
+  if (ret[1] > 2*df) return ret;
+
+  double fft_freq = floor(ret[0]/df)*df; // fft grid point below signal frequency
+
+  // We want to remove k points from the signal in such a way that
+  // signal frequency will be between FFT grid points
+
+  // how much should we shift grid point near the peak:
+  double fshift = ret[0] - fft_freq - 0.5*df;
+  if (fshift < 0) fshift += df; // always positive!
+
+  // how much points shoud we remove to shift fft grid by fshift?
+  int k = rint(fshift/fft_freq * len);
+
+  if (k<1) return ret;
+
+  ret = fit_signal(buf, len-k, sc, dt, t0, fmin, fmax);
+
+  return ret;
+
+}

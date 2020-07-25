@@ -1,16 +1,22 @@
 ==================================================
-Convert double values into RGB color gradients.
-
+Fit harmonic signals (A*exp(iw*t + t/tau))
 ==================================================
 Changelog:
 
-2019.05.02 V.Zavjalov 2.0:
-- New interface: a single class Rainbow with get() and
-  set_limits() methods.
-- Build color gradients from strings where characters represent
-  colors ("RGB", "BCGYRM", etc.)
-- Fix error with inverse gradient limits
-- Faster get() method
+2020.04.23: V.Zavjalov, v2.0
+- improve fit weighting function
+- add fit_signal_fitfre() function for fixing problem with
+  "too pure" signals (if freq = 1/tmax then there is only
+  one component in fft and it is not possible to fit it)
 
-2019.05.01 V.Zavjalov 1.0:
-- First version, taken from mapsoft, pico_rec.
+2018.01.12: V.Zavjalov, v1.3
+- throw error if fit_signal fails
+
+2017.05.04: V.Zavjalov, v1.2
+- tune fitting: new weight function, y scaling, smaller range
+
+2017.04.04: V.Zavjalov, v1.1
+- return pk-pk amplitude, (previously it was 1/2 of it)
+
+2017.04.01: V.Zavjalov, v1.0
+- First working version

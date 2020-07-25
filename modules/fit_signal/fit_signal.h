@@ -21,3 +21,9 @@ input:
 
 std::vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, double t0=0,
                                double fmin=0, double fmax=+HUGE_VAL);
+
+
+// fix problem with 'pure signals' where F = 1/tmax and only one fft component is
+// large.
+std::vector<double> fit_signal_fixfre(const int16_t *buf, int len, double sc, double dt, double t0=0,
+                               double fmin=0, double fmax=+HUGE_VAL);
