@@ -183,34 +183,33 @@ ADC24::cmd(const vector<string> & args){
   throw Err() << "Unknown command: " << args[0];
 }
 
-
+/**********************************************************/
 // return newline-separated list of all connected devices
 // See code in https://github.com/picotech/picosdk-c-examples/blob/master/picohrdl/picohrdlCon/picohrdlCon.c
 std::string
 ADC24::dev_list(){
-    std::string ret;
-    int16_t devices[HRDL_MAX_PICO_UNITS];
-    int8_t line[80];
+  std::string ret;
+  int16_t devices[HRDL_MAX_PICO_UNITS];
+  int8_t line[80];
 
-    for (int i = 0; i < HRDL_MAX_UNITS; i++) {
-      devices[i] = HRDLOpenUnit();
-      if (devices[i] > 0) {
-        HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_BATCH_AND_SERIAL);
-        ret += std::string((char*)line) + "\n";
-      }
-      else {
-        HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_ERROR);
-        if (atoi((char*)line) != HRDL_NOT_FOUND)
-          throw Err() << "can't open device " << i << ":" << line;
-      }
+  for (int i = 0; i < HRDL_MAX_UNITS; i++) {
+    devices[i] = HRDLOpenUnit();
+    if (devices[i] > 0) {
+      HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_BATCH_AND_SERIAL);
+      ret += std::string((char*)line) + "\n";
     }
-    // close devices
-    for (int i = 0; i < HRDL_MAX_PICO_UNITS; i++) {
-      if (devices[i] > 0) HRDLCloseUnit(devices[i]);
+    else {
+      HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_ERROR);
+      if (atoi((char*)line) != HRDL_NOT_FOUND)
+        throw Err() << "can't open device " << i << ":" << line;
     }
-    return ret;
   }
-
+  // close devices
+  for (int i = 0; i < HRDL_MAX_PICO_UNITS; i++) {
+    if (devices[i] > 0) HRDLCloseUnit(devices[i]);
+  }
+  return ret;
+}
 
 // Constructor and destructor: open/close device, throw errors if any.
 // See code in https://github.com/picotech/picosdk-c-examples/blob/master/picohrdl/picohrdlCon/picohrdlCon.c
@@ -250,8 +249,13 @@ ADC24::ADC24(const char *name){
   chconf.resize(chN);
 }
 
-ADC24::~ADC24(){}
+// destructor
+ADC24::~ADC24(){
+  HRDLCloseUnit(devh);
+}
 
+
+/**********************************************************/
 
 // get avaiable ranges: chan_get_ranges("A");
 std::string

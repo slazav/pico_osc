@@ -44,16 +44,18 @@ public:
 
   const char * cmd_help() const; // return command help
 
+  /**********************************************************/
 
-  ADC24(const char *name);
-
-  ~ADC24();
-
+  // return list of available devices
   static std::string dev_list();
 
-  /*****************************************************************************/
-  // low-level ADC interface commands defined somewhere else
-  // set channel:  chan_set("1", true, , true);
+  // constructor: find and open device with the name
+  ADC24(const char *name);
+
+  // destructor: close device
+  ~ADC24();
+
+  /**********************************************************/
 
   // get avaiable ranges: chan_get_ranges("1");
   std::string chan_get_ranges(const char * chan);
