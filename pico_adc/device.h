@@ -35,10 +35,10 @@ private:
 
 protected:
   bool sixtyHz;  // mains frequency
-  bool *chconf_en;
-  bool *chconf_sngl;
-  float *chconf_rng;
-  float *chconf_max;
+  std::vector<bool> chconf_en;
+  std::vector<bool> chconf_sngl;
+  std::vector<float> chconf_rng;
+  std::vector<float> chconf_max;
   int16_t chN;
 
 public:
@@ -84,7 +84,7 @@ public:
   virtual bool is_ready() = 0;
 
   // get the requested number of samples for each enabled channel
-  virtual float * get_values(int32_t nvals ,int16_t *overflow) = 0;
+  virtual std::vector<float> get_values(int32_t nvals ,int16_t *overflow) = 0;
 
   // get the maximum and minimum ADC count available for the device
   virtual int32_t get_max(int16_t ch) = 0;

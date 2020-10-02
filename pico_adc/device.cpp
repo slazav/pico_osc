@@ -151,7 +151,7 @@ ADCInt::cmd(const vector<string> & args){
     usleep(1000);
     while (!is_ready()) {usleep(1000);}
     int16_t overflow;
-    float *vals = get_values(1,&overflow);
+    auto vals = get_values(1,&overflow);
     for (int i=0; i<chan_get_num(); ++i) {
       if (i>0) std::cout << " ";
       std::cout << vals[i];

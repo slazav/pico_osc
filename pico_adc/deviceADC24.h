@@ -250,16 +250,10 @@ public:
     sixtyHz = (mainsHz == 60);
     set_mains();
     chN=HRDL_MAX_ANALOG_CHANNELS;
-    chconf_en = (bool*)malloc(sizeof(bool)*chN);
-    chconf_sngl = (bool*)malloc(sizeof(bool)*chN);
-    chconf_rng = (float*)malloc(sizeof(float)*chN);
-    chconf_max = (float*)malloc(sizeof(float)*chN);
-    for (int i=0; i<chN; ++i) {
-      chconf_en[i]=0;
-      chconf_sngl[i]=0;
-      chconf_rng[i]=0;
-      chconf_max[i]=0;
-    }
+    chconf_en.resize(chN, 0);
+    chconf_sngl.resize(chN, 0);
+    chconf_rng.resize(chN, 0);
+    chconf_max.resize(chN, 0);
   }
 
   ~ADC24(){}
@@ -321,19 +315,21 @@ public:
 
   // run block mode
   void run_block(int32_t nvals) {
-    if (!HRDLRun(devh,nvals,str2m("block"))) throw Err() << "failed to run block mode";
+    if (!HRDLRun(devh,nvals,str2m("block")))
+      throw Err() << "failed to run block mode";
   }
 
   // is device ready?
   bool is_ready() { return HRDLReady(devh); }
 
   // get the requested number of samples for each enabled channel
-  float * get_values(int32_t nvals, int16_t *overflow) {
+  std::vector<float> get_values(int32_t nvals, int16_t *overflow) {
     int16_t nch = chan_get_num();
-    int32_t *dvals = (int32_t*)malloc(sizeof(int32_t)*nch*nvals);
-    float   *vals = (float*)malloc(sizeof(float)*nch*nvals);
+    std::vector<int32_t> dvals(nch*nvals);
+    std::vector<float>   vals(nvals);
 
-    int32_t resn = HRDLGetValues(devh,dvals,overflow,nvals); // returns actual number of samples
+    // returns actual number of samples
+    int32_t resn = HRDLGetValues(devh,dvals.data(),overflow,nvals);
     float rngs[chN], maxcounts[chN];
     int rs_n=0;
     for (int ch = 0; ch<chN; ++ch) {
