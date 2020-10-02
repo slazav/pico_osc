@@ -43,7 +43,9 @@ ADCInt::cmd_help() const {
   "info -- write device info\n"
   "*idn? -- write id string: \"pico_adc " VERSION "\"\n"
   "get_time -- print current time (unix seconds with ms precision)\n"
-  "get_info -- print unit info\n";
+  "get_info -- print unit info\n"
+  "get -- collect and return a single data block.\n"
+  "       chan_set and set_t should be done before.\n";
 }
 
 bool
@@ -87,7 +89,7 @@ ADCInt::cmd(const vector<string> & args){
     return true;
   }
 
-  // show time conversion settings
+  // set time intervals
   if (is_cmd(args, "set_t")){
     if (args.size()!=3) throw Err() << "Usage: set_t <dt> <tconv>";
     set_interval(atoi(args[1].c_str()),atoi(args[2].c_str()));
