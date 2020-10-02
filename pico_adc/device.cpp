@@ -117,16 +117,12 @@ ADCInt::cmd(const vector<string> & args){
     for (int i=0; i<args[1].length(); i+=2){
       string ch; ch+=args[1][i]; ch+=args[1][i+1]; // channel as a string
       int16_t chi = (int16_t)atoi(ch.c_str());     // channel as int
-      ChConf C;
+      ChConf_t C;
       C.en  = atoi(args[2].c_str());
       C.sngl = atoi(args[3].c_str());;
       C.rng = atof(args[4].c_str());
       chan_set(chi, C.en, C.sngl, C.rng);
       chconf[chi] = C; // save channel configuration
-      chconf_en[chi] = atoi(args[2].c_str());
-      chconf_sngl[chi] = atoi(args[3].c_str());
-      chconf_rng[chi] = atof(args[4].c_str());
-      chconf_max[chi] = get_max(chi);
     }
     return true;
   }
@@ -135,10 +131,10 @@ ADCInt::cmd(const vector<string> & args){
   if (is_cmd(args, "chan_get")) {
     if (args.size()!=2) throw Err() << "Usage: chan_get <ch>";
     int ch = atoi(args[1].c_str());
-    if (chconf_en[ch]) cout << ch << " "
-          << chconf_en[ch] << " "
-          << chconf_sngl[ch] << " "
-          << chconf_rng[ch] << "\n";
+    if (chconf[ch].en) cout << ch << " "
+          << chconf[ch].en << " "
+          << chconf[ch].sngl << " "
+          << chconf[ch].rng << "\n";
     else cout << ch << " disabled\n";
 
     return true;

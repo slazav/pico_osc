@@ -86,10 +86,7 @@ public:
     sixtyHz = (mainsHz == 60);
     set_mains();
     chN=HRDL_MAX_ANALOG_CHANNELS;
-    chconf_en.resize(chN, 0);
-    chconf_sngl.resize(chN, 0);
-    chconf_rng.resize(chN, 0);
-    chconf_max.resize(chN, 0);
+    chconf.resize(chN);
   }
 
   ~ADC24(){}
@@ -169,9 +166,9 @@ public:
     float rngs[chN], maxcounts[chN];
     int rs_n=0;
     for (int ch = 0; ch<chN; ++ch) {
-      if (chconf_en[ch]) {
-        rngs[rs_n]=chconf_rng[ch];
-        maxcounts[rs_n]=chconf_max[ch];
+      if (chconf[ch].en) {
+        rngs[rs_n]=chconf[ch].rng;
+        maxcounts[rs_n]=chconf[ch].max;
         rs_n++;
       }
     }

@@ -10,35 +10,30 @@
 #include <stdint.h>
 
 // analog channel configuration
-struct ChConf{
+struct ChConf_t{
   bool en;
   bool sngl;
   float rng;
   int32_t min;
   int32_t max;
   std::vector<int16_t> buf;
+  ChConf_t(): en(false), sngl(false), rng(0), min(0), max(0) {}
 };
 
 // digital channel configuration
-struct DChConf{
+struct DChConf_t{
   bool en;
   bool sngl;
   float rng;
   std::vector<int16_t> buf;
+  DChConf_t(): en(0), sngl(0), rng(0) {}
 };
 
 class ADCInt{
-private:
-  std::map<int16_t, ChConf> chconf;   // analog channel configuration
-  std::map<int16_t, DChConf> dchconf; // digital channel configuration
-  bool waiting;
 
 protected:
   bool sixtyHz;  // mains frequency
-  std::vector<bool> chconf_en;
-  std::vector<bool> chconf_sngl;
-  std::vector<float> chconf_rng;
-  std::vector<float> chconf_max;
+  std::vector<ChConf_t> chconf;
   int16_t chN;
 
 public:
