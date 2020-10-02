@@ -32,7 +32,6 @@ struct DChConf_t{
 class ADCInt{
 
 protected:
-  bool sixtyHz;  // mains frequency
   std::vector<ChConf_t> chconf;
   int16_t chN;
 
@@ -67,7 +66,7 @@ public:
   virtual const char * get_err() = 0;
 
   // configures the mains noise rejection setting
-  virtual void set_mains() = 0;
+  virtual void set_mains(const bool m60Hz) = 0;
 
   // sets the sampling time interval
   virtual void set_interval(int32_t dt, int16_t conv) = 0;

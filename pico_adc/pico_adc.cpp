@@ -49,6 +49,8 @@ main(int argc, char *argv[]){
 
     // open the device
     ADC24 adc24(dev,mainsHz);
+    // configure the mains noise rejection
+    adc24.set_mains(mainsHz == 60);
 
     cout << "#SPP001\n"; // a command-line protocol, version 001.
     cout << "Pico ADC24 device is opened. Type help to see command list.\n";

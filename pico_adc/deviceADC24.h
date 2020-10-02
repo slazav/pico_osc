@@ -82,9 +82,6 @@ public:
       else throw Err() << "PicoLog device not found: " << name;
     }
 
-    // configure the mains noise rejection
-    sixtyHz = (mainsHz == 60);
-    set_mains();
     chN=HRDL_MAX_ANALOG_CHANNELS;
     chconf.resize(chN);
   }
@@ -137,8 +134,9 @@ public:
   };
 
   // configures the mains noise rejection setting
-  void set_mains() {
-    if (!HRDLSetMains(devh,sixtyHz)) throw Err() << "failed to set mains";
+  void set_mains(bool m60Hz) {
+    if (!HRDLSetMains(devh,m60Hz))
+      throw Err() << "failed to set mains";
   }
 
   // sets the sampling time interval
