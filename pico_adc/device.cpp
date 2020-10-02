@@ -46,7 +46,10 @@ ADC24::cmd_help() const {
   "info -- write device info\n"
   "*idn? -- write id string: \"pico_adc " VERSION "\"\n"
   "get_time -- print current time (unix seconds with ms precision)\n"
-  "get_info -- print unit info\n";
+  "get_info -- print unit info\n"
+  "get -- collect and return a single data block.\n"
+  "       chan_set and set_t should be done before.\n"
+  "get_val <chan> <rng> <convt> <single> -- get a single value.\n";
 }
 
 void
@@ -90,7 +93,7 @@ ADC24::cmd(const vector<string> & args){
     return;
   }
 
-  // show time conversion settings
+  // set time intervals
   if (is_cmd(args, "set_t")){
     if (args.size()!=3) throw Err() << "Usage: set_t <dt> <tconv>";
     set_interval(atoi(args[1].c_str()),atoi(args[2].c_str()));
@@ -143,6 +146,7 @@ ADC24::cmd(const vector<string> & args){
     return;
   }
 
+  // get
   if (is_cmd(args, "get")) {
     if (args.size()!=1) throw Err()
       << "Usage: get";
@@ -156,6 +160,23 @@ ADC24::cmd(const vector<string> & args){
       std::cout << vals[i];
     }
     std::cout <<"\n";
+    return;
+  }
+
+  // get_val <chan> <rng> <convt> <single> -- get a single value.
+  if (is_cmd(args, "get_val")) {
+    if (args.size()!=5) throw Err()
+      << "Usage: get_val <chan> <rng> <convt> <single>";
+
+    int16_t ch    = atoi(args[1].c_str());
+    float   rng   = atof(args[2].c_str());
+    int16_t convt = atoi(args[3].c_str());
+    int16_t sngl  = atoi(args[4].c_str());;
+
+    bool overflow;
+    auto v = get_single_value(ch,rng,convt,sngl,overflow);
+    if (overflow) throw Err() << "overflow";
+    std::cout << v << "\n";
     return;
   }
 
@@ -353,4 +374,24 @@ ADC24::get_info(){
   return std::string(ui_v)+" "+std::string(ui_n);
 }
 
+// measure a single channel
+float
+ADC24::get_single_value(
+    const int16_t ch,
+    const float rng,
+    const int16_t convt,
+    const bool single,
+    bool & ovfl) {
+
+  if (ch<0 || ch>15) throw Err() << "channel number 0..15 expected";
+  int32_t val;
+  int16_t ovfl_mask;
+
+  auto res = HRDLGetSingleValue(devh, ch,
+    volt2range(rng),
+    tconvi2convtime(convt),
+    single, &ovfl_mask, &val);
+  ovfl = ovfl & (1<<ch);
+  return rng*val*0.001/get_max(ch); // Volts
+}
 

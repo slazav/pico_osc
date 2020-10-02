@@ -2,7 +2,9 @@
 
 ### Folders:
 
-* pico_rec    -- record signals using Picoscope 4000.
+* pico_rec    -- SPP inderface to Picoscope 4000 devices.
+
+* pico_adc    -- SPP inderface to PicoADC24 devices.
 
 * pico_repack -- scripts for repacking pico libraries from original DEBs to Altlinux RPMs.
 
