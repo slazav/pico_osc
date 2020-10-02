@@ -38,8 +38,7 @@ protected:
 public:
 
   // High-level commands.
-  // return true if #OK should be printed
-  bool cmd(const std::vector<std::string> & args);
+  void cmd(const std::vector<std::string> & args);
 
   bool is_cmd(const std::vector<std::string> & args, const char *name);
 

@@ -49,9 +49,9 @@ ADC24::cmd_help() const {
   "get_info -- print unit info\n";
 }
 
-bool
+void
 ADC24::cmd(const vector<string> & args){
-  if (args.size()<1) return false;
+  if (args.size()<1) return; // should not happen
 
   // print time
   if (is_cmd(args, "get_time")){
@@ -59,56 +59,56 @@ ADC24::cmd(const vector<string> & args){
     struct timeval tv;
     gettimeofday(&tv, NULL);
     cout << tv.tv_sec << "." << setfill('0') << setw(6) << tv.tv_usec << "\n";
-    return true;
+    return;
   }
 
   // print id
   if (is_cmd(args, "*idn?")){
     if (args.size()!=1) throw Err() << "Usage: *idn?";
     cout << "pico_adc " VERSION "\n";
-    return true;
+    return;
   }
 
   // print help
   if (is_cmd(args, "help")){
     if (args.size()!=1) throw Err() << "Usage: help";
     cout << cmd_help();
-    return true;
+    return;
   }
 
   // print device info
   if (is_cmd(args, "get_info")){
     if (args.size()!=1) throw Err() << "Usage: get_info";
     cout << "pico_adc " << get_info() << "\n";
-    return true;
+    return;
   }
 
   // show range settings
   if (is_cmd(args, "ranges")){
     if (args.size()!=1) throw Err() << "Usage: ranges";
     cout << chan_get_ranges(args[1].c_str()) << "\n";
-    return true;
+    return;
   }
 
   // show time conversion settings
   if (is_cmd(args, "set_t")){
     if (args.size()!=3) throw Err() << "Usage: set_t <dt> <tconv>";
     set_interval(atoi(args[1].c_str()),atoi(args[2].c_str()));
-    return true;
+    return;
   }
 
   // show time conversion settings
   if (is_cmd(args, "tconvs")){
     if (args.size()!=1) throw Err() << "Usage: ranges";
     cout << chan_get_tconvs() << "\n";
-    return true;
+    return;
   }
 
   // print number of active channels
   if (is_cmd(args, "chan_get_n")){
     if (args.size()!=1) throw Err() << "Usage: get_chan_n";
     cout << chan_get_num() << "\n";
-    return true;
+    return;
   }
 
   // set channel parameters
@@ -127,7 +127,7 @@ ADC24::cmd(const vector<string> & args){
       chan_set(chi, C.en, C.sngl, C.rng);
       chconf[chi] = C; // save channel configuration
     }
-    return true;
+    return;
   }
 
   // set channel parameters
@@ -140,7 +140,7 @@ ADC24::cmd(const vector<string> & args){
           << chconf[ch].rng << "\n";
     else cout << ch << " disabled\n";
 
-    return true;
+    return;
   }
 
   if (is_cmd(args, "get")) {
@@ -156,7 +156,7 @@ ADC24::cmd(const vector<string> & args){
       std::cout << vals[i];
     }
     std::cout <<"\n";
-    return true;
+    return;
   }
 
   throw Err() << "Unknown command: " << args[0];

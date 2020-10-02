@@ -56,8 +56,10 @@ main(int argc, char *argv[]){
     cout << "#OK\n";
     while (1){
       try {
-        if (cin.eof()) break;
-        if (adc24.cmd(read_words(cin))) cout << "#OK\n" << flush;
+        auto args = read_words(cin);
+        if (args.size()<1) break;
+        adc24.cmd(args);
+        cout << "#OK\n" << flush;
       }
       catch (Err E){ cout << "#Error: " << E.str() << "\n" << flush; }
     }
