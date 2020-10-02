@@ -1,7 +1,7 @@
 PROGRAMS = pico_adc
 
 
-MOD_HEADERS := deviceADC24.h device.h ADC24_const.h
+MOD_HEADERS := device.h ADC24_const.h
 MOD_SOURCES := device.cpp
 
 LDLIBS += -lm -lpicohrdl

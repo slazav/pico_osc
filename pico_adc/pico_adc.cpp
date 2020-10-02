@@ -4,7 +4,6 @@
 #include "read_words/read_words.h"
 
 #include "device.h"
-#include "deviceADC24.h"
 
 /* SPP-compatable interface to ADC-24 device */
 
@@ -48,7 +47,7 @@ main(int argc, char *argv[]){
     }
 
     // open the device
-    ADC24 adc24(dev,mainsHz);
+    ADC24 adc24(dev);
     // configure the mains noise rejection
     adc24.set_mains(mainsHz == 60);
 

@@ -3,10 +3,8 @@
 
 // Base class for ADC devices
 
-#include <pico/HRDL.h>
 #include <string>
 #include <vector>
-#include <map>
 #include <stdint.h>
 
 // analog channel configuration
@@ -29,65 +27,74 @@ struct DChConf_t{
   DChConf_t(): en(0), sngl(0), rng(0) {}
 };
 
-class ADCInt{
+class ADC24{
 
 protected:
   std::vector<ChConf_t> chconf;
   int16_t chN;
+  int16_t devh; // device handle
+  int16_t devn; // device number (1..20)
 
 public:
 
   // High-level commands.
   // return true if #OK should be printed
   bool cmd(const std::vector<std::string> & args);
+
   bool is_cmd(const std::vector<std::string> & args, const char *name);
+
   const char * cmd_help() const; // return command help
+
+
+  ADC24(const char *name);
+
+  ~ADC24();
+
+  static std::string dev_list();
 
   /*****************************************************************************/
   // low-level ADC interface commands defined somewhere else
   // set channel:  chan_set("1", true, , true);
 
   // get avaiable ranges: chan_get_ranges("1");
-  virtual std::string chan_get_ranges(const char * chan) = 0;
+  std::string chan_get_ranges(const char * chan);
 
   // get avaiable time conversion conctants
-  virtual std::string chan_get_tconvs() = 0;
+  std::string chan_get_tconvs();
 
   // returns the number of analog channels enabled
-  virtual int16_t chan_get_num() = 0;
+  int16_t chan_get_num();
 
   // set channel parameters
-  virtual void chan_set(int16_t chan, bool enable, bool sngl, float rng) = 0;
+  void chan_set(int16_t chan, bool enable, bool sngl, float rng);
 
   // returns unit id
-  virtual const char * get_unit_id() = 0;
+  const char * get_unit_id();
 
   // returns settings error
-  virtual const char * get_err() = 0;
+  const char * get_err();
 
   // configures the mains noise rejection setting
-  virtual void set_mains(const bool m60Hz) = 0;
+  void set_mains(const bool m60Hz);
 
   // sets the sampling time interval
-  virtual void set_interval(int32_t dt, int16_t conv) = 0;
+  void set_interval(int32_t dt, int16_t conv);
 
   // run block mode
-  virtual void run_block(int32_t nvals) = 0;
+  void run_block(int32_t nvals);
 
   // is device ready?
-  virtual bool is_ready() = 0;
+  bool is_ready();
 
   // get the requested number of samples for each enabled channel
-  virtual std::vector<float> get_values(int32_t nvals ,int16_t *overflow) = 0;
+  std::vector<float> get_values(int32_t nvals ,int16_t *overflow);
 
   // get the maximum and minimum ADC count available for the device
-  virtual int32_t get_max(int16_t ch) = 0;
+  int32_t get_max(int16_t ch);
 
   // get device info
-  virtual std::string get_info() = 0;
+  std::string get_info();
 
 };
 
 #endif
-
-
