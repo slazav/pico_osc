@@ -92,6 +92,12 @@ public:
   // get device info
   virtual std::string get_info() = 0;
 
+  // measure a single channel
+  virtual float get_single_value(
+      const int16_t ch, const float rng, const int16_t convt,
+      const bool single, bool & ovfl) = 0;
+
+
 };
 
 #endif

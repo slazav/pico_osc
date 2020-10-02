@@ -369,6 +369,27 @@ public:
       throw Err() << "failed to get unit info";
     return std::string(ui_v)+" "+std::string(ui_n);
   }
+
+  // measure a single channel
+  float get_single_value(
+      const int16_t ch,
+      const float rng,
+      const int16_t convt,
+      const bool single,
+      bool & ovfl) override{
+
+    if (ch<0 || ch>15) throw Err() << "channel number 0..15 expected";
+    int32_t val;
+    int16_t ovfl_mask;
+
+    auto res = HRDLGetSingleValue(devh, ch,
+      volt2range(rng),
+      tconvi2convtime(convt),
+      single, &ovfl_mask, &val);
+    ovfl = ovfl & (1<<ch);
+    return rng*val*0.001/get_max(ch); // Volts
+  }
+
 };
 
 #endif

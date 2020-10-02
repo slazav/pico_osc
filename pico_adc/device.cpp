@@ -45,7 +45,8 @@ ADCInt::cmd_help() const {
   "get_time -- print current time (unix seconds with ms precision)\n"
   "get_info -- print unit info\n"
   "get -- collect and return a single data block.\n"
-  "       chan_set and set_t should be done before.\n";
+  "       chan_set and set_t should be done before.\n"
+  "get_val <chan> <rng> <convt> <single> -- get a single value.\n";
 }
 
 bool
@@ -146,6 +147,7 @@ ADCInt::cmd(const vector<string> & args){
     return true;
   }
 
+  // get
   if (is_cmd(args, "get")) {
     if (args.size()!=1) throw Err()
       << "Usage: get";
@@ -159,6 +161,23 @@ ADCInt::cmd(const vector<string> & args){
       std::cout << vals[i];
     }
     std::cout <<"\n";
+    return true;
+  }
+
+  // get_val <chan> <rng> <convt> <single> -- get a single value.
+  if (is_cmd(args, "get_val")) {
+    if (args.size()!=5) throw Err()
+      << "Usage: get_val <chan> <rng> <convt> <single>";
+
+    int16_t ch    = atoi(args[1].c_str());
+    float   rng   = atof(args[2].c_str());
+    int16_t convt = atoi(args[3].c_str());
+    int16_t sngl  = atoi(args[4].c_str());;
+
+    bool overflow;
+    auto v = get_single_value(ch,rng,convt,sngl,overflow);
+    if (overflow) throw Err() << "overflow";
+    std::cout << v << "\n";
     return true;
   }
 
