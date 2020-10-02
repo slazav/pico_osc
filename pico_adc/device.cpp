@@ -292,12 +292,10 @@ ADC24::chan_get_num() {
   throw Err() << "chan_get_num() failed: invalid handle";
 }
 
-const char *
+std::string
 ADC24::get_unit_id() {
-  int16_t len=20;
-  const char *str;
-  str = (char*)malloc(sizeof(char)*20);
-  HRDLGetUnitInfo(devh,(int8_t *)str,len,HRDL_BATCH_AND_SERIAL);
+  std::string str('0', 20);
+  HRDLGetUnitInfo(devh,(int8_t *)str.data(),str.size(),HRDL_BATCH_AND_SERIAL);
   return str;
 }
 
