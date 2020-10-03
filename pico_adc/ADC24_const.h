@@ -8,23 +8,6 @@
 // from/to string representation.
 
 /************************************************/
-template<typename T>
-T str_to_type(const std::string & s){
-  std::istringstream ss(s);
-  T val;
-  ss >> std::showbase >> val;
-  if (ss.fail() || !ss.eof())
-    throw Err() << "can't parse value: \"" << s << "\"";
-  return val;
-}
-template<typename T>
-std::string type_to_str(const T & t){
-  std::ostringstream ss;
-  ss << t;
-  return ss.str();
-}
-
-/************************************************/
 // Conversion time.
 // String values have same format as in get_tconvs()
 // output: 60 100 180 340 660.
@@ -91,83 +74,6 @@ double str_to_volt(const std::string & s){
 
 double range_to_volt(const HRDL_RANGE r){
   return(str_to_volt(range_to_str(r)));
-}
-
-/************************************************/
-
-// digital channel
-HRDL_DIGITAL_IO_CHANNEL int_to_dch(const int i){
-  switch(i){
-    case 1: return HRDL_DIGITAL_IO_CHANNEL_1;
-    case 2: return HRDL_DIGITAL_IO_CHANNEL_2;
-    case 3: return HRDL_DIGITAL_IO_CHANNEL_3;
-    case 4: return HRDL_DIGITAL_IO_CHANNEL_4;
-  }
-  throw Err() << "error: unknown digital channel: " << i;
-}
-
-HRDL_DIGITAL_IO_CHANNEL str_to_dch(const std::string & s){
-  return int_to_dch(str_to_type<int>(s));
-}
-
-int dch_to_int(const HRDL_DIGITAL_IO_CHANNEL ch){
-  switch (ch){
-    case HRDL_DIGITAL_IO_CHANNEL_1: return 1;
-    case HRDL_DIGITAL_IO_CHANNEL_2: return 2;
-    case HRDL_DIGITAL_IO_CHANNEL_3: return 3;
-    case HRDL_DIGITAL_IO_CHANNEL_4: return 4;
-  }
-  throw Err() << "error: unknown digital channel: " << ch;
-}
-
-/************************************************/
-// analog channel
-HRDL_INPUTS int_to_ch(const int i){
-  switch (i){
-    case  1: return HRDL_ANALOG_IN_CHANNEL_1;
-    case  2: return HRDL_ANALOG_IN_CHANNEL_2;
-    case  3: return HRDL_ANALOG_IN_CHANNEL_3;
-    case  4: return HRDL_ANALOG_IN_CHANNEL_4;
-    case  5: return HRDL_ANALOG_IN_CHANNEL_5;
-    case  6: return HRDL_ANALOG_IN_CHANNEL_6;
-    case  7: return HRDL_ANALOG_IN_CHANNEL_7;
-    case  8: return HRDL_ANALOG_IN_CHANNEL_8;
-    case  9: return HRDL_ANALOG_IN_CHANNEL_9;
-    case 10: return HRDL_ANALOG_IN_CHANNEL_10;
-    case 11: return HRDL_ANALOG_IN_CHANNEL_11;
-    case 12: return HRDL_ANALOG_IN_CHANNEL_12;
-    case 13: return HRDL_ANALOG_IN_CHANNEL_13;
-    case 14: return HRDL_ANALOG_IN_CHANNEL_14;
-    case 15: return HRDL_ANALOG_IN_CHANNEL_15;
-    case 16: return HRDL_ANALOG_IN_CHANNEL_16;
-  }
-  throw Err() << "error: unknown analog channel: " << i;
-}
-
-HRDL_INPUTS str_to_ch(const std::string & s){
-  return int_to_ch(str_to_type<int>(s));
-}
-
-int ch_to_int(const HRDL_INPUTS ch){
-  switch (ch){
-    case  HRDL_ANALOG_IN_CHANNEL_1: return 1;
-    case  HRDL_ANALOG_IN_CHANNEL_2: return 2;
-    case  HRDL_ANALOG_IN_CHANNEL_3: return 3;
-    case  HRDL_ANALOG_IN_CHANNEL_4: return 4;
-    case  HRDL_ANALOG_IN_CHANNEL_5: return 5;
-    case  HRDL_ANALOG_IN_CHANNEL_6: return 6;
-    case  HRDL_ANALOG_IN_CHANNEL_7: return 7;
-    case  HRDL_ANALOG_IN_CHANNEL_8: return 8;
-    case  HRDL_ANALOG_IN_CHANNEL_9: return 9;
-    case HRDL_ANALOG_IN_CHANNEL_10: return 10;
-    case HRDL_ANALOG_IN_CHANNEL_11: return 11;
-    case HRDL_ANALOG_IN_CHANNEL_12: return 12;
-    case HRDL_ANALOG_IN_CHANNEL_13: return 13;
-    case HRDL_ANALOG_IN_CHANNEL_14: return 14;
-    case HRDL_ANALOG_IN_CHANNEL_15: return 15;
-    case HRDL_ANALOG_IN_CHANNEL_16: return 16;
-  }
-  throw Err() << "error: unknown analog channel: " << ch;
 }
 
 /************************************************/

@@ -1,6 +1,7 @@
 #ifndef ADC24_H
 #define ADC24_H
 
+#define VERSION "1.0"
 
 #include <pico/HRDL.h>
 #include <string>
@@ -25,12 +26,6 @@ protected:
   int16_t devn; // device number (1..20)
 
 public:
-
-  void cmd(const std::vector<std::string> & args);
-
-  bool is_cmd(const std::vector<std::string> & args, const char *name);
-
-  const char * cmd_help() const; // return command help
 
   /**********************************************************/
 
@@ -104,5 +99,27 @@ public:
   std::vector<double> get_block(int32_t nvals);
 
 };
+
+/*************************/
+
+#include <sstream>
+#include <iomanip>
+#include "err/err.h"
+// convert values to strings and back
+template<typename T>
+T str_to_type(const std::string & s){
+  std::istringstream ss(s);
+  T val;
+  ss >> std::showbase >> val;
+  if (ss.fail() || !ss.eof())
+    throw Err() << "can't parse value: \"" << s << "\"";
+  return val;
+}
+template<typename T>
+std::string type_to_str(const T & t){
+  std::ostringstream ss;
+  ss << t;
+  return ss.str();
+}
 
 #endif

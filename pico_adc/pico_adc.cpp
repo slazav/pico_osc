@@ -4,6 +4,7 @@
 #include "read_words/read_words.h"
 
 #include "device.h"
+#include "commands.h"
 
 /* SPP-compatable interface to ADC-24 device */
 
@@ -58,7 +59,7 @@ main(int argc, char *argv[]){
       try {
         auto args = read_words(cin);
         if (args.size()<1) break;
-        adc24.cmd(args);
+        cmd(adc24, args);
         cout << "#OK\n" << flush;
       }
       catch (Err E){ cout << "\n#Error: " << E.str() << "\n" << flush; }
