@@ -1,5 +1,4 @@
 #include <cstring> // strcasecmp
-#include <cstdlib> // atoi
 #include <unistd.h> // usleep
 #include <fstream>
 #include <iostream>
@@ -25,31 +24,31 @@ ADC24::is_cmd(const vector<string> & args, const char *name){
 const char *
 ADC24::cmd_help() const {
   return
-  "help -- show command list\n"
-  "ranges -- show possible ranges\n"
-  "chan_set <ch> <en> <sngl> <rng> -- set channel parameters\n"
-  "   ch   -- select channel: 1 to 16\n"
-  "   en   -- enable channel: 1,0\n"
-  "   sngl -- single ended or double: 1,0\n"
-  "   rng  -- input range, mV (see ranges command)\n"
-  "chan_get <ch>  -- get channel parameters\n"
-  "   ch -- select channel: 01,02,07 etc.\n"
-  "   Returns a line with four words: <ch> <en> <sngl> <rng> for each channel.\n"
-  "   If the channel is disabled returns channel name with 'disabled' word.\n"
-  "chan_get_n  -- get number of enabled analog channels\n"
-  "set_t <dt> <tconv> -- set time intervals\n"
-  "   dt    -- time step in milliseconds within which all conversions \n"
-  "            must take place before the next set of conversions starts.\n"
-  "   tconv -- the amount of time in milliseconds given to one \n"
-  "            channel's conversion (see tconvs command)\n"
-  "tconvs -- show possible conversion time constants in milliseconds\n"
-  "info -- write device info\n"
-  "*idn? -- write id string: \"pico_adc " VERSION "\"\n"
-  "get_time -- print current time (unix seconds with ms precision)\n"
-  "get_info -- print unit info\n"
+  "get_time -- Get current time.\n"
+  "*idn? -- Get ID string: \"pico_adc " VERSION "\".\n"
+  "help  -- Get list of commands.\n"
+  "get_info -- Get device information.\n"
+  "ranges   -- Get available range settings.\n"
+  "tconvs   -- Get available conversion time settings.\n"
+  "get_val <chan> <single> <rng> <convt> -- Measure a single value.\n"
+  "\n"
+  "  Below are commands for 'block read mode'.\n"
+  "  It's not recommended to use them.\n"
+  "\n"
+  "chan_set <chs> <en> <sngl> <rng> -- set channel parameters\n"
+  "   chs  -- Channels: 01 to 16, multiple channels allowed\n"
+  "   en   -- Enable channels: 1 or 0\n"
+  "   sngl -- Single/Differential mode: 1 or 0.\n"
+  "   rng  -- Input range, mV (see ranges command).\n"
+  "chan_get <ch>  -- get channel parameters (<ch> <en> <sngl> <rng>,\n"
+  "   or '<ch> disabled' for disabled channels.\n"
+  "chan_get_n  -- Get number of enabled analog channels.\n"
+  "set_t <dt> <tconv> -- Set timings.\n"
+  "   dt    -- time step between measurements\n"
+  "   tconv -- conversion time for one channel (see tconvs command)\n"
   "get -- collect and return a single data block.\n"
   "       chan_set and set_t should be done before.\n"
-  "get_val <chan> <rng> <convt> <single> -- get a single value.\n";
+  ;
 }
 
 void
@@ -82,103 +81,103 @@ ADC24::cmd(const vector<string> & args){
   // print device info
   if (is_cmd(args, "get_info")){
     if (args.size()!=1) throw Err() << "Usage: get_info";
-    cout << "pico_adc " << get_info() << "\n";
+    cout << get_info() <<  "\n";
     return;
   }
 
-  // show range settings
+  // show available range settings
   if (is_cmd(args, "ranges")){
     if (args.size()!=1) throw Err() << "Usage: ranges";
-    cout << chan_get_ranges(args[1].c_str()) << "\n";
+    cout << get_ranges() <<  "\n";
     return;
   }
 
-  // set time intervals
-  if (is_cmd(args, "set_t")){
-    if (args.size()!=3) throw Err() << "Usage: set_t <dt> <tconv>";
-    set_interval(atoi(args[1].c_str()),atoi(args[2].c_str()));
-    return;
-  }
-
-  // show time conversion settings
+  // show available time conversion settings
   if (is_cmd(args, "tconvs")){
-    if (args.size()!=1) throw Err() << "Usage: ranges";
-    cout << chan_get_tconvs() << "\n";
+    if (args.size()!=1) throw Err() << "Usage: tconvs";
+    cout << get_tconvs() <<  "\n";
     return;
   }
 
-  // print number of active channels
+  // get a single value.
+  if (is_cmd(args, "get_val")) {
+    if (args.size()!=5) throw Err()
+      << "Usage: get_val <chan> <single> <rng> <convt>";
+
+    int ch  = str_to_type<int>(args[1]);
+    bool sngl = str_to_type<bool>(args[2]);
+    auto & rng   = args[3];
+    auto & convt = args[4];
+
+    auto v = get_single(ch, sngl, rng, convt);
+    std::cout << v << "\n";
+    return;
+  }
+
+  // Block read commands:
+
+  // set channel parameters for block mode
+  if (is_cmd(args, "chan_set")) {
+    if (args.size()!=5) throw Err()
+      << "Usage: chan_set <ch> <en> <sngl> <rng>";
+    // set multiple channels
+    int8_t len = args[1].length();
+    if (len%2) throw Err() << "bad channel option";
+    for (int i=0; i<args[1].length(); i+=2){
+      string sch(&args[1][i], &args[1][i+2]); // channel as a string
+      auto ch   = str_to_type<int>(sch);
+      auto en   = str_to_type<bool>(args[2]);
+      auto sngl = str_to_type<bool>(args[3]);
+      auto & rng = args[4];
+      set_channel(ch, en, sngl, rng);
+    }
+    return;
+  }
+
+  // print channel parameters
+  if (is_cmd(args, "chan_get")) {
+    if (args.size()!=2) throw Err() << "Usage: chan_get <ch>";
+    print_channel(str_to_type<int>(args[1]));
+    return;
+  }
+
+  // print number of active channels for block mode
   if (is_cmd(args, "chan_get_n")){
     if (args.size()!=1) throw Err() << "Usage: get_chan_n";
     cout << chan_get_num() << "\n";
     return;
   }
 
-  // set channel parameters
-  if (is_cmd(args, "chan_set")) {
-    if (args.size()!=5) throw Err()
-      << "Usage: chan_set <ch> <en> <sngl> <rng>";
-    int8_t len = args[1].length();
-    if (len%2) throw Err() << "bad channel option";
-    for (int i=0; i<args[1].length(); i+=2){
-      string ch; ch+=args[1][i]; ch+=args[1][i+1]; // channel as a string
-      int16_t chi = (int16_t)atoi(ch.c_str());     // channel as int
-      ChConf_t C;
-      C.en  = atoi(args[2].c_str());
-      C.sngl = atoi(args[3].c_str());;
-      C.rng = atof(args[4].c_str());
-      chan_set(chi, C.en, C.sngl, C.rng);
-      chconf[chi] = C; // save channel configuration
-    }
+  // set timings for block mode
+  if (is_cmd(args, "set_t")){
+    if (args.size()!=3) throw Err() << "Usage: set_t <dt> <tconv>";
+    set_timing(str_to_type<int>(args[1]), args[2]);
     return;
   }
 
-  // set channel parameters
-  if (is_cmd(args, "chan_get")) {
-    if (args.size()!=2) throw Err() << "Usage: chan_get <ch>";
-    int ch = atoi(args[1].c_str());
-    if (chconf[ch].en) cout << ch << " "
-          << chconf[ch].en << " "
-          << chconf[ch].sngl << " "
-          << chconf[ch].rng << "\n";
-    else cout << ch << " disabled\n";
-
-    return;
-  }
-
-  // get
+  // get values in block mode
   if (is_cmd(args, "get")) {
     if (args.size()!=1) throw Err()
       << "Usage: get";
-    run_block(1);
-    usleep(1000);
-    while (!is_ready()) {usleep(1000);}
-    int16_t overflow;
-    auto vals = get_values(1,&overflow);
-    for (int i=0; i<chan_get_num(); ++i) {
-      if (i>0) std::cout << " ";
-      std::cout << vals[i];
+
+    int16_t nvals = 1;
+    auto v = get_block(nvals);
+
+    auto nchan = chan_get_num();
+    if (nvals*nchan != v.size())
+     throw Err() << "get_block() returned wrong number of samples";
+
+    for (size_t nv = 0; nv<nvals; ++nv){
+      for (size_t nc = 0; nc<nchan; ++nc){
+         size_t ind = nv*nchan + nc;
+         if (nc>0) std::cout << " ";
+         std::cout << v[ind];
+      }
+      std::cout << "\n";
     }
-    std::cout <<"\n";
     return;
   }
 
-  // get_val <chan> <rng> <convt> <single> -- get a single value.
-  if (is_cmd(args, "get_val")) {
-    if (args.size()!=5) throw Err()
-      << "Usage: get_val <chan> <rng> <convt> <single>";
-
-    int16_t ch    = atoi(args[1].c_str());
-    float   rng   = atof(args[2].c_str());
-    int16_t convt = atoi(args[3].c_str());
-    int16_t sngl  = atoi(args[4].c_str());;
-
-    bool overflow;
-    auto v = get_single_value(ch,rng,convt,sngl,overflow);
-    if (overflow) throw Err() << "overflow";
-    std::cout << v << "\n";
-    return;
-  }
 
   throw Err() << "Unknown command: " << args[0];
 }
@@ -190,18 +189,17 @@ std::string
 ADC24::dev_list(){
   std::string ret;
   int16_t devices[HRDL_MAX_PICO_UNITS];
-  int8_t line[80];
 
   for (int i = 0; i < HRDL_MAX_UNITS; i++) {
     devices[i] = HRDLOpenUnit();
     if (devices[i] > 0) {
-      HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_BATCH_AND_SERIAL);
-      ret += std::string((char*)line) + "\n";
+      auto line = get_unit_info(devices[i], HRDL_BATCH_AND_SERIAL);
+      ret += line + "\n";
     }
     else {
-      HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_ERROR);
-      if (atoi((char*)line) != HRDL_NOT_FOUND)
-        throw Err() << "can't open device " << i << ":" << line;
+      auto err = str_to_type<int>(get_unit_info(devices[i], HRDL_ERROR));
+      if (err != HRDL_NOT_FOUND)
+        throw Err() << "can't open device " << i << ":" << err_to_str(err);
     }
   }
   // close devices
@@ -214,11 +212,10 @@ ADC24::dev_list(){
 // Constructor and destructor: open/close device, throw errors if any.
 // See code in https://github.com/picotech/picosdk-c-examples/blob/master/picohrdl/picohrdlCon/picohrdlCon.c
 // for their strange way of finding correct device...
-ADC24::ADC24(const char *name){
+ADC24::ADC24(const std::string & name){
 
   // open all devices, as in dev_list()
   int16_t devices[HRDL_MAX_PICO_UNITS];
-  int8_t line[80];
   devh=-1; devn=-1;
 
   // initialize device array
@@ -228,8 +225,8 @@ ADC24::ADC24(const char *name){
   for (int i = 0; i < HRDL_MAX_UNITS; i++) {
     devices[i] = HRDLOpenUnit();
     if (devices[i] > 0) {
-      HRDLGetUnitInfo(devices[i], line, sizeof (line), HRDL_BATCH_AND_SERIAL);
-      if (name==0 || name[0] == 0 || strcasecmp(name, (char*)line)==0){
+      auto line = get_unit_info(devices[i], HRDL_BATCH_AND_SERIAL);
+      if (name=="" || strcasecmp(name.c_str(), line.c_str())==0){
         devh = devices[i]; devn = i; break;
       }
     }
@@ -241,7 +238,7 @@ ADC24::ADC24(const char *name){
   }
 
   if (devn == -1){
-    if (name==0 || name[0] == 0) throw Err() << "No PicoLog devices found";
+    if (name=="") throw Err() << "No PicoLog devices found";
     else throw Err() << "PicoLog device not found: " << name;
   }
 
@@ -257,143 +254,206 @@ ADC24::~ADC24(){
 
 /**********************************************************/
 
-// get avaiable ranges: chan_get_ranges("A");
+// Returns unit info for a device handle (used in list method and constuctor)
 std::string
-ADC24::chan_get_ranges(const char * chan){
-  std::string ret;
-  for (int i = 0; i != HRDL_MAX_RANGES; ++i) {
-    if (i>0) ret+=" ";
-    ret+=range2str((HRDL_RANGE)i);
-  }
-  return ret;
-}
-
-// get avaiable time conversion conctants
-std::string
-ADC24::chan_get_tconvs() {
-  std::string ret;
-  for (int i = 0; i != HRDL_MAX_CONVERSION_TIMES; ++i) {
-    if (i>0) ret+=" ";
-    ret+=tconv2str((HRDL_CONVERSION_TIME)i);
-  }
-  return ret;
-}
-
-void
-ADC24::chan_set(int16_t chan, bool enable, bool sngl, float rng) {
-  if (!(HRDLSetAnalogInChannel(devh,chan,enable,volt2range(rng),sngl))) throw Err()
-    << "failed to set channel " << chan;
-}
-
-int16_t
-ADC24::chan_get_num() {
-  int16_t n;
-  if (HRDLGetNumberOfEnabledChannels(devh, &n)) return n;
-  throw Err() << "chan_get_num() failed: invalid handle";
-}
-
-std::string
-ADC24::get_unit_id() {
-  std::string str('0', 20);
-  HRDLGetUnitInfo(devh,(int8_t *)str.data(),str.size(),HRDL_BATCH_AND_SERIAL);
+ADC24::get_unit_info(const int16_t h, const uint16_t info) {
+  std::string str('0', 80);
+  if (!HRDLGetUnitInfo(h,(int8_t *)str.data(),str.size(),info))
+    throw Err() << "failed to get unit info";
   return str;
 }
 
-// returns settings error
-const char *
-ADC24::get_err() {
-  return NULL;
-};
+std::string
+ADC24::get_error(){
+  // In the case of parameter error HRDL returns strange string: 8PPPP<...>.
+  // Use only the first digit to get error code:
+  auto e = get_unit_info(devh, HRDL_ERROR);
+  int ne = e.size()? e[0]-'0' : 0;
+  if (ne != 0 && ne != 8) return err_to_str(ne);
+
+  e = get_unit_info(devh, HRDL_SETTINGS);
+  ne = e.size()? e[0]-'0' : 0;
+  if (ne != 0) return serr_to_str(ne);
+  return "no erorrs";
+}
 
 // configures the mains noise rejection setting
 void
 ADC24::set_mains(bool m60Hz) {
   if (!HRDLSetMains(devh,m60Hz))
-    throw Err() << "failed to set mains";
+    throw Err() << "failed to set mains: " << get_error();
 }
 
-// sets the sampling time interval
-void
-ADC24::set_interval(int32_t dt, int16_t conv) {
-  if (!HRDLSetInterval(devh,dt,tconvi2convtime(conv))) throw Err() << "failed to set time interval";
-};
-
-// run block mode
-void
-ADC24::run_block(int32_t nvals) {
-  if (!HRDLRun(devh,nvals,str2m("block")))
-    throw Err() << "failed to run block mode";
-}
-
-// is device ready?
-bool
-ADC24::is_ready() { return HRDLReady(devh); }
-
-// get the requested number of samples for each enabled channel
-std::vector<float>
-ADC24::get_values(int32_t nvals, int16_t *overflow) {
-  int16_t nch = chan_get_num();
-  std::vector<int32_t> dvals(nch*nvals);
-  std::vector<float>   vals(nvals);
-
-  // returns actual number of samples
-  int32_t resn = HRDLGetValues(devh,dvals.data(),overflow,nvals);
-  float rngs[chN], maxcounts[chN];
-  int rs_n=0;
-  for (int ch = 0; ch<chN; ++ch) {
-    if (chconf[ch].en) {
-      rngs[rs_n]=chconf[ch].rng;
-      maxcounts[rs_n]=chconf[ch].max;
-      rs_n++;
-    }
-  }
-  int32_t v=0;
-  for (int n=0; n<resn; ++n) {
-    for (int ri=0; ri<rs_n; ++ri ) {
-      vals[v]=rngs[ri]*dvals[v]/maxcounts[ri]*0.001; // Volts
-      v++;
-    }
-  }
-  return vals;
-}
-
-// get the maximum and minimum ADC count available for the device
-int32_t
-ADC24::get_max(int16_t ch) {
-  int32_t min,max;
-  if (!HRDLGetMinMaxAdcCounts(devh,&min,&max,ch)) throw Err() << "failed to get max ADC count";
-  return max;
-}
-
-// get device info
+// get device information
 std::string
 ADC24::get_info(){
   const int16_t ui_buflen=1024;
   char ui_v[ui_buflen],ui_n[ui_buflen];
-  if (!HRDLGetUnitInfo(devh,(int8_t *)ui_v,ui_buflen, HRDL_VARIANT_INFO) ||
-      !HRDLGetUnitInfo(devh,(int8_t *)ui_n,ui_buflen, HRDL_BATCH_AND_SERIAL))
-    throw Err() << "failed to get unit info";
-  return std::string(ui_v)+" "+std::string(ui_n);
+  auto var = get_unit_info(devh, HRDL_VARIANT_INFO);
+  auto ser = get_unit_info(devh, HRDL_BATCH_AND_SERIAL);
+  return var + " " + ser;
 }
 
-// measure a single channel
-float
-ADC24::get_single_value(
-    const int16_t ch,
-    const float rng,
-    const int16_t convt,
-    const bool single,
-    bool & ovfl) {
+// get available range constants
+std::string
+ADC24::get_ranges(){
+  std::string ret;
+  for (int i = 0; i != HRDL_MAX_RANGES; ++i) {
+    if (i>0) ret+=" ";
+    ret+=range_to_str((HRDL_RANGE)i);
+  }
+  return ret;
+}
 
-  if (ch<0 || ch>15) throw Err() << "channel number 0..15 expected";
+// get available time conversion constants
+std::string
+ADC24::get_tconvs() {
+  std::string ret;
+  for (int i = 0; i != HRDL_MAX_CONVERSION_TIMES; ++i) {
+    if (i>0) ret+=" ";
+    ret+=convt_to_str((HRDL_CONVERSION_TIME)i);
+  }
+  return ret;
+}
+
+// measure a single value with full channel setup.
+double
+ADC24::get_single( const int ch, const bool single,
+    const std::string & rng, const std::string & convt ) {
+
+  // more understandable error message:
+  if (ch%2==0 && !single) throw Err()
+   << "only odd channels can be set for differential measurements";
+
   int32_t val;
-  int16_t ovfl_mask;
+  int16_t ovfl;
 
-  auto res = HRDLGetSingleValue(devh, ch,
-    volt2range(rng),
-    tconvi2convtime(convt),
-    single, &ovfl_mask, &val);
-  ovfl = ovfl & (1<<ch);
-  return rng*val*0.001/get_max(ch); // Volts
+  // get value
+  auto res = HRDLGetSingleValue(devh, int_to_ch(ch), str_to_range(rng),
+    str_to_convt(convt), (int16_t)single, &ovfl, &val);
+
+  if (res==0) throw Err()
+    << "can't get value from ADC: " << get_error();
+
+  // get max integer value
+  int32_t min,max;
+  if (!HRDLGetMinMaxAdcCounts(devh,&min,&max,ch))
+    throw Err() << "failed to get max ADC count: " << get_error();
+
+  if (ovfl & (1<<ch)) return std::nan("");
+  return (str_to_volt(rng)*val)/max;
 }
 
+
+// Block read mode:
+
+// Set channel parameters.
+void
+ADC24::set_channel(int chan, bool enable,
+                bool single, const std::string & rng){
+
+  // more understandable error message:
+  if (chan%2==0 && !single) throw Err()
+   << "only odd channels can be set for differential measurements";
+
+  // convert values to ADC24 types.
+  ChConf_t C;
+  auto ch = int_to_ch(chan);
+  C.en   = enable; C.sngl = single;
+  C.rng  = str_to_range(rng);
+
+  // apply changes
+  if (!(HRDLSetAnalogInChannel(devh,ch,C.en,C.rng,C.sngl)))
+    throw Err() << "failed to set channel " << ch << ": " << get_error();
+
+  // get max/min SDC count for this channel
+  if (!HRDLGetMinMaxAdcCounts(devh,&C.min,&C.max,ch))
+    throw Err() << "failed to get min/max ADC count: " << get_error();
+
+  chconf[(int)ch] = C; // save channel configuration
+}
+
+// Print channel settings.
+void
+ADC24::print_channel(int chan){
+  auto ch = int_to_ch(chan);
+  if (chconf[(int)ch].en) {
+    cout << ch << " "
+         << chconf[ch].en << " "
+         << chconf[ch].sngl << " "
+         << range_to_str(chconf[ch].rng) << "\n";
+  }
+  else cout << ch << " disabled\n";
+}
+
+// Set timing parameters.
+// - dt is measurement time [ms]. If N is number of enabled channels
+//   then dt should be: N*conv_t < dt <= 1000*N*conv_t.
+//   For a single measurement set this to the smallest possible value.
+// - conv_t: ADC conversion time for a single value [ms].
+//   Possible values: 60 100 180 340 660.
+//   Use longer times for more accurate measurements.
+void
+ADC24::set_timing(int32_t dt, const std::string & convt){
+  if (!HRDLSetInterval(devh,dt,str_to_convt(convt)))
+    throw Err() << "failed to set timings: " << get_error();
+}
+
+// Returns the number of channels enabled.
+int
+ADC24::chan_get_num(){
+  int16_t n;
+  if (HRDLGetNumberOfEnabledChannels(devh, &n)) return n;
+    throw Err() << "can't get number of enabled channels: " << get_error();
+  return n;
+}
+
+// Returns list of enabled channels.
+std::vector<int>
+ADC24::chan_get_list(){
+  std::vector<int> ret;
+  for (int i=0; i<chconf.size(); ++i)
+    if (chconf[i].en) ret.push_back(i);
+
+  // this should not happen:
+  if (ret.size() != chan_get_num()) throw Err()
+      << "Channel enable settings are not syncronised!";
+  return ret;
+}
+
+// get the requested number of samples for each enabled channel
+std::vector<double>
+ADC24::get_block(int32_t nvals) {
+
+  // run block mode for a ginev number of readings
+  if (!HRDLRun(devh, nvals, HRDL_BM_BLOCK))
+    throw Err() << "failed to run block mode: " << get_error();
+
+  // wait until values are ready
+  while (1) {
+    usleep(1000);
+    if (HRDLReady(devh)) break;
+  }
+
+  // get list of enabled channels, allocate data arrays
+  auto ch_e = chan_get_list();
+  size_t N = nvals*ch_e.size();
+  std::vector<int32_t> ivals(N);
+  std::vector<double>  vals(N);
+  std::vector<int16_t> ovfl(nvals);
+
+  // read data, (res - actual number of samples)
+  auto res = HRDLGetValues(devh,ivals.data(),ovfl.data(),nvals);
+  if (res==0) throw Err() << "can't get values from ADC: " << get_error();
+
+  // convert int data to double
+  for (int32_t nv = 0; nv<nvals; ++nv){
+    for (size_t nc = 0; nc<ch_e.size(); ++nc){
+      size_t ind = nv*ch_e.size() + nc;
+      int ch = ch_e[nc];
+      vals[ind] = range_to_volt(chconf[ch].rng)*ivals[ind]/chconf[ch].max;
+      if (ovfl[nv] & (1<<ch)) vals[ind] = std::nan("");
+    }
+  }
+  return vals;
+}

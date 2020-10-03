@@ -1,30 +1,20 @@
-#ifndef DEVICE_H
-#define DEVICE_H
+#ifndef ADC24_H
+#define ADC24_H
 
-// Base class for ADC devices
 
+#include <pico/HRDL.h>
 #include <string>
 #include <vector>
 #include <stdint.h>
 
 // analog channel configuration
 struct ChConf_t{
-  bool en;
-  bool sngl;
-  float rng;
-  int32_t min;
-  int32_t max;
+  int16_t en;
+  int16_t sngl;
+  HRDL_RANGE rng;
   std::vector<int16_t> buf;
-  ChConf_t(): en(false), sngl(false), rng(0), min(0), max(0) {}
-};
-
-// digital channel configuration
-struct DChConf_t{
-  bool en;
-  bool sngl;
-  float rng;
-  std::vector<int16_t> buf;
-  DChConf_t(): en(0), sngl(0), rng(0) {}
+  int32_t min, max;
+  ChConf_t(): en(false), sngl(false), rng(HRDL_2500_MV),min(-1),max(1) {}
 };
 
 class ADC24{
@@ -37,7 +27,6 @@ protected:
 
 public:
 
-  // High-level commands.
   void cmd(const std::vector<std::string> & args);
 
   bool is_cmd(const std::vector<std::string> & args, const char *name);
@@ -50,57 +39,63 @@ public:
   static std::string dev_list();
 
   // constructor: find and open device with the name
-  ADC24(const char *name);
+  ADC24(const std::string & name);
 
   // destructor: close device
   ~ADC24();
 
   /**********************************************************/
 
-  // get avaiable ranges: chan_get_ranges("1");
-  std::string chan_get_ranges(const char * chan);
+  // General device/program settings
 
-  // get avaiable time conversion conctants
-  std::string chan_get_tconvs();
+  // Return unit information for a handler (used in list method
+  // and constuctor with different handlers).
+  static std::string get_unit_info(const int16_t h, const uint16_t info);
 
-  // returns the number of analog channels enabled
-  int16_t chan_get_num();
+  // Get error information and return message
+  std::string get_error();
 
-  // set channel parameters
-  void chan_set(int16_t chan, bool enable, bool sngl, float rng);
-
-  // returns unit id
-  const char * get_unit_id();
-
-  // returns settings error
-  const char * get_err();
-
-  // configures the mains noise rejection setting
+  // Configure the mains noise rejection setting (60 or 50 Hz).
   void set_mains(const bool m60Hz);
 
-  // sets the sampling time interval
-  void set_interval(int32_t dt, int16_t conv);
-
-  // run block mode
-  void run_block(int32_t nvals);
-
-  // is device ready?
-  bool is_ready();
-
-  // get the requested number of samples for each enabled channel
-  std::vector<float> get_values(int32_t nvals ,int16_t *overflow);
-
-  // get the maximum and minimum ADC count available for the device
-  int32_t get_max(int16_t ch);
-
-  // get device info
+  // Get device info.
   std::string get_info();
 
-  // measure a single channel
-  float get_single_value(
-      const int16_t ch, const float rng, const int16_t convt,
-      const bool single, bool & ovfl);
+  // Get available range constants.
+  std::string get_ranges();
 
+  // Get available time conversion constants.
+  std::string get_tconvs();
+
+  // Measure a single value with full channel setup.
+  // (no need for other setup functions)
+  // returns overflow flag.
+  double get_single(const int ch, const bool single,
+      const std::string & rng, const std::string & convt);
+
+  // Block read mode (set channels, set timings, read data block).
+  // Using this mode by multiple users (through device server)
+  // will require device locking between setting parameters
+  // and making the measurement.
+
+  // Set channel parameters.
+  void set_channel(int chan, bool enable,
+                bool single, const std::string & rng);
+
+  // Print channel settings.
+  void print_channel(int chan);
+
+  // Set timing parameters.
+  void set_timing(int32_t dt, const std::string & convt);
+
+  // Returns the number of channels enabled.
+  int chan_get_num();
+
+  // Returns list of enabled channels.
+  std::vector<int> chan_get_list();
+
+  // Get block of data.
+  std::vector<double> get_block(int32_t nvals);
 
 };
 

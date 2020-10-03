@@ -40,7 +40,7 @@ main(int argc, char *argv[]){
                   "Options:\n"
                   " -l       -- list all connected devices and exit\n"
                   " -d <dev> -- device ID (autodetect by default)\n"
-                  " -m <Hz>  -- set mains frequency\n"
+                  " -m <Hz>  -- set mains frequency, Hz (50 or 60, default: 50)\n"
                   " -h       -- write this help message and exit\n";
           return 0;
       }
@@ -61,7 +61,7 @@ main(int argc, char *argv[]){
         adc24.cmd(args);
         cout << "#OK\n" << flush;
       }
-      catch (Err E){ cout << "#Error: " << E.str() << "\n" << flush; }
+      catch (Err E){ cout << "\n#Error: " << E.str() << "\n" << flush; }
     }
 
   }
