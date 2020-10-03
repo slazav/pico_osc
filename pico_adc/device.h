@@ -23,6 +23,7 @@ protected:
   std::vector<ChConf_t> chconf; // channel configuration for block mode
   int16_t devh; // device handle
   int16_t devn; // device number (1..20)
+  bool time_conf; // are timings configured (block mode stucks if not!)
 
 public:
 

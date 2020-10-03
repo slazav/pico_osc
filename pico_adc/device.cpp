@@ -43,7 +43,7 @@ ADC24::dev_list(){
 // Constructor and destructor: open/close device, throw errors if any.
 // See code in https://github.com/picotech/picosdk-c-examples/blob/master/picohrdl/picohrdlCon/picohrdlCon.c
 // for their strange way of finding correct device...
-ADC24::ADC24(const std::string & name){
+ADC24::ADC24(const std::string & name): time_conf(false){
 
   // open all devices, as in dev_list()
   int16_t devices[HRDL_MAX_PICO_UNITS];
@@ -248,16 +248,11 @@ ADC24::print_channel(int ch){
 }
 
 // Set timing parameters.
-// - dt is measurement time [ms]. If N is number of enabled channels
-//   then dt should be: N*conv_t < dt <= 1000*N*conv_t.
-//   For a single measurement set this to the smallest possible value.
-// - conv_t: ADC conversion time for a single value [ms].
-//   Possible values: 60 100 180 340 660.
-//   Use longer times for more accurate measurements.
 void
 ADC24::set_timing(int32_t dt, const std::string & convt){
   if (!HRDLSetInterval(devh,dt,str_to_convt(convt)))
     throw Err() << "failed to set timings: " << get_error();
+  time_conf = true;
 }
 
 // Returns the number of channels enabled.
@@ -285,6 +280,11 @@ ADC24::chan_get_list(){
 // get the requested number of samples for each enabled channel
 std::vector<double>
 ADC24::get_block(int32_t nvals) {
+
+  // check if timings are configured (or block mode will stuck!)
+  if (!time_conf) throw Err() << "timings are not configured";
+
+  if (!chan_get_num()) throw Err() << "channels are not configured";
 
   // run block mode for a ginev number of readings
   if (!HRDLRun(devh, nvals, HRDL_BM_BLOCK))
