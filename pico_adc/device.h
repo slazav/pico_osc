@@ -20,8 +20,7 @@ struct ChConf_t{
 class ADC24{
 
 protected:
-  std::vector<ChConf_t> chconf;
-  int16_t chN;
+  std::vector<ChConf_t> chconf; // channel configuration for block mode
   int16_t devh; // device handle
   int16_t devn; // device number (1..20)
 
@@ -81,6 +80,9 @@ public:
   // Set channel parameters.
   void set_channel(int chan, bool enable,
                 bool single, const std::string & rng);
+
+  // Disable all channels
+  void disable_all();
 
   // Print channel settings.
   void print_channel(int chan);

@@ -134,10 +134,10 @@ ADC24::cmd(const vector<string> & args){
     return;
   }
 
-  // print channel parameters
-  if (is_cmd(args, "chan_get")) {
-    if (args.size()!=2) throw Err() << "Usage: chan_get <ch>";
-    print_channel(str_to_type<int>(args[1]));
+  // disable all channels
+  if (is_cmd(args, "disable_all")) {
+    if (args.size()!=1) throw Err() << "Usage: disable_all";
+    disable_all();
     return;
   }
 
@@ -242,8 +242,7 @@ ADC24::ADC24(const std::string & name){
     else throw Err() << "PicoLog device not found: " << name;
   }
 
-  chN=HRDL_MAX_ANALOG_CHANNELS;
-  chconf.resize(chN);
+  chconf.resize(HRDL_MAX_ANALOG_CHANNELS);
 }
 
 // destructor
@@ -371,6 +370,17 @@ ADC24::set_channel(int chan, bool enable,
     throw Err() << "failed to get min/max ADC count: " << get_error();
 
   chconf[(int)ch] = C; // save channel configuration
+}
+
+// Disable all channels
+void
+ADC24::disable_all(){
+  for (int ch=1; ch<=HRDL_MAX_ANALOG_CHANNELS; ch++){
+    ChConf_t C;
+    if (!(HRDLSetAnalogInChannel(devh,ch,false,C.rng,true)))
+      throw Err() << "failed to disable channel " << ch << ": " << get_error();
+    chconf[(int)ch] = C;
+  }
 }
 
 // Print channel settings.

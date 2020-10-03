@@ -47,6 +47,9 @@ to mix `get_val` measurements with the block read measuremens.
   - `sngl` -- Single/Differential mode: 1 or 0.
   - `rng`  -- Input range, mV (see `ranges` command).
 
+* `disable_all` -- Disable all channels. Do this before
+  setting up channels if the device was in unknown state.
+
 * `chan_get <ch>`  -- get channel parameters (`<ch> <en> <sngl> <rng>`,
   or `<ch> disabled` for disabled channels.
 
