@@ -13,7 +13,6 @@ struct ChConf_t{
   int16_t en;
   int16_t sngl;
   HRDL_RANGE rng;
-  std::vector<int16_t> buf;
   int32_t min, max;
   ChConf_t(): en(false), sngl(false), rng(HRDL_2500_MV),min(-1),max(1) {}
 };
