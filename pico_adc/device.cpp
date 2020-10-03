@@ -334,6 +334,17 @@ ADC24::get_single( const int ch, const bool single,
   if (res==0) throw Err()
     << "can't get value from ADC: " << get_error();
 
+  // Block mode channel configuration becomes invalid after
+  // call to HRDLGetSingleValue. Update it.
+  for (int n=1; n<=HRDL_MAX_ANALOG_CHANNELS; n++){
+    ChConf_t C;
+    if (ch == n){ // only one channel enabled
+      C.en = true; C.rng = str_to_range(rng);
+      C.sngl = single;
+    }
+    chconf[(int)ch] = C;
+  }
+
   // get max integer value
   int32_t min,max;
   if (!HRDLGetMinMaxAdcCounts(devh,&min,&max,ch))
