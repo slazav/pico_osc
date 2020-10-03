@@ -128,9 +128,11 @@ cmd(ADC24 & dev, const vector<string> & args){
       << "Usage: chan_set <ch> <en> <sngl> <rng>";
     // set multiple channels
     int8_t len = args[1].length();
-    if (len%2) throw Err() << "bad channel option";
-    for (int i=0; i<args[1].length(); i+=2){
-      string sch(&args[1][i], &args[1][i+2]); // channel as a string
+
+    if (len!=1 && len%2) throw Err() << "bad channel option";
+    for (int i=0; i<len; i+=2){
+      // channel as a string
+      string sch = (len==1)? args[1]: string(&args[1][i], &args[1][i+2]);
       auto ch   = str_to_type<int>(sch);
       auto en   = str_to_type<bool>(args[2]);
       auto sngl = str_to_type<bool>(args[3]);
