@@ -32,6 +32,9 @@
   `ranges` command. `convt` is conversion time,  one of values returned
   by `tconvs` command. Use longer time for more accurate measurement.
 
+* `set_dig_out <v1> <v2> <v3> <v4>` -- Set digital outputs.
+  Using digital ports for input is not supported.
+
 Commands listed below are used for "block read mode", to do measurement
 of multiple channels. In this mode one should set channel parameters and
 measurement timings in advance, and then do the measurement. Note that

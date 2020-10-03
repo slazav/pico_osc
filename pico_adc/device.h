@@ -72,6 +72,10 @@ public:
   double get_single(const int ch, const bool single,
       const std::string & rng, const std::string & convt);
 
+  // Set four digital lines as outputs, set values
+  // according with the bitmask
+  void set_dig_out(const int bitmask);
+
   // Block read mode (set channels, set timings, read data block).
   // Using this mode by multiple users (through device server)
   // will require device locking between setting parameters

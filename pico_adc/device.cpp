@@ -31,6 +31,7 @@ ADC24::cmd_help() const {
   "ranges   -- Get available range settings.\n"
   "tconvs   -- Get available conversion time settings.\n"
   "get_val <chan> <single> <rng> <convt> -- Measure a single value.\n"
+  "set_dig_out <v1> <v2> <v3> <v4> -- Set digital outputs.\n"
   "\n"
   "  Below are commands for 'block read mode'.\n"
   "  It's not recommended to use them.\n"
@@ -111,6 +112,17 @@ ADC24::cmd(const vector<string> & args){
 
     auto v = get_single(ch, sngl, rng, convt);
     std::cout << v << "\n";
+    return;
+  }
+
+  // set digital output.
+  if (is_cmd(args, "set_dig_out")) {
+    if (args.size()!=5) throw Err()
+      << "Usage: get_val <v1> <v2> <v3> <v4>";
+    int v = 0;
+    for (int i=0; i<4; i++)
+      v = (v<<1) | (str_to_type<bool>(args[i+1])? 1:0);
+    set_dig_out(v);
     return;
   }
 
@@ -354,6 +366,13 @@ ADC24::get_single( const int ch, const bool single,
   return (str_to_volt(rng)*val)/max;
 }
 
+// Set four digital lines as outputs, set values
+// according with the bitmask
+void
+ADC24::set_dig_out( const int bitmask){
+  if (!HRDLSetDigitalIOChannel(devh, 0xF, bitmask & 0xF, 0))
+    throw Err() << "can't set digital output: " << get_error();
+}
 
 // Block read mode:
 
