@@ -31,6 +31,7 @@
   Parameter `<rng>` is measurement range, one of values returned by
   `ranges` command. `convt` is conversion time,  one of values returned
   by `tconvs` command. Use longer time for more accurate measurement.
+  In the case of overflow +/-Inf is returned.
 
 * `set_dig_out <v1> <v2> <v3> <v4>` -- Set digital outputs.
   Using digital ports for input is not supported.
@@ -69,3 +70,4 @@ to mix `get_val` measurements with the block read measuremens.
 * `get` -- collect and return a single data block.
   Returns one value for each enabled channel.
   `chan_set` and `set_t` should be done before.
+  In case of overflow +/-Inf is returned;

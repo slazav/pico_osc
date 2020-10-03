@@ -183,8 +183,9 @@ ADC24::get_single( const int ch, const bool single,
   if (!HRDLGetMinMaxAdcCounts(devh,&min,&max,ch))
     throw Err() << "failed to get max ADC count: " << get_error();
 
-  if (ovfl & (1<<ch)) return std::nan("");
-  return (str_to_volt(rng)*val)/max;
+  double v = (str_to_volt(rng)*val)/max;
+  if (ovfl & (1<<ch)) v*=INFINITY;
+  return v;
 }
 
 // Set four digital lines as outputs, set values
@@ -313,7 +314,7 @@ ADC24::get_block(int32_t nvals) {
       size_t ind = nv*ch_e.size() + nc;
       int ch = ch_e[nc];
       vals[ind] = range_to_volt(chconf[ch].rng)*ivals[ind]/chconf[ch].max;
-      if (ovfl[nv] & (1<<ch)) vals[ind] = std::nan("");
+      if (ovfl[nv] & (1<<ch)) vals[ind] *= INFINITY;
     }
   }
   return vals;
