@@ -76,7 +76,7 @@ cmd(ADC24 & dev, const vector<string> & args){
   // print device info
   if (is_cmd(args, "get_info")){
     if (args.size()!=1) throw Err() << "Usage: get_info";
-    cout << dev.get_info() <<  "\n";
+    dev.print_info();
     return;
   }
 

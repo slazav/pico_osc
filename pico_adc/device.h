@@ -52,8 +52,8 @@ public:
   // Configure the mains noise rejection setting (60 or 50 Hz).
   void set_mains(const bool m60Hz);
 
-  // Get device info.
-  std::string get_info();
+  // Print device information.
+  void print_info();
 
   // Get available range constants.
   std::string get_ranges();

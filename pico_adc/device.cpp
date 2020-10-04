@@ -103,8 +103,7 @@ ADC24::get_error(){
 
   e = get_unit_info(devh, HRDL_SETTINGS);
   ne = e.size()? e[0]-'0' : 0;
-  if (ne != 0) return serr_to_str(ne);
-  return "no erorrs";
+  return serr_to_str(ne);
 }
 
 // configures the mains noise rejection setting
@@ -115,13 +114,19 @@ ADC24::set_mains(bool m60Hz) {
 }
 
 // get device information
-std::string
-ADC24::get_info(){
+void
+ADC24::print_info(){
   const int16_t ui_buflen=1024;
   char ui_v[ui_buflen],ui_n[ui_buflen];
-  auto var = get_unit_info(devh, HRDL_VARIANT_INFO);
-  auto ser = get_unit_info(devh, HRDL_BATCH_AND_SERIAL);
-  return var + " " + ser;
+  std::cout << "DRIVER_VERSION:        " << get_unit_info(devh, HRDL_DRIVER_VERSION) << "\n";
+  std::cout << "HARDWARE_VERSION:      " << get_unit_info(devh, HRDL_HARDWARE_VERSION) << "\n";
+  std::cout << "VARIANT_INFO:          " << get_unit_info(devh, HRDL_VARIANT_INFO) << "\n";
+  std::cout << "BATCH_AND_SERIAL:      " << get_unit_info(devh, HRDL_BATCH_AND_SERIAL) << "\n";
+  std::cout << "CAL_DATE:              " << get_unit_info(devh, HRDL_CAL_DATE) << "\n";
+  std::cout << "KERNEL_DRIVER_VERSION: " << get_unit_info(devh, HRDL_KERNEL_DRIVER_VERSION) << "\n";
+  std::cout << "ERROR CODE:            " << get_unit_info(devh, HRDL_ERROR) << "\n";
+  std::cout << "SETTINGS ERROR CODE:   " << get_unit_info(devh, HRDL_SETTINGS) << "\n";
+  std::cout << "ERROR MESSAGE:         " << get_error() << "\n";
 }
 
 // get available range constants

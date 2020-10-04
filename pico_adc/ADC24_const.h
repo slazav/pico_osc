@@ -112,7 +112,7 @@ std::string serr_to_str(const int e){
     case SE_INVALID_PARAMETER: return "invalid parameter";
     case SE_CONVERSION_IN_PROGRESS: return "conversion in progress";
     case SE_COMMUNICATION_FAILED: return "communication failed";
-    case SE_OK: return "No coniguration error";
+    case SE_OK: return "no errors";
   }
   return "unknown error";
 }
