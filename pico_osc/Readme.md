@@ -4,7 +4,7 @@ Source code: `https://github.com/slazav/graphene`
 
 E-mail: `Vladislav Zavjalov <slazav@altlinux.org>`
 
-Now only PS4224 model is supported.
+Picoscope 4224 and 4262 models are supported.
 
 ###Usage: pico_osc [options] < commands
 
@@ -25,10 +25,11 @@ If the oscilloscope have been opened sucsessfully, the program reads
 commands from stdin and sends ansers to stdout folowed by "#OK" or
 "#Error: <...>" lines until the user  close the connection.
 
-There is one non-trivial exception in the protocol: the "block" command
-returns two "#OK" lines: one then the device is ready for the signal
-recording, and second then the recording is done and the signal is
-written to a file. User should care about reading both of them.
+There is one non-trivial feature in the protocol: the `block` command
+returns "#OK" line when recording is started. User may want to produce
+external triggering after this, if needed. Communication with `pico_osc`
+program is is blocked until recording will be finished. It is recommended
+to send `wait` command and wait until it returns "OK".
 
 ###Commands (see pico_osc -h):
 `
