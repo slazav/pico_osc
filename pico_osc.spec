@@ -1,5 +1,5 @@
 Name:         pico_rec
-Version:      2.1
+Version:      2.2
 Release:      alt1
 
 %define libname SigLoad
@@ -36,6 +36,40 @@ pico_rec - record signals with Picoscope PS4224 and process them
 %_tcldatadir/%libname-%libver/pkgIndex.tcl
 
 %changelog
+* Sat Jul 25 2020 Vladislav Zavjalov <slazav@altlinux.org> 2.2-alt1
+- start using Mapsoft2 module system (w/o git submodules)
+- add pico_osc-9999.ebuild (by A.S.)
+- add pico_adc program (mostly by A.S.)
+- more test signals
+
+- modules/fit_signal:
+  - add fit_signal_fixfre function
+  - better weighting function for fit
+  - add test, add Readme file
+
+- sig_filter
+  - reading FLAC and GZ files
+  - new filter: peak -- position of the main peak on FFT absolute value
+  - new filter: sfft_pow -- print a text table with fft amplitude
+  - sfft_pnm filter: -l option for log scale; -g option for choosing color gradient
+  - sfft_pnm filter: set default window size to have same f and t resolution
+  - -a option: average all channels (sfft_pnm, sfft_peaks filters)
+  - -S option: width of a color scale (sfft_pnm, sfft_pnm_ad)
+  - -B option: Blackman window (fft_txt, fft_pow, fft_pow_corr filters)
+  - -P option: pulse detection
+  - -M option: reading multiple signals
+  - fix sigf reading
+  - add some additional data to pnm files
+  - sig_pnginfo and sig_pnmtopng programs (for using with sig_pngfig)
+
+- pico_rec
+ - filter command: check return value of system call
+ - use read_words module for reading commands
+ - fix filter command
+
+- sig_pngfig: add script for wrapping png/pnm files in fig and extracting
+   data semi-manually.
+
 * Thu May 02 2019 Vladislav Zavjalov <slazav@altlinux.org> 2.1-alt1
 - Version of May 2019 left in LTL.
 - pico_rec:
