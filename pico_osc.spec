@@ -1,5 +1,5 @@
 Name:         pico_rec
-Version:      2.2
+Version:      2.3
 Release:      alt1
 
 %define libname SigLoad
@@ -36,6 +36,18 @@ pico_rec - record signals with Picoscope PS4224 and process them
 %_tcldatadir/%libname-%libver/pkgIndex.tcl
 
 %changelog
+* Tue Oct 13 2020 Vladislav Zavjalov <slazav@altlinux.org> 2.3-alt1
+changes in pico_adc:
+ - rewrite code keeping old interface
+ - modify get_info command: print more information
+ - return +/-Inf at overflow
+ - allow 1-digit channels in chan_set command
+ - check timing configuration in get command
+ - new command: set_dig_out, setting digital output
+ - new command: disable_all, reset all channel settings
+ - new command: get_val, read a single value, no channel setup needed
+ - update documentation
+
 * Sat Jul 25 2020 Vladislav Zavjalov <slazav@altlinux.org> 2.2-alt1
 - start using Mapsoft2 module system (w/o git submodules)
 - add pico_osc-9999.ebuild (by A.S.)
