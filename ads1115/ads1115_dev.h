@@ -43,7 +43,7 @@ public:
        const std::string & range, const std::string & rate){
     return meas(make_conf(chan, range, rate));}
 
-  // Do multiple (nmeas) measurements, return time, mean value, unsertainty
+  // Do multiple (nmeas) measurements, return time, mean value, uncertainty
   void meas_n(const std::string & chan,
        const std::string & range, const std::string & rate,
        const size_t nmeas, double & t, double & m, double & s);

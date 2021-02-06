@@ -210,4 +210,7 @@ ADS1115::meas_n(const std::string & chan,
   for (const auto vx:vs) s += (vx - m) * (vx - m);
   s = sqrt(s / (vs.size()-1)) / sqrt(vs.size());
   t = t1/2.0 + t2/2.0;
+
+  // limit uncertainty to ADC resolution
+  s = std::max(s, get_range(conf)/32768.0);
 }
