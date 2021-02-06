@@ -50,7 +50,9 @@ main(int argc, char *argv[]){
         case 'c': chan  = optarg; break;
         case 'v': range = optarg; break;
         case 'r': rate  = optarg; break;
-        case 'a': addr = atoi(optarg); break;
+        case 'a': addr = atoi(optarg);
+                  if (addr==0) throw Err() << "bad address: " << optarg << "\n";
+                  break;
         case 'S': single = true; break;
         case 'h':
           cout << "ads1115 -- SPP interface to ADS1113/1114/1115 ADC converters\n"
@@ -76,7 +78,7 @@ main(int argc, char *argv[]){
     }
 
     cout << "#SPP001\n"; // a command-line protocol, version 001.
-    cout << "Using " << path << ":0x" << hex << addr << "as a ADS1113/1114/1115 device.\n";
+    cout << "Using " << path << ":0x" << hex << addr << " as a ADS1113/1114/1115 device.\n";
     cout << "Type help to see command list.\n";
     cout << "#OK\n";
 
