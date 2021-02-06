@@ -172,7 +172,7 @@ ADS1115::meas(uint16_t conf) {
   // wait for conversion
   usleep(1e6/get_rate(conf));
   while (1) {
-    uint16_t data = i2c_read_word(fd, 1);
+    uint16_t data = i2c_read_word(fd, REG_CONF);
     if (data>>15) break;
     usleep(100);
   }
