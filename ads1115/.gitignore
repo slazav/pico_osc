@@ -1,0 +1,4 @@
+*.o
+*.a
+ads1115
+Makefile.deps
