@@ -15,7 +15,11 @@
 # SCRIPT_TESTS -- Programs with testing scripts.
 #                 For each <name> should be a source <name>.test.cpp and
 #                 a script <name>.test.script
-# OTHER_TESTS  -- Any programs or scripts which shoukld be run after building
+# OTHER_TESTS  -- Any programs or scripts which should be run after building
+# PKG_CONFIG   -- external libraries used in this module, controlled by
+#                 pkg-config. Default path includes
+#                 $(PKG_CONFIG_PATH) and $(MODDIR)/pc
+# LDLIBS, LDFLAGS, CXXFLAGS, etc. -- standard Makefile variables
 ######################################################
 
 MODDIR ?= ..
@@ -25,7 +29,7 @@ MOD_STATIC  :=
 MOD_OBJECTS :=
 
 ifdef MOD_HEADERS
-  MOD_NAME    := $(shell a=$$(pwd); echo $${a\#\#*/})
+  MOD_NAME    := $(notdir $(shell pwd))
   MOD_STATIC  := $(MOD_NAME).a
 endif
 ifdef MOD_SOURCES
@@ -35,48 +39,44 @@ endif
 SHARED_LIB_SO := $(patsubst %, %.so, $(SHARED_LIB))
 
 ######################################################
-# Dependency search for ALL_SOURCES
+# Main building rules
+all: make_deps make_nodeps
+clean:
+	rm -f *.o *.a *.so *.test *.passed Makefile.deps $(PROGRAMS)
 
-ALL_SOURCES += $(MOD_SOURCES) $(MOD_HEADERS)
-ALL_SOURCES += $(patsubst %,%.test.cpp, $(SIMPLE_TESTS))
-ALL_SOURCES += $(patsubst %,%.test.cpp, $(SCRIPT_TESTS))
-ALL_SOURCES += $(patsubst %,%.cpp, $(PROGRAMS))
-
-# Extract #include statements from MOD_SOURCES and MOD_HEADERS:
-HDEPS := $(shell cat $(ALL_SOURCES) |\
-          sed -rne 's|^\#include +"([^/]*/[^/]*)".*|$(MODDIR)/\1|p'\
-          | sort -u)
-
-# List of modules which should be rebuilt (in correct order).
-# Here an extenal script is used (get_deps). It is also possble
-# to build the list similarly to HDEPS and then visit all modules
-# recursively, but then one module can be visited many times.
-MDEPS := $(shell $(MODDIR)/get_deps $(MODDIR) $(ALL_SOURCES))
-
-# a-files (should be in opposite order then MDEPS)
-ADEPS := $(shell for i in $(MDEPS); do echo $(MODDIR)/$$i/$${i\#*/}.a; done | tac)
+######################################################
+# Build and include dependency file (using get_deps script).
+$(shell $(MODDIR)/get_deps $(MODDIR) . > Makefile.deps)
+ifneq (${.SHELLSTATUS},0)
+$(error "get_deps failed: ${.SHELLSTATUS}")
+endif
+-include Makefile.deps
 
 ######################################################
 # Building flags
+# user-defined flags are added _after_ this
 
-override CXXFLAGS += $(shell [ "$(PKG_CONFIG)" == "" ] ||\
-                       pkg-config --cflags '$(PKG_CONFIG)')
-override LDLIBS   += $(shell [ "$(PKG_CONFIG)" == "" ] ||\
-                       pkg-config --libs '$(PKG_CONFIG)')
-override CXXFLAGS += -std=gnu++11 -Werror=return-type -O2 -fPIC
-override CXXFLAGS += -I$(MODDIR)
+
+override CXXFLAGS_ += $(shell [ "$(PKG_CONFIG)" = "" ] ||\
+                      PKG_CONFIG_PATH=$(PKG_CONFIG_PATH):$(MODDIR)/pc\
+                        pkg-config --cflags '$(PKG_CONFIG)')
+override LDLIBS_   += $(shell [ "$(PKG_CONFIG)" = "" ] ||\
+                      PKG_CONFIG_PATH=$(PKG_CONFIG_PATH):$(MODDIR)/pc\
+                        pkg-config --libs '$(PKG_CONFIG)')
+
+override CXXFLAGS_ += -std=gnu++11 -Werror=return-type -O2 -fPIC -I$(MODDIR)
+
+CXXFLAGS := $(CXXFLAGS_) $(CXXFLAGS)
+LDLIBS   := $(LDLIBS_) $(LDLIBS)
 
 ######################################################
-# Building rules
-all: make_deps make_nodeps
-make_nodeps: $(MOD_STATIC) $(PROGRAMS) $(SHARED_LIB_SO) make_tests
-clean:
-	rm -f *.o *.a *.so *.test *.passed $(PROGRAMS)
-
+# make_deps/make_nodeps building rules:
 make_deps:
 	@echo "## Building dependencies: [$(MDEPS)]"
-	@for i in $(MDEPS); do $(MAKE) -C $(MODDIR)/$$i make_nodeps; done
+	@sh -e -c 'for i in $(MDEPS); do $(MAKE) -C $(MODDIR)/$$i make_nodeps; done'
 	@echo "## Finish building dependencies"
+
+make_nodeps: $(MOD_STATIC) $(PROGRAMS) $(SHARED_LIB_SO) make_tests
 
 ######################################################
 # Building rules for tests
@@ -90,44 +90,44 @@ $(SCRIPT_TEST_RES): TEST_DEP := %.test.script
 $(SIMPLE_TEST_RES): TEST_CMD = ./$< && > $<.passed
 $(SCRIPT_TEST_RES): TEST_CMD = ./$<.script && > $<.passed
 
-TEST_OBJECTS += $(patsubst %,%.o, $(SIMPLE_TESTS) $(SCRIPT_TESTS))
+TEST_OBJECTS := $(patsubst %,%.test.o, $(SIMPLE_TESTS) $(SCRIPT_TESTS))
 $(SIMPLE_TEST_PROGS) $(SCRIPT_TEST_PROGS):     CC:=$(CXX)
 $(SIMPLE_TEST_PROGS) $(SCRIPT_TEST_PROGS):     %: %.o $(MOD_OBJECTS) $(ADEPS)
-$(TEST_OBJECTS): %.o: %.cpp $(MOD_HEADERS) $(HDEPS)
+$(TEST_OBJECTS): %.o: %.cpp
 
 %.test.passed: %.test $(TEST_DEP)
 	@echo "## Running test: $<"
 	@$(TEST_CMD)
 
 make_tests: $(SIMPLE_TEST_RES) $(SCRIPT_TEST_RES)
-	@for i in $(OTHER_TESTS); do echo "## Running test: $$i"; ./$$i; done
+	@sh -e -c 'for i in $(OTHER_TESTS); do echo "## Running test: $$i"; ./$$i; done'
 
 ######################################################
 # building rules for programs and shared lib
-PROG_OBJECTS += $(patsubst %,%.o, $(PROGRAMS))
+PROG_OBJECTS := $(patsubst %,%.o, $(PROGRAMS))
 $(PROGRAMS):     CC:=$(CXX)
 $(PROGRAMS):     %: %.o $(MOD_OBJECTS) $(ADEPS)
-$(PROG_OBJECTS): %.o: %.cpp $(MOD_HEADERS) $(HDEPS)
+$(PROG_OBJECTS): %.o: %.cpp
 
 $(SHARED_LIB_SO):   %.so: $(MOD_OBJECTS) $(ADEPS)
 	$(CXX) -shared $(LDFLAGS) $+ $(LDLIBS) -o $@
 ######################################################
 # Building rules for module static library
-$(MOD_OBJECTS): $(MOD_HEADERS) $(HDEPS)
 
 $(MOD_STATIC): $(MOD_OBJECTS)
 	ar crs $@ $+
 
 ######################################################
-print_info:
+info:
 	@echo "###########################"
 	@echo "## Module <<$(MOD_NAME)>>"
 	@echo "MOD_STATIC:   $(MOD_STATIC)"
 	@echo "MOD_SOURCES:  $(MOD_SOURCES)"
 	@echo "MOD_HEADERS:  $(MOD_HEADERS)"
-	@echo "HDEPS:        $(HDEPS)"
 	@echo "MDEPS:        $(MDEPS)"
 	@echo "ADEPS:        $(ADEPS)"
-	@echo "LDLIBS:       $(LDLIBS)"
+	@echo "LDEPS:        $(LDEPS)"
 	@echo "SIMPLE_TESTS: $(SIMPLE_TESTS)"
 	@echo "SCRIPT_TESTS: $(SCRIPT_TESTS)"
+	@echo "LDLIBS:       $(LDLIBS)"
+	@echo "CXXFLAGS:     $(CXXFLAGS)"
