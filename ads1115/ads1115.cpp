@@ -35,16 +35,17 @@ print_tstamp(){
 
 int
 main(int argc, char *argv[]){
-  try {
 
-    /* default values */
-    const char *path = "/dev/i2c-0"; // i2c bus
-    const char *chan  = "AB";
-    const char *range = "2.048";
-    const char *rate  = "8";
-    const char *mode  = "spp";
-    uint8_t addr=0x48;            // default device address
-    int delay = 1000000;          // delay in cont mode [us]
+  /* default values */
+  const char *path = "/dev/i2c-0"; // i2c bus
+  const char *chan  = "AB";
+  const char *range = "2.048";
+  const char *rate  = "8";
+  const char *mode  = "spp";
+  uint8_t addr=0x48;            // default device address
+  int delay = 1000000;          // delay in cont mode [us]
+
+  try {
 
     /* parse  options */
     while(1){
@@ -175,14 +176,18 @@ main(int argc, char *argv[]){
         } while(0);
         cout << "#OK\n" << flush;
       }
-      catch (Err E){ cout << "\n#Error: " << E.str() << "\n" << flush; }
+      catch (const Err & E){ cout << "\n#Error: " << E.str() << "\n" << flush; }
     }
 
     return 0;
   }
-  catch (Err E){
-    cout << "#SPP001\n"; // a command-line protocol, version 001.
-    cerr << "#Error: " << E.str() << "\n";
+  catch (const Err & E){
+    if (strcasecmp(mode, "spp") == 0) {
+      cout << "#SPP001\n"; // a command-line protocol, version 001.
+      cerr << "#Error: " << E.str() << "\n";
+    }
+    else
+      cerr << "Error: " << E.str() << "\n";
     return 1;
   }
 
