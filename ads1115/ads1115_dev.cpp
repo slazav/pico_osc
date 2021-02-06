@@ -1,6 +1,10 @@
 #include <iostream>
+#include <string>
+#include <vector>
 #include <iomanip>
 #include <unistd.h>
+#include <cmath>
+#include <sys/time.h> // gettimeofday
 
 #include "ads1115_dev.h"
 #include "i2c.h"
@@ -57,25 +61,21 @@ ADS1115::set_range(uint16_t *conf, const std::string & s){
 }
 
 double
-ADS1115::range_to_num(const std::string & s){
-  return atof(s.c_str());
-}
-
-const char *
 ADS1115::get_range(uint16_t conf){
   int v = (conf>>9)&7;
   switch(v){
-    case 0: return "6.144";
-    case 1: return "4.096";
-    case 2: return "2.048";
-    case 3: return "1.024";
-    case 4: return "0.512";
+    case 0: return 6.144;
+    case 1: return 4.096;
+    case 2: return 2.048;
+    case 3: return 1.024;
+    case 4: return 0.512;
     case 5:
     case 6:
-    case 7: return "0.256";
+    case 7: return 0.256;
   }
   throw Err() << "unknown range setting: " << v;
 }
+
 
 void
 ADS1115::set_rate(uint16_t *conf, const std::string & s){
@@ -91,25 +91,19 @@ ADS1115::set_rate(uint16_t *conf, const std::string & s){
   throw Err() << "unknown rate setting: " << s;
 }
 
-double
-ADS1115::rate_to_num(const std::string & s){
-  return atof(s.c_str());
-}
-
-const char *
+int
 ADS1115::get_rate(uint16_t conf){
   int v = (conf>>5)&7;
   switch(v){
-    case 0: return "8";
-    case 1: return "16";
-    case 2: return "32";
-    case 3: return "64";
-    case 4: return "128";
-    case 5: return "250";
-    case 6: return "475";
-    case 7: return "860";
-  }
-  throw Err() << "unknown rate setting: " << v;
+    case 0: return 8;
+    case 1: return 16;
+    case 2: return 32;
+    case 3: return 64;
+    case 4: return 128;
+    case 5: return 250;
+    case 6: return 475;
+    case 7: return 860;
+  }  throw Err() << "unknown rate setting: " << v;
 }
 
 const char *
@@ -154,7 +148,7 @@ ADS1115::print_info(){
   std::cout << "config register:    0x" << std::hex << data << "\n";
   std::cout << "status:     " << ((data>>15)? "ready":"busy") << "\n";
   std::cout << "chan:       " << get_chan(data) << "\n";
-  std::cout << "range:      " << get_range(data) << " V\n";
+  std::cout << "range:      " << std::fixed << std::setw(3) << get_range(data) << " V\n";
   std::cout << "mode:       " << ((data>>8)? "single":"cont") << "\n";
   std::cout << "rate:       1/" << get_rate(data) << " s\n";
   std::cout << "comp.type:  " << ((data>>4) ? "window":"trad") << "\n";
@@ -163,26 +157,20 @@ ADS1115::print_info(){
   std::cout << "comp.queue: " << get_comp(data) << "\n";
 }
 
+double
+ADS1115::tstamp(){
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec + 1e-6*tv.tv_usec;
+}
 
 double
-ADS1115::meas(const std::string & chan,
-             const std::string & range, const std::string & rate){
-
-  uint16_t conf=0x8583; // default value
-
-  set_chan(&conf, chan);
-  set_range(&conf, range);
-  set_rate(&conf, rate);
-  conf |= 1 << 15; // start conversion
-
-  int delay = 1000000/rate_to_num(rate);
-  double scale = range_to_num(range) / 32768.0;
-
+ADS1115::meas(uint16_t conf) {
   // write conf register
   i2c_write_word(fd, REG_CONF, conf);
 
   // wait for conversion
-  usleep(delay);
+  usleep(1e6/get_rate(conf));
   while (1) {
     uint16_t data = i2c_read_word(fd, 1);
     if (data>>15) break;
@@ -190,6 +178,36 @@ ADS1115::meas(const std::string & chan,
   }
 
   // read data
-  int16_t data = i2c_read_word(fd, REG_CONV);
-  return data * scale;
+  return i2c_read_word(fd, REG_CONV)/32768.0 * get_range(conf);
+}
+
+uint16_t
+ADS1115::make_conf(const std::string & chan,
+          const std::string & range, const std::string & rate){
+  uint16_t conf=0x8583; // default value
+  set_chan(&conf, chan);
+  set_range(&conf, range);
+  set_rate(&conf, rate);
+  conf |= 1 << 15; // start conversion
+  return conf;
+}
+
+void
+ADS1115::meas_n(const std::string & chan,
+       const std::string & range, const std::string & rate,
+       const size_t nmeas, double & t, double & m, double & s){
+
+  uint16_t conf = make_conf(chan, range, rate);
+
+  std::vector<double> vs;
+  double t1 = tstamp();
+  for (int j=0; j<nmeas; j++) vs.push_back(meas(conf));
+  double t2 = tstamp();
+
+  m = s = 0;
+  for (const auto vx:vs) m += vx;
+  m /= vs.size();
+  for (const auto vx:vs) s += (vx - m) * (vx - m);
+  s = sqrt(s / (vs.size()-1)) / sqrt(vs.size());
+  t = t1/2.0 + t2/2.0;
 }

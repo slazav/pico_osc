@@ -10,12 +10,10 @@ class ADS1115 {
   const char * get_chan(uint16_t conf);
 
   void set_range(uint16_t *conf, const std::string & s);
-  double range_to_num(const std::string & s);
-  const char * get_range(uint16_t conf);
+  double get_range(uint16_t conf);
 
   void set_rate(uint16_t *conf, const std::string & s);
-  double rate_to_num(const std::string & s);
-  const char * get_rate(uint16_t conf);
+  int get_rate(uint16_t conf);
 
   const char * get_comp(uint16_t conf);
 
@@ -30,9 +28,27 @@ public:
   // Print all information from device registers
   void print_info();
 
-  // Do a single measurement, return result [V]
+  double tstamp(); // get timestamp
+
+  // Parse parameters and prepare config register for measurements.
+  uint16_t make_conf(const std::string & chan,
+             const std::string & range, const std::string & rate);
+
+  // Do a single measurement using a prepared config register, return result [V].
+  double meas(uint16_t conf);
+
+
+  // Parse, parameters, prepare config register, do measurements
   double meas(const std::string & chan,
-       const std::string & range, const std::string & rate);
+       const std::string & range, const std::string & rate){
+    return meas(make_conf(chan, range, rate));}
+
+  // Do multiple (nmeas) measurements, return time, mean value, unsertainty
+  void meas_n(const std::string & chan,
+       const std::string & range, const std::string & rate,
+       const size_t nmeas, double & t, double & m, double & s);
+
+
 };
 
 
