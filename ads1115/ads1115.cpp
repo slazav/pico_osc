@@ -242,11 +242,11 @@ main(int argc, char *argv[]){
               "*idn? -- Get ID string: \"ads1115 " VERSION "\".\n"
               "get_conf -- Get device configuration.\n"
               "get (A|B|C|D|AB|AD|BD|CD) <range> <rate> -- do a single measurement.\n"
-              " Arguments:"
-              " - Channels A..D, double letters for differential mode."
-              " - Range: 6.144, 4.096, 2.048, 1.024, 0.512, 0.256 [V],"
-              "   bi-directional in differential mode."
-              " - Rate: 8,16,32,64,128,250,475,860 [1/s]."
+              " Arguments:\n"
+              " - Channels A..D, double letters for differential mode.\n"
+              " - Range: 6.144, 4.096, 2.048, 1.024, 0.512, 0.256 [V],\n"
+              "   bi-directional in differential mode.\n"
+              " - Rate: 8,16,32,64,128,250,475,860 [1/s].\n"
             ;
             break;
           }
