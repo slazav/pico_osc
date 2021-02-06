@@ -31,18 +31,24 @@ main(int argc, char *argv[]){
   try {
 
     /* default values */
-    const char *path="/dev/i2c-0"; // i2c bus
+    const char *path = "/dev/i2c-0"; // i2c bus
+    const char *chan  = "AB";
+    const char *range = "2.048";
+    const char *rate  = "8";
     uint8_t addr=0x48;            // default device address
 
     /* parse  options */
     while(1){
       opterr=0;
-      int c = getopt(argc, argv, "hd:a:");
+      int c = getopt(argc, argv, "hd:a:c:v:r:");
       if (c==-1) break;
       switch (c){
         case '?':
         case ':': throw Err() << "incorrect options, see -h"; /* error msg is printed by getopt*/
-        case 'd': path = optarg; break;
+        case 'd': path  = optarg; break;
+        case 'c': chan  = optarg; break;
+        case 'v': range = optarg; break;
+        case 'r': rate  = optarg; break;
         case 'a': addr = atoi(optarg); break;
         case 'h':
           cout << "ads1115 -- SPP interface to ADS1113/1114/1115 ADC converters\n"
@@ -50,6 +56,9 @@ main(int argc, char *argv[]){
                   "Options:\n"
                   " -d <dev>  -- I2C device path (default /dev/i2c-0)\n"
                   " -a <addr> -- I2C address (default 0x48)\n"
+                  " -c <chan> -- change default channel setting (default AB)\n"
+                  " -v <chan> -- change default range setting (default 2.048)\n"
+                  " -r <chan> -- change default rate setting (default 8)\n"
                   " -h        -- write this help message and exit\n";
           return 0;
       }
@@ -77,8 +86,8 @@ main(int argc, char *argv[]){
               "get_time -- Get current time.\n"
               "*idn? -- Get ID string: \"ads1115 " VERSION "\".\n"
               "get_conf -- Get device configuration.\n"
-              "get (A|B|C|D|AB|AD|BD|CD) <range> <rate> -- do a single measurement.\n"
-              " Arguments:\n"
+              "get [(A|B|C|D|AB|AD|BD|CD) [<range> [<rate>]]] -- do a single measurement.\n"
+              " Arguments (if skipped, use default values):\n"
               " - Channels A..D, double letters for differential mode.\n"
               " - Range: 6.144, 4.096, 2.048, 1.024, 0.512, 0.256 [V],\n"
               "   bi-directional in differential mode.\n"
@@ -112,11 +121,14 @@ main(int argc, char *argv[]){
 
           // do a measurement
           if (is_cmd(args, "get")){
-            if (args.size()!=4) throw Err() << "Usage: get <chan> <range> <rate>";
-            std::cout << dev.meas(args[1], args[2],args[3]) << "\n";
+            if (args.size()<1 || args.size()>4) throw Err()
+              << "Usage: get [<chan> [<range> [<rate>]]]";
+            std::string c = args.size()>1? args[1]:chan;
+            std::string v = args.size()>2? args[2]:range;
+            std::string r = args.size()>3? args[3]:rate;
+            std::cout << dev.meas(c,v,r) << "\n";
             break;
           }
-
 
         } while(0);
         cout << "#OK\n" << flush;
