@@ -17,14 +17,14 @@
 void
 ADS1115::set_chan(uint16_t *conf, const std::string & s){
   *conf &= ~(7<<12);
-  if (s == "AB") *conf|= 0<<12; return;
-  if (s == "AD") *conf|= 1<<12; return;
-  if (s == "BD") *conf|= 2<<12; return;
-  if (s == "CD") *conf|= 3<<12; return;
-  if (s == "A")  *conf|= 4<<12; return;
-  if (s == "B")  *conf|= 5<<12; return;
-  if (s == "C")  *conf|= 6<<12; return;
-  if (s == "D")  *conf|= 7<<12; return;
+  if (s == "AB") {*conf|= 0<<12; return;}
+  if (s == "AD") {*conf|= 1<<12; return;}
+  if (s == "BD") {*conf|= 2<<12; return;}
+  if (s == "CD") {*conf|= 3<<12; return;}
+  if (s == "A")  {*conf|= 4<<12; return;}
+  if (s == "B")  {*conf|= 5<<12; return;}
+  if (s == "C")  {*conf|= 6<<12; return;}
+  if (s == "D")  {*conf|= 7<<12; return;}
   throw Err() << "unknown channel setting: " << s;
 }
 
@@ -47,12 +47,12 @@ ADS1115::get_chan(uint16_t conf){
 void
 ADS1115::set_range(uint16_t *conf, const std::string & s){
   *conf &= ~(7<<9);
-  if (s == "6.144") *conf|= 0<<9; return;
-  if (s == "4.096") *conf|= 1<<9; return;
-  if (s == "2.048") *conf|= 2<<9; return;
-  if (s == "1.024") *conf|= 3<<9; return;
-  if (s == "0.512") *conf|= 4<<9; return;
-  if (s == "0.256") *conf|= 5<<9; return;
+  if (s == "6.144") {*conf|= 0<<9; return;}
+  if (s == "4.096") {*conf|= 1<<9; return;}
+  if (s == "2.048") {*conf|= 2<<9; return;}
+  if (s == "1.024") {*conf|= 3<<9; return;}
+  if (s == "0.512") {*conf|= 4<<9; return;}
+  if (s == "0.256") {*conf|= 5<<9; return;}
   throw Err() << "unknown range setting: " << s;
 }
 
@@ -80,14 +80,14 @@ ADS1115::get_range(uint16_t conf){
 void
 ADS1115::set_rate(uint16_t *conf, const std::string & s){
   *conf &= ~(7<<5);
-  if (s == "8")   *conf|= 0<<5; return;
-  if (s == "16")  *conf|= 1<<5; return;
-  if (s == "32")  *conf|= 2<<5; return;
-  if (s == "64")  *conf|= 3<<5; return;
-  if (s == "128") *conf|= 4<<5; return;
-  if (s == "250") *conf|= 5<<5; return;
-  if (s == "475") *conf|= 6<<5; return;
-  if (s == "860") *conf|= 7<<5; return;
+  if (s == "8")   {*conf|= 0<<5; return;}
+  if (s == "16")  {*conf|= 1<<5; return;}
+  if (s == "32")  {*conf|= 2<<5; return;}
+  if (s == "64")  {*conf|= 3<<5; return;}
+  if (s == "128") {*conf|= 4<<5; return;}
+  if (s == "250") {*conf|= 5<<5; return;}
+  if (s == "475") {*conf|= 6<<5; return;}
+  if (s == "860") {*conf|= 7<<5; return;}
   throw Err() << "unknown rate setting: " << s;
 }
 
