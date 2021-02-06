@@ -74,7 +74,7 @@ main(int argc, char *argv[]){
                   " -c <chan> -- change default channel setting (default AB)\n"
                   " -v <chan> -- change default range setting (default 2.048)\n"
                   " -r <chan> -- change default rate setting (default 8)\n"
-                  " -m <mode> -- program mode: spp, single, cont (default: spp)\n"
+                  " -m <mode> -- program mode: spp, single, info, cont (default: spp)\n"
                   " -d <time> -- delay in cont mode [s] (default: 1.0)\n"
                   " -h        -- write this help message and exit\n"
           ;
@@ -88,6 +88,12 @@ main(int argc, char *argv[]){
     // single measurement mode, measure and print one value
     if (strcasecmp(mode, "single") == 0){
       std::cout << fixed << setw(6) << dev.meas(chan,range,rate) << "\n";
+      return 0;
+    }
+
+    // conf mode, print device configuration
+    if (strcasecmp(mode, "info") == 0){
+      dev.print_info();
       return 0;
     }
 
