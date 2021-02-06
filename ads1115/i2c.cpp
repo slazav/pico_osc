@@ -26,7 +26,7 @@ i2c_access(int file, char read_write, uint8_t command,
   args.data = data;
   if (ioctl(file,I2C_SMBUS,&args))
     throw Err() << "can't do " << (read_write? "read":"write")
-                << " command: " << command;
+                << " command: 0x" << std::hex << (int)command;
 }
 
 uint8_t
