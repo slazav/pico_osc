@@ -36,11 +36,12 @@ main(int argc, char *argv[]){
     const char *range = "2.048";
     const char *rate  = "8";
     uint8_t addr=0x48;            // default device address
+    bool single = false;
 
     /* parse  options */
     while(1){
       opterr=0;
-      int c = getopt(argc, argv, "hd:a:c:v:r:");
+      int c = getopt(argc, argv, "hd:a:c:v:r:S");
       if (c==-1) break;
       switch (c){
         case '?':
@@ -50,6 +51,7 @@ main(int argc, char *argv[]){
         case 'v': range = optarg; break;
         case 'r': rate  = optarg; break;
         case 'a': addr = atoi(optarg); break;
+        case 'S': single = true; break;
         case 'h':
           cout << "ads1115 -- SPP interface to ADS1113/1114/1115 ADC converters\n"
                   "Usage: ads1115 [options]\n"
@@ -59,6 +61,7 @@ main(int argc, char *argv[]){
                   " -c <chan> -- change default channel setting (default AB)\n"
                   " -v <chan> -- change default range setting (default 2.048)\n"
                   " -r <chan> -- change default rate setting (default 8)\n"
+                  " -S        -- do a single measurement and print result (without SPP interface)\n";
                   " -h        -- write this help message and exit\n";
           return 0;
       }
@@ -66,6 +69,11 @@ main(int argc, char *argv[]){
 
     // open device
     ADS1115 dev(path, addr);
+
+    if (single){
+      std::cout << dev.meas(chan,range,rate) << "\n";
+      return 0;
+    }
 
     cout << "#SPP001\n"; // a command-line protocol, version 001.
     cout << "Using " << path << ":0x" << hex << addr << "as a ADS1113/1114/1115 device.\n";
