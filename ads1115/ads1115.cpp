@@ -24,6 +24,13 @@ is_cmd(const vector<string> & args, const char *name){
   return strcasecmp(args[0].c_str(), name)==0;
 }
 
+void
+print_tstamp(){
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  cout << tv.tv_sec << "." << setfill('0') << setw(6) << tv.tv_usec;
+}
+
 /*********************************************************************/
 
 int
@@ -35,13 +42,14 @@ main(int argc, char *argv[]){
     const char *chan  = "AB";
     const char *range = "2.048";
     const char *rate  = "8";
+    const char *mode  = "spp";
     uint8_t addr=0x48;            // default device address
-    bool single = false;
+    int delay = 1000000;          // delay in cont mode [us]
 
     /* parse  options */
     while(1){
       opterr=0;
-      int c = getopt(argc, argv, "hd:a:c:v:r:S");
+      int c = getopt(argc, argv, "hd:a:c:v:r:m:t:");
       if (c==-1) break;
       switch (c){
         case '?':
@@ -50,10 +58,13 @@ main(int argc, char *argv[]){
         case 'c': chan  = optarg; break;
         case 'v': range = optarg; break;
         case 'r': rate  = optarg; break;
+        case 'm': mode = optarg; break;
         case 'a': addr = atoi(optarg);
                   if (addr==0) throw Err() << "bad address: " << optarg << "\n";
                   break;
-        case 'S': single = true; break;
+        case 't': delay = atof(optarg)*1e6;
+                  if (delay<0) throw Err() << "bad delay: " << optarg << "\n";
+                  break;
         case 'h':
           cout << "ads1115 -- SPP interface to ADS1113/1114/1115 ADC converters\n"
                   "Usage: ads1115 [options]\n"
@@ -63,8 +74,10 @@ main(int argc, char *argv[]){
                   " -c <chan> -- change default channel setting (default AB)\n"
                   " -v <chan> -- change default range setting (default 2.048)\n"
                   " -r <chan> -- change default rate setting (default 8)\n"
-                  " -S        -- do a single measurement and print result (without SPP interface)\n";
-                  " -h        -- write this help message and exit\n";
+                  " -m <mode> -- program mode: spp, single, cont (default: spp)\n"
+                  " -d <time> -- delay in cont mode [s] (default: 1.0)\n"
+                  " -h        -- write this help message and exit\n"
+          ;
           return 0;
       }
     }
@@ -72,13 +85,27 @@ main(int argc, char *argv[]){
     // open device
     ADS1115 dev(path, addr);
 
-    if (single){
-      std::cout << dev.meas(chan,range,rate) << "\n";
+    // single measurement mode, measure and print one value
+    if (strcasecmp(mode, "single") == 0){
+      std::cout << fixed << setw(6) << dev.meas(chan,range,rate) << "\n";
       return 0;
     }
 
+    // cont mode: measure and print values with timestamps
+    if (strcasecmp(mode, "cont") == 0){
+      while(1){
+        print_tstamp();
+        std::cout << "\t" << fixed << setw(6) << dev.meas(chan,range,rate) << "\n";
+        usleep(delay);
+      }
+      return 0;
+    }
+
+    if (strcasecmp(mode, "spp") != 0)
+      throw Err() << "unknown mode: " << mode;
+
     cout << "#SPP001\n"; // a command-line protocol, version 001.
-    cout << "Using " << path << ":0x" << hex << addr << " as a ADS1113/1114/1115 device.\n";
+    cout << "Using " << path << ":0x" << hex << (int)addr << " as a ADS1113/1114/1115 device.\n";
     cout << "Type help to see command list.\n";
     cout << "#OK\n";
 
@@ -109,9 +136,8 @@ main(int argc, char *argv[]){
           // print time
           if (is_cmd(args, "get_time")){
             if (args.size()!=1) throw Err() << "Usage: get_time";
-            struct timeval tv;
-            gettimeofday(&tv, NULL);
-            cout << tv.tv_sec << "." << setfill('0') << setw(6) << tv.tv_usec << "\n";
+            print_tstamp();
+            cout << "\n";
             break;
           }
 
@@ -136,7 +162,7 @@ main(int argc, char *argv[]){
             std::string c = args.size()>1? args[1]:chan;
             std::string v = args.size()>2? args[2]:range;
             std::string r = args.size()>3? args[3]:rate;
-            std::cout << dev.meas(c,v,r) << "\n";
+            std::cout << fixed << setw(6) << dev.meas(c,v,r) << "\n";
             break;
           }
 
