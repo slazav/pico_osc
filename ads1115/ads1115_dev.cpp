@@ -14,21 +14,23 @@
 
 /*********************************************************************/
 
-int
-ADS1115::encode_chan(const std::string & s){
-  if (s == "AB") return 0;
-  if (s == "AD") return 1;
-  if (s == "BD") return 2;
-  if (s == "CD") return 3;
-  if (s == "A") return 4;
-  if (s == "B") return 5;
-  if (s == "C") return 6;
-  if (s == "D") return 7;
+void
+ADS1115::set_chan(uint16_t *conf, const std::string & s){
+  *conf &= ~(7<<12);
+  if (s == "AB") *conf|= 0<<12; return;
+  if (s == "AD") *conf|= 1<<12; return;
+  if (s == "BD") *conf|= 2<<12; return;
+  if (s == "CD") *conf|= 3<<12; return;
+  if (s == "A")  *conf|= 4<<12; return;
+  if (s == "B")  *conf|= 5<<12; return;
+  if (s == "C")  *conf|= 6<<12; return;
+  if (s == "D")  *conf|= 7<<12; return;
   throw Err() << "unknown channel setting: " << s;
 }
 
 const char *
-ADS1115::decode_chan(int v){
+ADS1115::get_chan(uint16_t conf){
+  int v = (conf>>12)&7;
   switch(v){
     case 0: return "AB";
     case 1: return "AD";
@@ -42,14 +44,15 @@ ADS1115::decode_chan(int v){
   throw Err() << "unknown channel setting: " << v;
 }
 
-int
-ADS1115::encode_range(const std::string & s){
-  if (s == "6.144") return 0;
-  if (s == "4.096") return 1;
-  if (s == "2.048") return 2;
-  if (s == "1.024") return 3;
-  if (s == "0.512") return 4;
-  if (s == "0.256") return 5;
+void
+ADS1115::set_range(uint16_t *conf, const std::string & s){
+  *conf &= ~(7<<9);
+  if (s == "6.144") *conf|= 0<<9; return;
+  if (s == "4.096") *conf|= 1<<9; return;
+  if (s == "2.048") *conf|= 2<<9; return;
+  if (s == "1.024") *conf|= 3<<9; return;
+  if (s == "0.512") *conf|= 4<<9; return;
+  if (s == "0.256") *conf|= 5<<9; return;
   throw Err() << "unknown range setting: " << s;
 }
 
@@ -59,7 +62,8 @@ ADS1115::range_to_num(const std::string & s){
 }
 
 const char *
-ADS1115::decode_range(int v){
+ADS1115::get_range(uint16_t conf){
+  int v = (conf>>9)&7;
   switch(v){
     case 0: return "6.144";
     case 1: return "4.096";
@@ -73,16 +77,17 @@ ADS1115::decode_range(int v){
   throw Err() << "unknown range setting: " << v;
 }
 
-int
-ADS1115::encode_rate(const std::string & s){
-  if (s == "8") return 0;
-  if (s == "16") return 1;
-  if (s == "32") return 2;
-  if (s == "64") return 3;
-  if (s == "128") return 4;
-  if (s == "250") return 5;
-  if (s == "475") return 6;
-  if (s == "860") return 7;
+void
+ADS1115::set_rate(uint16_t *conf, const std::string & s){
+  *conf &= ~(7<<5);
+  if (s == "8")   *conf|= 0<<5; return;
+  if (s == "16")  *conf|= 1<<5; return;
+  if (s == "32")  *conf|= 2<<5; return;
+  if (s == "64")  *conf|= 3<<5; return;
+  if (s == "128") *conf|= 4<<5; return;
+  if (s == "250") *conf|= 5<<5; return;
+  if (s == "475") *conf|= 6<<5; return;
+  if (s == "860") *conf|= 7<<5; return;
   throw Err() << "unknown rate setting: " << s;
 }
 
@@ -92,7 +97,8 @@ ADS1115::rate_to_num(const std::string & s){
 }
 
 const char *
-ADS1115::decode_rate(int v){
+ADS1115::get_rate(uint16_t conf){
+  int v = (conf>>5)&7;
   switch(v){
     case 0: return "8";
     case 1: return "16";
@@ -107,7 +113,8 @@ ADS1115::decode_rate(int v){
 }
 
 const char *
-ADS1115::decode_comp(int v){
+ADS1115::get_comp(uint16_t conf){
+  int v = conf&3;
   switch(v){
     case 0: return "after one";
     case 1: return "after two";
@@ -146,14 +153,14 @@ ADS1115::print_info(){
   if (data<0) throw Err() << "can't read Config register";
   std::cout << "config register:    0x" << std::hex << data << "\n";
   std::cout << "status:     " << ((data>>15)? "ready":"busy") << "\n";
-  std::cout << "chan:       " << decode_chan((data>>12)&7) << "\n";
-  std::cout << "range:      " << decode_range((data>>9)&7) << " V\n";
+  std::cout << "chan:       " << get_chan(data) << "\n";
+  std::cout << "range:      " << get_range(data) << " V\n";
   std::cout << "mode:       " << ((data>>8)? "single":"cont") << "\n";
-  std::cout << "rate:       1/" << decode_rate((data>>5)&7) << " s\n";
+  std::cout << "rate:       1/" << get_rate(data) << " s\n";
   std::cout << "comp.type:  " << ((data>>4) ? "window":"trad") << "\n";
   std::cout << "comp.pol:   " << ((data>>3) ? "act.high":"act.low") << "\n";
   std::cout << "comp.latch: " << ((data>>2) ? "on":"off") << "\n";
-  std::cout << "comp.queue: " << decode_comp(data&3) << "\n";
+  std::cout << "comp.queue: " << get_comp(data) << "\n";
 }
 
 
@@ -161,13 +168,12 @@ double
 ADS1115::meas(const std::string & chan,
              const std::string & range, const std::string & rate){
 
-  // default value with cleared mplex (bits 12-14), gain (9-11), rate (5-7)
-  uint16_t conf=0b0000000100000011;
+  uint16_t conf=0x8583; // default value
 
+  set_chan(&conf, chan);
+  set_range(&conf, range);
+  set_rate(&conf, rate);
   conf |= 1 << 15; // start conversion
-  conf |= encode_chan(chan) << 12;
-  conf |= encode_range(range) << 9;
-  conf |= encode_rate(rate) << 5;
 
   int delay = 1000000/rate_to_num(rate);
   double scale = range_to_num(range) / 32768.0;

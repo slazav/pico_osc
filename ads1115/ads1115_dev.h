@@ -6,18 +6,18 @@
 class ADS1115 {
   int fd;
 
-  int encode_chan(const std::string & s);
-  const char * decode_chan(int v);
+  void set_chan(uint16_t *conf, const std::string & s);
+  const char * get_chan(uint16_t conf);
 
-  int encode_range(const std::string & s);
+  void set_range(uint16_t *conf, const std::string & s);
   double range_to_num(const std::string & s);
-  const char * decode_range(int v);
+  const char * get_range(uint16_t conf);
 
-  int encode_rate(const std::string & s);
+  void set_rate(uint16_t *conf, const std::string & s);
   double rate_to_num(const std::string & s);
-  const char * decode_rate(int v);
+  const char * get_rate(uint16_t conf);
 
-  const char * decode_comp(int v);
+  const char * get_comp(uint16_t conf);
 
 
 public:
