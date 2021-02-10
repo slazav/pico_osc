@@ -15,15 +15,7 @@
 #include <sys/time.h> // gettimeofday
 #include <cstring>
 
-/*
-Pressure measurements for f4rpi computer.
-All parameters are hardcoded in the program.
-
-4 channels are recorded into separate files (time, mean, uncertainty),
-points are skipped if difference with a previous one is less
-then 3*uncertainty.
-
-*/
+/* Pressure measurements for f4rpi computer */
 
 using namespace std;
 
@@ -35,17 +27,30 @@ main(int argc, char *argv[]){
 
     /* default values */
     const char *path = "/dev/i2c-3"; // i2c bus
-    uint8_t addr=0x48;            // default device address
-    std::vector<std::string> chans = {"A", "B", "C", "D"};
+    uint8_t addr1=0x48; // 1st card
+    uint8_t addr2=0x49; // 2nd card
+
+//    std::vector<std::string> chans = {"A", "B", "C", "D"};
+    std::vector<std::string> chans = {"A", "B", "C", "D", "E"};
+
     const char *range = "4.096";
     const char *rate  = "8";
-    double delay = 0; // delay between measurements, s
+    double delay = 0.1; // delay between measurements, s
     double dt = 600;  // max point distance, s
     size_t nmeas = 10; // number of measurements in each point (to get uncertainty)
     std::string fpref = "/root/press_log"; // data folder
 
+    // wait until time will be set (in RPi clock is set via network)
+    while (1){
+      time_t ts = time(NULL);
+      if (ts > 1e9) break;
+      std::cerr << "Waiting for correct clock setting...\n";
+      sleep(10);
+    }
+
     // open device
-    ADS1115 dev(path, addr);
+    ADS1115 dev1(path, addr1);
+    ADS1115 dev2(path, addr2);
 
     // time, value, uncertainty for each channel
     std::vector<double> tp(chans.size(), HUGE_VAL);
@@ -55,6 +60,7 @@ main(int argc, char *argv[]){
 
     // open logfiles
     std::vector<std::ofstream> files;
+
     for (int i=0; i<chans.size(); i++){
       time_t ts = time(NULL);
       struct tm * t = localtime(&ts);
@@ -76,20 +82,28 @@ main(int argc, char *argv[]){
         // do nmeas measurements
         // calculate time, mean value, uncertainty
         double t,v,s;
-        dev.meas_n(chans[i],range,rate, nmeas, t,v,s);
+        auto ch = chans[i];
+        if (ch.size()==0) continue;
+
+        if (ch[0] <= 'D'){
+          dev1.meas_n(ch,range,rate, nmeas, t,v,s);
+        }
+        else {
+          ch[0]-=4;
+          dev2.meas_n(ch,range,rate, nmeas, t,v,s);
+        }
+
+        // voltage dividers 10k/(10k+20k) on the board
+        v*=3;
+        s*=3;
 
         // write the point if it is far enough from prev.value
         // For normal distribution 1*s: 68%, 2*s: 95%, 3*s: 99.7%.
         if ( abs(t-tp[i]) > dt || abs(v-vp[i]) > 3*s) {
           tp[i] = t; vp[i] = v; sp[i] = s;
-          files[i] << chans[i] << " " << fixed << setw(6)
+          files[i] << fixed << setw(6)
                    << tp[i] << " " << vp[i] << " " << sp[i] << "\n";
-        }
-
-        // flush file
-        if (abs(t-tflush[i]) > dt) {
           files[i].flush();
-          tflush[i] = t;
         }
 
       }
