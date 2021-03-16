@@ -275,7 +275,7 @@ fit_res_init (const size_t n,
     double d = hypot(real[i]-A, imag[i]-B);
     if (d>dmax/sqrt(2)) {ih2=i; break;}
   }
-  double dw = (freq[ih2]-freq[ih1]);
+  double dw = fabs(freq[ih2]-freq[ih1]);
 
   // amplitudes:
   double D =  freq[imax]*dw*(real[imax]-A);
