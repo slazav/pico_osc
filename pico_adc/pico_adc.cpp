@@ -47,28 +47,33 @@ main(int argc, char *argv[]){
       }
     }
 
-    // open the device
-    ADC24 adc24(dev);
-    // configure the mains noise rejection
-    adc24.set_mains(mainsHz == 60);
-
     cout << "#SPP001\n"; // a command-line protocol, version 001.
-    cout << "Pico ADC24 device is opened. Type help to see command list.\n";
-    cout << "#OK\n";
-    while (1){
-      try {
-        auto args = read_words(cin);
-        if (args.size()<1) break;
-        cmd(adc24, args);
-        cout << "#OK\n" << flush;
+    try {
+      // open the device
+      ADC24 adc24(dev);
+      // configure the mains noise rejection
+      adc24.set_mains(mainsHz == 60);
+
+      cout << "Pico ADC24 device is opened. Type help to see command list.\n";
+      cout << "#OK\n";
+      while (1){
+        try {
+          auto args = read_words(cin);
+          if (args.size()<1) break;
+          cmd(adc24, args);
+          cout << "#OK\n" << flush;
+        }
+        catch (Err E){ cout << "\n#Error: " << E.str() << "\n" << flush; }
       }
-      catch (Err E){ cout << "\n#Error: " << E.str() << "\n" << flush; }
+    }
+    catch (Err E){
+      cerr << "#Error: " << E.str() << "\n";
+      return 1;
     }
 
   }
   catch (Err E){
-    cout << "#SPP001\n"; // a command-line protocol, version 001.
-    cerr << "#Error: " << E.str() << "\n";
+    cerr << "Error: " << E.str() << "\n";
     return 1;
   }
 
