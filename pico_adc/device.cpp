@@ -88,9 +88,9 @@ ADC24::~ADC24(){
 std::string
 ADC24::get_unit_info(const int16_t h, const uint16_t info) {
   std::string str('0', 80);
-  if (!HRDLGetUnitInfo(h,(int8_t *)str.data(),str.size(),info))
-    throw Err() << "failed to get unit info";
-  return str;
+  int16_t l = HRDLGetUnitInfo(h,(int8_t *)str.data(),str.size(),info);
+  if (l==0) throw Err() << "failed to get unit info";
+  return str.substr(0,l);
 }
 
 std::string
