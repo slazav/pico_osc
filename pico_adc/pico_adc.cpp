@@ -63,16 +63,16 @@ main(int argc, char *argv[]){
           cmd(adc24, args);
           cout << "#OK\n" << flush;
         }
-        catch (Err E){ cout << "\n#Error: " << E.str() << "\n" << flush; }
+        catch (const Err & E){ cout << "\n#Error: " << E.str() << "\n" << flush; }
       }
     }
-    catch (Err E){
+    catch (const Err & E){
       cerr << "#Error: " << E.str() << "\n";
       return 1;
     }
 
   }
-  catch (Err E){
+  catch (const Err & E){
     cerr << "Error: " << E.str() << "\n";
     return 1;
   }
