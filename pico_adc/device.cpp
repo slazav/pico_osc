@@ -16,10 +16,11 @@ using namespace std;
 /**********************************************************/
 // return newline-separated list of all connected devices
 // See code in https://github.com/picotech/picosdk-c-examples/blob/master/picohrdl/picohrdlCon/picohrdlCon.c
+// (There is an error in this code with HRDL_MAX_PICO_UNITS/HRDL_MAX_UNITS. Here I use HRDL_MAX_UNITS everywhere)
 std::string
 ADC24::dev_list(){
   std::string ret;
-  int16_t devices[HRDL_MAX_PICO_UNITS];
+  int16_t devices[HRDL_MAX_UNITS];
 
   for (int i = 0; i < HRDL_MAX_UNITS; i++) {
     devices[i] = HRDLOpenUnit();
@@ -34,7 +35,7 @@ ADC24::dev_list(){
     }
   }
   // close devices
-  for (int i = 0; i < HRDL_MAX_PICO_UNITS; i++) {
+  for (int i = 0; i < HRDL_MAX_UNITS; i++) {
     if (devices[i] > 0) HRDLCloseUnit(devices[i]);
   }
   return ret;
@@ -46,7 +47,7 @@ ADC24::dev_list(){
 ADC24::ADC24(const std::string & name): time_conf(false){
 
   // open all devices, as in dev_list()
-  int16_t devices[HRDL_MAX_PICO_UNITS];
+  int16_t devices[HRDL_MAX_UNITS];
   devh=-1; devn=-1;
 
   // initialize device array
@@ -64,7 +65,7 @@ ADC24::ADC24(const std::string & name): time_conf(false){
   }
 
   // close all devices except one
-  for (int i = 0; i < HRDL_MAX_PICO_UNITS; i++) {
+  for (int i = 0; i < HRDL_MAX_UNITS; i++) {
     if (devices[i] > 0 && i!=devn) HRDLCloseUnit(devices[i]);
   }
 
