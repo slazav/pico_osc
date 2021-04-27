@@ -57,10 +57,13 @@ ADC24::ADC24(const std::string & name): time_conf(false){
   for (int i = 0; i < HRDL_MAX_UNITS; i++) {
     devices[i] = HRDLOpenUnit();
     if (devices[i] > 0) {
-      auto line = get_unit_info(devices[i], HRDL_BATCH_AND_SERIAL);
-      if (name=="" || strcasecmp(name.c_str(), line.c_str())==0){
-        devh = devices[i]; devn = i; break;
+      try {
+        auto line = get_unit_info(devices[i], HRDL_BATCH_AND_SERIAL);
+        if (name=="" || strcasecmp(name.c_str(), line.c_str())==0){
+          devh = devices[i]; devn = i; break;
+        }
       }
+      catch (const Err & e) {}
     }
   }
 
