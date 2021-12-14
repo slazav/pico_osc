@@ -79,6 +79,9 @@ Signal read_sig(std::istream & ff);
 // WAV format
 Signal read_wav(std::istream & ff);
 
+// Text data
+Signal read_txt(std::istream & ff);
+
 /***********************************************************/
 // Writing signals
 
@@ -90,5 +93,8 @@ void write_sigf(std::ostream & ff, const Signal & sig, double fmin, double fmax)
 
 // write WAV format
 void write_wav(std::ostream & ff, const Signal & sig);
+
+// write text data
+void write_txt(std::ostream & ff, const Signal & sig);
 
 #endif

@@ -34,8 +34,6 @@ void help(){
           "              Signals are aligned by t=0 point and cropped to the shortest signal.\n"
           "              -c, -T, -U options are applied to each signal before joining.\n"
           "Filters:\n"
-          "     txt -- Print a text table with all channels.\n"
-          "       No filter options.\n"
           "     pnm -- Make image with all channels.\n"
           "       Options:\n"
           "       -W <value> -- image width, pixels (default: 1024)\n"
@@ -154,6 +152,8 @@ void help(){
           "       -G <value>  -- high frequency limit\n"
           "     sig           -- Print SIG file.\n"
           "     wav           -- Print WAV file.\n"
+          "     txt           -- Print text file.\n"
+          "       No filter options.\n"
   ;
 }
 

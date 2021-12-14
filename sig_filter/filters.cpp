@@ -27,26 +27,6 @@
 using namespace std;
 
 
-/******************************************************************/
-void
-flt_txt(ostream & ff, const Signal & s, const int argc, char **argv){
-  const char *name = "txt";
-  if (argc>1) throw Err() << name << ": extra argument found: " << argv[1];
-
-  int N = s.get_n();
-  int cN  = s.get_ch();
-  if (N<1 || cN<1) return;
-
-  ff << scientific;
-  for (int i=0; i<N; i++){
-    ff << s.t0 + s.dt*i;
-
-    for (int c = 0; c<cN; c++)
-      ff << "\t" << s.get_val(c,i);
-
-    ff << "\n";
-  }
-}
 
 /******************************************************************/
 void
@@ -1308,4 +1288,13 @@ flt_wav(ostream & ff, const Signal & s, const int argc, char **argv) {
   if (argc>1) throw Err() << name << ": extra argument found: " << argv[1];
 
   write_wav(ff, s);
+}
+
+/******************************************************************/
+void
+flt_txt(ostream & ff, const Signal & s, const int argc, char **argv){
+  const char *name = "txt";
+  if (argc>1) throw Err() << name << ": extra argument found: " << argv[1];
+
+  write_txt(ff, s);
 }

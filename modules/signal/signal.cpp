@@ -154,6 +154,10 @@ Signal read_signal(istream & ff){
     IFilter flt(ff, "gunzip");
     return read_signal(flt.stream());
   }
+
+  // read text file (columns separated by spaces, comments are #)
+  return read_txt(ff);
+
   throw Err() << "unknown format (not SIG, WAV, FLAC or GZ)";
 }
 
@@ -314,6 +318,78 @@ Signal read_sig(istream & ff){
   }
   return sig;
 }
+
+/***********************************************************/
+Signal read_txt(istream & ff){
+
+  if (ff.fail()) throw Err() << "Can't read file";
+  Signal sig;
+  vector<double> tt;
+  vector<double> vmax;
+  vector<vector<double> > vv;
+
+  // Read data lines
+  while (!ff.eof()){
+    // read line
+    std::string line;
+    getline(ff,line);
+
+    // remove comments
+    size_t nc = line.find('#');
+    if (nc!=string::npos) line = line.substr(0,nc);
+
+    // read all numeric values from the line
+    istringstream ls(line);
+    vector<double> vl;
+    while (1){
+      double v;
+      ls >> v;
+      if (!ls.fail()) vl.push_back(v);
+      else break;
+    }
+
+    if (vl.size()==0) continue; // empty, non-numeric lines
+    if (vl.size()==1)
+      throw Err() << "only one column found in the line: " << line;
+
+    // if we are reading first line, resize data storage:
+    if (vv.size()==0){
+      vv.resize(vl.size()-1);
+      vmax.resize(vl.size()-1, 0);
+    }
+
+    // number of columns in all lines should be same:
+    if (vv.size()!=vl.size()-1)
+      throw Err() << "wrong number of columns in the line: " << line;
+
+    // collect values to tt and vv arrays
+    // find max values for each channel
+    tt.push_back(vl[0]);
+    for (int n=0; n<vl.size()-1; n++){
+      vv[n].push_back(vl[n+1]);
+      if (abs(vl[n+1]) > vmax[n]) vmax[n] = abs(vl[n+1]);
+    }
+  }
+
+  // set t0 and dt values - signal does not contain time values!
+  if (tt.size()>0){
+    sig.t0 = tt[0];
+    sig.dt = (tt[tt.size()-1]-tt[0])/(tt.size()-1);
+  }
+
+  // transfer data to sig object
+  sig.chan.resize(vv.size());
+  for (int n = 0; n<vv.size(); n++){
+    // set scales for each channel:
+    sig.chan[n].sc = vmax[n]/(1<<15);
+    sig.chan[n].resize(vv[n].size());
+    for (int i=0; i<vv[n].size(); i++)
+      sig.set_val(n,i, vv[n][i]);
+  }
+
+  return sig;
+}
+
 
 /***********************************************************/
 void write_sig(ostream & ff, const Signal & sig){
@@ -565,4 +641,36 @@ void write_wav(ostream & ff, const Signal & sig){
   }
 }
 
+/***********************************************************/
+void write_txt(ostream & ff, const Signal & sig){
+  // number of points
+  int N = sig.get_n();
+  int cN  = sig.get_ch();
 
+  ff << scientific;
+  ff << "##SIG001\n";
+  ff << "# Signal parameters:\n";
+  ff << "# points:   " << N  << "  # number of points\n"
+     << "# dt:       " << sig.dt << "  # time step\n"
+     << "# t0:       " << sig.t0 << "  # relative time of the first sample\n"
+     << "# t0abs:    " << sig.t0abs << "  # system time of trigger position\n";
+
+  ff << "\n# Data channels (osc channel, scale factor, overload):\n";
+  for (int j=0; j<cN; j++){
+    char   ch = sig.chan[j].name;
+    double sc = sig.chan[j].sc;
+    bool   ov = sig.chan[j].ov;
+    ff << "#  chan: " << " " << ch << " " << sc << " " << ov << "\n";
+  }
+
+  ff << "\n";
+  ff << scientific;
+  for (int i = 0; i<N; i++){
+    ff << sig.t0 + sig.dt*i;
+    for (int n=0; n<cN; n++){
+      ff << "\t" << sig.get_val(n,i);
+    }
+    ff << "\n";
+  }
+
+}
