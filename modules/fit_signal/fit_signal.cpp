@@ -28,8 +28,8 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   fftw_execute(plan);
 
   // first step: find max(abs(fft))
-  // index limits
-  int i1f = max(0.0,    floor(fmin/df));
+  // index limits (exclude DC component)
+  int i1f = max(1,   int(floor(fmin/df)));
   int i2f = min(0.5*len, ceil(fmax/df));
   double vm = hypot(cbuf[i1f][0], cbuf[i1f][1]);
   int im = i1f;
