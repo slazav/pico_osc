@@ -28,20 +28,21 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   fftw_execute(plan);
 
   // first step: find max(abs(fft))
-  // index limits (exclude DC component)
-  int i1f = max(1,   int(floor(fmin/df)));
+  int i1f = max(0,   int(floor(fmin/df)));
   int i2f = min(0.5*len, ceil(fmax/df));
-  double vm = hypot(cbuf[i1f][0], cbuf[i1f][1]);
+  double vm = 0;
   int im = i1f;
-  for (int i = i1f; i<i2f; i++){
+  for (int i = i1f+1; i<i2f-1; i++){
     double v = hypot(cbuf[i][0], cbuf[i][1]);
-    if (v>=vm) {vm=v; im=i;}
+    double v1 = hypot(cbuf[i-1][0], cbuf[i-1][1]);
+    double v2 = hypot(cbuf[i+1][0], cbuf[i+1][1]);
+    if (v>v1 && v>=v2 && v>=vm) {vm=v; im=i;}
   }
 
-  // second step: find parabolic fit near maximum
   if (im<i1f+1 || im>=i2f-1)
     throw Err() << "Can't find signal frequency";
 
+  // second step: find parabolic fit near maximum
   double x1 = df*(im-1);
   double x2 = df*im;
   double x3 = df*(im+1);
