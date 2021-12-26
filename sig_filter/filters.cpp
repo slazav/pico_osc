@@ -966,9 +966,10 @@ fitn(ostream & ff, const Signal & s, const int argc, char **argv) {
 
   double fmin=0, fmax=+HUGE_VAL;
   int NS = 1; // number of signals to fit
+  bool sort_fre = 1;
   // parse options (opterr==0, optint==1)
   while(1){
-    int c = getopt(argc, argv, "+F:G:N:");
+    int c = getopt(argc, argv, "+F:G:N:s:");
     if (c==-1) break;
     switch (c){
       case '?': throw Err() << name << ": unknown option: -" << (char)optopt;
@@ -976,6 +977,7 @@ fitn(ostream & ff, const Signal & s, const int argc, char **argv) {
       case 'F': fmin = atof(optarg); break;
       case 'N': NS = atoi(optarg); break;
       case 'G': fmax = atof(optarg); break;
+      case 's': sort_fre = atoi(optarg); break;
     }
   }
   if (argc-optind>0) throw Err() << name << ": extra argument found: " << argv[0];
@@ -1010,15 +1012,16 @@ fitn(ostream & ff, const Signal & s, const int argc, char **argv) {
   }
 
   // sort results by frequency
-
-  class sort_indices{
-    private:
-      std::vector<double> mparr;
-    public:
-      sort_indices(std::vector<double> parr) : mparr(parr) {}
-      bool operator()(int i, int j) const { return mparr[i]<mparr[j]; }
-  };
-  std::sort(ind.begin(), ind.end(), sort_indices(fre));
+  if (sort_fre) {
+    class sort_indices{
+      private:
+        std::vector<double> mparr;
+      public:
+        sort_indices(std::vector<double> parr) : mparr(parr) {}
+        bool operator()(int i, int j) const { return mparr[i]<mparr[j]; }
+    };
+    std::sort(ind.begin(), ind.end(), sort_indices(fre));
+  }
 
   for (int i=0; i< fre.size(); i++){
     ff << s.t0abs_str << " "

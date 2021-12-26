@@ -123,6 +123,7 @@ void help(){
           "       -F <value>  -- low frequency limit\n"
           "       -G <value>  -- high frequency limit\n"
           "       -N <value>  -- number of signals (default 1)\n"
+          "       -s (1|0)    -- sort results by frequency (default 1)\n"
           "     lockin        -- Detect signal using another channel as reference.\n"
           "       Options:\n"
           "       -F <value>  -- low frequency limit\n"
