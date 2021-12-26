@@ -13,35 +13,40 @@ main(){
   // parameters
   double dt = 0.411e-5;
   double f0 = 32674;
-  double w0 = 2*M_PI*f0;
-  double tau = 0.925;
-  double amp = 0.582;
-  double ph  = 0.1234;
-  double noise = 0.5;
+  double rtau = 1.212;
+  double amp  = 0.582;
+  double ph   = 0.1234;
 
-  int N1 = 10;
-  int N2 = 10000;
+  int N = 100000;
+  double df = 1.0/((N-1)*dt);
 
 
-  for (N2=100000; N2<100150; N2++){
-    int N=N2-N1;
+  for (double n2a=0; n2a<2; n2a+=0.1){ // noise/amp ratio
     vector<int16_t> buf(N);
     int max=1<<15;
-    double sc = (amp+noise)/2.0/max;
+    double sc = amp*(1+n2a)/0.5/max;
 
-    // build a pure sine signal
-    for (int i = N1; i<N2; i++){
-      double t = i*dt;
-      double val = 0.5*amp*exp(-t/tau)*sin(w0*t + ph) +
-                   noise*(1.0*random()/RAND_MAX-0.5);
-      buf[i-N1] = val/sc;
+    cout << "# f0, noise/amp,  fre_err, rtau_err, amp_err, ph_err";
+
+    for (double f=f0; f<f0+df; f+=df/30.0){ // freq
+
+      // build signal
+      for (int i = 0; i<N; i++){
+        double t = i*dt;
+        double val = 0.5*exp(-t*rtau)*sin(2*M_PI*f*t + ph)
+                   + n2a*(1.0*random()/RAND_MAX-0.5);
+        buf[i] = val*amp/sc;
+      }
+
+      vector<double> ret = fit_signal(buf.data(), buf.size(), sc, dt, 0);
+      cout << f << " "
+           << n2a << " "
+           <<  (ret[0]-f)/f << " "
+           <<  (ret[1]-rtau)/rtau << " "
+           <<  (ret[2]-amp)/amp   << " "
+           <<  ret[3]-ph << "\n";
     }
-
-    vector<double> ret = fit_signal(buf.data(), buf.size(), sc, dt, N1*dt);
-    cout << setprecision(12) << ret[0] << " "
-         << setprecision(6)  << ret[1] << " "
-         << setprecision(6)  << ret[2] << " "
-         << setprecision(6)  << ret[3] << "\n";
+    cout << "\n";
   }
 
 }

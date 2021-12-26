@@ -1,25 +1,33 @@
 #!/usr/bin/gnuplot
 
+set nokey
+set xlabel "noise/amp ratio"
+
 set title "Frequency, relative error"
 plot  \
- "res.txt" using 0:($1/32674-1) pt 7 title "fre"
+ "res.txt" using 2:3 pt 7,\
+ 4e-7*x lc 0, -4e-7*x lc 0
 
 pause -1
 
-set title "Relaxartion time, relative error"
+set title "Relaxartion, relative error"
 plot  \
- "res.txt" using 0:(1/$2/0.925-1) pt 7 title "tau"
+ "res.txt" using 2:4 pt 7,\
+ 0.06*x lc 0, -0.06*x lc 0
+
 pause -1
 
 
 set title "Amplitude, relative error"
 plot  \
- "res.txt" using 0:($3/0.582-1) pt 7 title "amp"
+ "res.txt" using 2:5 pt 7,\
+ 0.015*x lc 0, -0.015*x lc 0
 
 pause -1
 
 set title "Phase"
 plot  \
- "res.txt" using 0:($4) pt 7 title "amp", 0.1234
+ "res.txt" using 2:6 pt 7,\
+ 0.015*x lc 0, -0.015*x lc 0
 
 pause -1
