@@ -27,13 +27,13 @@ main(){
     int N=N2-N1;
     vector<int16_t> buf(N);
     int max=1<<15;
-    double sc = (amp+noise)/max;
+    double sc = (amp+noise)/2.0/max;
 
     // build a pure sine signal
     for (int i = N1; i<N2; i++){
       double t = i*dt;
-      double val = amp*exp(-t/tau)*sin(w0*t + ph) +
-                   noise*(2.0*random()/RAND_MAX-1.0);
+      double val = 0.5*amp*exp(-t/tau)*sin(w0*t + ph) +
+                   noise*(1.0*random()/RAND_MAX-0.5);
       buf[i-N1] = val/sc;
     }
 
