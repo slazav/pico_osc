@@ -4,11 +4,11 @@
 #include <cstdlib>
 #include <complex>
 #include <vector>
-#include <fftw3.h>
-#include "../fit_signal.h"
+#include "fit_signal/fit_signal.h"
 
 using namespace std;
 
+int
 main(){
   // parameters
   double dt = 0.411e-5;
