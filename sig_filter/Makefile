@@ -4,7 +4,7 @@ PROGRAMS := sig_filter testsig_decay testsig_2decay testsig_noise\
 MOD_SOURCES := filters.cpp
 MOD_HEADERS := filters.h
 
-LDLIBS += -lm -lfftw3 -lpng
+LDLIBS += -lm -lpng
 CPPFLAGS += -g
 
 MODDIR = ../modules
