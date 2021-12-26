@@ -59,6 +59,7 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   double rtau = -sqrt(B*B-4*A*C)*M_PI/2/A;
   double amp0 = C - B*B/(4*A);
 
+
   // third step: fit 1/fft by a linear function
   // adjust index limits
   double dff = rtau;
@@ -71,7 +72,7 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   for (int i = i1f; i<i2f; i++){
     double x = df*i-fre;
     complex<double> y = amp0/complex<double>(cbuf[i][0], cbuf[i][1]);
-    double w = pow(2*(df+rtau)/(df+x), 4.0);
+    double w = pow(1.0/abs(y), 4.0);
     sx2 += x*x*w;
     sx1 += x*w;
     sx0 += w;
