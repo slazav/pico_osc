@@ -42,29 +42,31 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   if (im<i1f+1 || im>=i2f-1)
     throw Err() << "Can't find signal frequency";
 
-  // second step: find parabolic fit near maximum
-  double x1 = df*(im-1);
-  double x2 = df*im;
-  double x3 = df*(im+1);
-  double y1 = hypot(cbuf[im-1][0], cbuf[im-1][1]);
-  double y2 = hypot(cbuf[im  ][0], cbuf[im  ][1]);
-  double y3 = hypot(cbuf[im+1][0], cbuf[im+1][1]);
-  double A = ((y1-y2)/(x1-x2) - (y2-y3)/(x2-x3))/(x1-x3);
-  double B = (y1-y2)/(x1-x2) - A*(x1+x2);
-  double C = y1 - A*x1*x1 - B*x1;
-  // fre - positin of the parabola maximum
-  // rtau - distance between zero crossings
-  // amp0 - value in the maximum
-  double fre = -B/(2*A);
-  double rtau = -sqrt(B*B-4*A*C)*M_PI/2/A;
-  double amp0 = C - B*B/(4*A);
-
+  double amp0 = df;
+  double fre = im*df;
 
   // third step: fit 1/fft by a linear function
-  // adjust index limits
-  double dff = rtau;
-  i1f = max(0.0,     floor((fre-dff)/df));
-  i2f = min(0.5*len, ceil((fre+dff)/df));
+
+  // Adjust index limits.
+  // Select range where amplitude is growing from both ends
+  // towards the maximum at im:
+  int i1 = im;
+  while (1){
+    if (i1 >= i2f) break;
+    if (hypot(cbuf[i1][0], cbuf[i1][1]) <
+        hypot(cbuf[i1+1][0], cbuf[i1+1][1])) break;
+    i1++;
+  }
+  i2f = i1;
+
+  i1 = im;
+  while (1){
+    if (i1 <= i1f) break;
+    if (hypot(cbuf[i1][0], cbuf[i1][1]) <
+        hypot(cbuf[i1-1][0], cbuf[i1-1][1])) break;
+    i1--;
+  }
+  i1f = i1;
 
   // linear fit with weight w
   double sx2=0, sx1=0, sx0=0;
@@ -93,7 +95,7 @@ vector<double> fit_signal(const int16_t *buf, int len, double sc, double dt, dou
   amp*=2*dt;
   // Exact freq an tau:
   fre = fre - (BB/AA).real();
-  rtau = -2*M_PI*(BB/AA).imag();
+  double rtau = -2*M_PI*(BB/AA).imag();
   // Boundary-dependent factor:
   complex<double> v1 = exp(2*M_PI*fre*I*tmin - tmin*rtau);
   complex<double> v2 = exp(2*M_PI*fre*I*tmax - tmax*rtau);
