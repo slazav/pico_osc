@@ -1,7 +1,0 @@
-test signal fitting:
-
-w1rXX -- weight setting  y^4
-w2rXX -- weight setting  1/(x^2 + 1/t)^2
-
-XX -- 1/2 of fitting range in 1/tau
-w1r1.txt means range -1/tau..1/tau

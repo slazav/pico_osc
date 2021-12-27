@@ -1,6 +1,0 @@
-for n in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
-  ../testsig_decay -T 0.1 -A 1 -n $n -F 2132 -D 2.27e-5 -N 44000 > a.sig
-  a=$(../sig_filter -f fit a.sig)
-  echo "$n $a"
-done > a.txt
-
