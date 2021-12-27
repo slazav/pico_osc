@@ -1001,7 +1001,7 @@ fitn(ostream & ff, const Signal & s, const int argc, char **argv) {
     ind.push_back(is);
     fre.push_back(ret[0]);
     rel.push_back(ret[1]);
-    amp.push_back(ret[2]/2);
+    amp.push_back(ret[2]);
     ph.push_back(ret[3]);
 
     // subtract it
