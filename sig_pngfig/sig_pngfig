@@ -310,7 +310,7 @@ sub add_data {
   my $ky = shift;
 
   my @a = split /\s+/, $line;
-  next if scalar @a < 7;
+  die "Bad data line: $line\n" if scalar @a < 6;
 
   my $type  = $a[0];
   my $color = $a[1];
