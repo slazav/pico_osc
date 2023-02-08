@@ -227,11 +227,37 @@ class Pico4224 : public PicoOsc {
 
   // convert time step (seconds) into timebase: dt2tbase(dt);
   uint32_t dt2tbase(float dt){
-    // this works only for 4224, 4224, 4432, 4424
-    if (dt <= 12e-9) return 0;
-    if (dt <= 50e-9) return round(log(8e7*dt));
-    if (dt <= (pow(2,30)-2)/2e7) return floor(2e7*dt+1);
-    return  (1<<30)-1;
+
+    // get oscilloscope model
+    const int16_t buflen=1024;
+    char buf[buflen];
+    int16_t res,len;
+    res = ps4000GetUnitInfo(h,(int8_t *)buf,buflen,&len, PICO_VARIANT_INFO);
+    if (res!=PICO_OK) throw Err() << "GetUnitInfo error: " << pico_err(res);
+    std::string model(buf, len-1); // last char is \r?
+
+    if (model=="4262"){
+      if (dt <= 0) return 0;
+      if (dt <= pow(2,30)/1e7) return floor(1e7*dt-1);
+      return (1<<30)-1;
+    }
+    if (model=="4226" || model=="4227"){
+      if (dt <=   8e-9) return 0;
+      if (dt <=  16e-9) return 1;
+      if (dt <=  32e-9) return 2;
+      if (dt <=  64e-9) return 3;
+      if (dt <= (pow(2,30)-3)/3.125e7) return floor(3.125e7*dt+1);
+      return  (1<<30)-1;
+    }
+    if (model=="4223" || model=="4224" ||
+        model=="4423" || model=="4424"){
+      if (dt <=  25e-9) return 0;
+      if (dt <=  50e-9) return 1;
+      if (dt <= 100e-9) return 2;
+      if (dt <= (pow(2,30)-2)/2e7) return floor(2e7*dt+1);
+      return  (1<<30)-1;
+    }
+    throw Err() << "dt2tbase: unknown oscilloscope model: " << model;
   }
 
   // show data buffer to oscilloscope: set_buff("A",buf);
