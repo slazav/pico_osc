@@ -31,6 +31,8 @@ data from sig files using these marks.
 
 * sig_viewer  -- TCL viewer for signal (and text) files
 
+* sig_python  -- a simple python library for reading sig files
+
 * signals     -- signal examples
 
 * ps3000      -- old programs for ps3000 device: HTTP server + tcl interface
