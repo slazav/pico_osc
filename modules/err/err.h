@@ -7,6 +7,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <exception>
+
 
 /***********************************************************/
 /** A simple class for exceptions.
@@ -32,26 +34,42 @@ catch (Err E){
 ```
 */
 
-class Err {
+class Err: public std::exception {
   std::ostringstream s;    // stream for error messages
+
+  // This buf string is here only because of std::exception interface.
+  // To return `const char*` we need some place where to keep
+  // the message until Err object exists. Unfortunately we
+  // can not fill the buffer in what() method because it is
+  // marked as const.
+  std::string buf;
+
   int c;
 
   public:
     /// Constructor with optional error code.
-    Err(int c_ = -1): c(c_) {}
+    Err(int c_ = -1): s(std::ostringstream::ate), c(c_) {}
 
     /// Copy constructor.
-    Err(const Err & o) { c=o.c; s << o.s.str(); }
+    Err(const Err & o): s(std::ostringstream::ate) {
+      c=o.c; s.str(o.s.str()); buf = s.str();}
+
+    /// operator=
+    Err operator=(const Err & o) {c=o.c; s.str(o.s.str()); buf = o.buf; return *this;}
+
 
     /// Operator << for error messages.
     template <typename T>
-      Err & operator<<(const T & o){ s << o; return *this; }
+      Err & operator<<(const T & o){ s << o; buf = s.str(); return *this; }
 
     /// Get error code.
     int code() const {return c;}
 
     /// Get error message.
     std::string str() const { return s.str(); }
+
+    const char* what() const noexcept override {
+      return buf.c_str(); }
 
 };
 
