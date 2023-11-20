@@ -2,7 +2,7 @@
 # A is genegator output: burst mode 32764Hz, 10V, 100 cycles
 # B is fork output
 
-./pico_rec <<EOF
+./pico_osc <<EOF
 chan_set A 1 DC 10
 chan_set B 1 AC 0.05
 trig_set A 0.1 RISING 0
