@@ -1,0 +1,9 @@
+Source: libpico
+Section: alien
+Priority: extra
+Maintainer: Slava Zavjalov <vl.zavjalov@gmail.com>
+
+Package: libpico
+Architecture: amd64
+Depends: ${shlibs:Depends}
+Description: Pico Technology libraries (repacked)
