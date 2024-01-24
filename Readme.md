@@ -12,10 +12,6 @@ Program res
 
 * pico_adc -- SPP interface to Pico ADC24 devices.
 
-* ads1115 -- Communication with ads1115 ADC cards. I'm using at my Raspberry Pi.
-There is an SPP/command line interface program (ads1115.cpp), but it is not well tested,
-because I'm using more specialized mesurement program (pmeas.cpp).
-
 * sig_filter  -- Program for processing signals recorded by pico_rec program.
 I'm using a simple custom format SIG for recording signals. It contains a
 text header and binary data from oscilloscope. There is also SIGF
