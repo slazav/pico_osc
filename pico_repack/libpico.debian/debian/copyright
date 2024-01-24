@@ -1,0 +1,17 @@
+This package was debianized by the alien program by converting
+a binary .deb package on Mon, 20 Nov 2023 19:16:02 +0000
+
+Copyright: see /usr/share/doc/libpicohrdl/copyright
+
+Information from the binary package:
+Package: libpicohrdl
+Version: 2.0.17-1r1441
+Architecture: amd64
+Maintainer: Pico Support <support@picotech.com>
+Installed-Size: 318
+Depends: debconf (>= 0.5) | debconf-2.0, libc6 (>= 2.3.2), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.1.1), libusb-1.0-0 (>= 2:1.0.8)
+Section: libs
+Priority: extra
+Homepage: <http://www.picotech.com>
+Description: Pico Technology High Resolution Data Logger
+

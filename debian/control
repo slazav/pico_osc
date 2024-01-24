@@ -1,0 +1,10 @@
+Source: pico-rec
+Section: System
+Priority: optional
+Maintainer: Vladislav Zavjalov <vl.zavjalov@gmail.com>
+Build-Depends: libmicrohttpd-dev, libjansson-dev, libcurl-dev
+Standards-Version: 4.0.0
+
+Package: pico-rec
+Architecture: any
+Description: record signals with Picoscope PS4224 and process them

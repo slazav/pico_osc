@@ -18,11 +18,11 @@ rpm_name="libpico"
 
 for arch in $arches; do
 
-  dest="libpico.rpm"
-  rm -rf -- ${dest}
+  dest="libpico.debian"
+  rm -rf -- ${dest}/usr
 
   libdir=/usr/lib
-  [ "$arch" -ne "amd64" ] || libdir=/usr/lib64
+  [ "$arch" != "amd64" ] || libdir=/usr/lib64
   incdir=/usr/include/pico
   docdir=/usr/share/doc/pico
   mkdir -p -- $dest/$libdir $dest/$incdir $dest/$docdir
@@ -31,6 +31,7 @@ for arch in $arches; do
   while read dir name ver rel; do
     [ -n "$name" ] || continue
     fname=${name}_${ver}-${rel}_${arch}.deb
+    oname=${name}-${ver}.orig
     dname=${name}-${ver}
 
     echo Processing: ${name}_${ver}-${rel}_${arch}
@@ -39,34 +40,14 @@ for arch in $arches; do
     [ -f $fname ] ||
       wget http://labs.picotech.com/debian/pool/main/${dir}/${name}/${fname}
 
-    rm -rf -- ${dname}
-    alien --to-rpm -g ${fname}
-    mv ${dname}/opt/picoscope/lib/*               ${dest}/$libdir
-    mv ${dname}/opt/picoscope/include/*/*         ${dest}/$incdir
-    mv ${dname}/opt/picoscope/share/doc/${name}/* ${dest}/$docdir
-    mv ${dname}/usr/share/doc/${name}/*           ${dest}/$docdir
-    rm -rf -- ${dname}
+    rm -rf -- ${dname} ${oname}
+    alien --to-deb -g ${fname}
+    mv ${oname}/opt/picoscope/lib/*               ${dest}/$libdir
+    mv ${oname}/opt/picoscope/include/*/*         ${dest}/$incdir
+    mv ${oname}/opt/picoscope/share/doc/${name}/* ${dest}/$docdir
+    mv ${oname}/usr/share/doc/${name}/*           ${dest}/$docdir
+#    rm -rf -- ${dname}
   done
-
-  cat > ${rpm_name}.spec <<EOF
-Name: ${rpm_name}
-Version: ${rpm_ver}
-Release: 0
-License: non-free
-Summary: PicoScope libraries
-Group: Converted/libs
-%description
-Picoscope libraries
-
-%files
-%dir $incdir
-%dir $docdir
-$libdir/*
-$incdir/*
-$docdir/*
-EOF
-
-  rpmbuild -bb libpico.spec
-  mv -f /home/sla/RPM/RPMS/x86_64/${rpm_name}-${rpm_ver}-0.x86_64.rpm ${rpm_name}-${rpm_ver}-0.$arch.rpm
-#  rm -rf -- ${dest} libpico.spec
 done
+
+cd libpico.debian && ./build
