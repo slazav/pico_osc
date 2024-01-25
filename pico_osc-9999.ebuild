@@ -28,7 +28,6 @@ src_compile() {
 }
 
 src_install() {
-  dobin pico_adc/pico_adc
   dobin pico_osc/pico_osc
   dobin sig_filter/{sig_filter,sig_pnmtopng,sig_pnginfo}
   dobin sig_viewer/sig_viewer

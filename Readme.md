@@ -10,8 +10,6 @@ Program res
 
 * pico_log_py -- Python library for accessing oscilloscopes (by M.Will).
 
-* pico_adc -- SPP interface to Pico ADC24 devices.
-
 * sig_filter  -- Program for processing signals recorded by pico_rec program.
 I'm using a simple custom format SIG for recording signals. It contains a
 text header and binary data from oscilloscope. There is also SIGF
