@@ -1,7 +1,0 @@
-Five forks on a single line,
-measured in Lancaster, 10.2018
-
-five_forks_avr1.sig    -- one signal
-five_forks_avr200.sig  -- 200-signal average, excite first modes (second modes are also visible)
-five_forks_avr200a.sig -- excite second modes (first modes are also visible)
-
