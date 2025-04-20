@@ -1,21 +1,22 @@
-Name:         pico_rec
+Name:         spp-picoosc
 Version:      2.3
 Release:      alt1
 
-%define libname SigLoad
-%define libver  1.0
-
-Summary:      Record signals with Picoscope PS4224 and process them.
+Summary:      SPP interface for Picoscope PS4224
 Group:        System
-URL:          https://github.com/slazav/pico_osc
+URL:          https://github.com/slazav/spp-picoosc
 License:      GPL
 
 Packager:     Vladislav Zavjalov <slazav@altlinux.org>
 
 Source:       %name-%version.tar
 
+# old name
+Provides: pico_osc
+Obsoletes: pico_osc
+
 %description
-pico_rec - record signals with Picoscope PS4224 and process them
+spp-picoosc - SPP interface for Picoscope PS4224
 
 %prep
 %setup -q

@@ -1,7 +1,5 @@
 all:
-	make -C pico_osc
-
-#dir=/usr$(subst ${prefix},,${libdir})/tcl
+	make -C spp-picoosc
 
 DESTDIR    ?=
 prefix     ?= $(DESTDIR)/usr
@@ -17,7 +15,5 @@ srvdir     ?= $(DESTDIR)/usr/lib/systemd/system
 bindir ?= /usr/bin
 
 install: all
-	install -m755 pico_osc/pico_osc ${bindir}
-
-
-
+	mkdir -p ${bindir}
+	install -m755 spp-picoosc/pico_osc ${bindir}
