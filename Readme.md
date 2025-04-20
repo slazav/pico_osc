@@ -1,15 +1,12 @@
-## pico_osc -- programs for recording and processing oscilloscope signals
+## spp-picoosc - SPP interface for Picoscope PS4224
 
 ### Folders:
 
-* pico_rec -- SPP interface to Picoscope 4000 devices. (SPP is a "simple pipe protocol" used
-to communicate with command-line programs via unix pipes. It is used in some of
-my programs: graphene, device2. This allows to use the oscilloscopes in the device2 system,
-but the communication can be also done with simple shell scripts).
-
-* pico_log_py -- Python library for accessing oscilloscopes (by M.Will).
-
-* ps3000      -- old programs for ps3000 device: HTTP server + tcl interface
+* spp-picoosc -- SPP interface for Picoscope 4000 devices. (SPP is a
+"simple pipe protocol" used to communicate with command-line programs
+via unix pipes. It is used in some of my programs: graphene, device2.
+This allows to use the oscilloscopes in the device2 system, but the
+communication can be also done with simple shell scripts).
 
 * pico_repack -- scripts for repacking pico libraries from original DEBs
 to Altlinux RPMs.
