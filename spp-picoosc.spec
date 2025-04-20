@@ -1,5 +1,5 @@
 Name:         spp-picoosc
-Version:      2.3
+Version:      2.4
 Release:      alt1
 
 Summary:      SPP interface for Picoscope PS4224
@@ -31,6 +31,15 @@ spp-picoosc - SPP interface for Picoscope PS4224
 %_bindir/*
 
 %changelog
+* Sun Apr 20 2025 Vladislav Zavjalov <slazav@altlinux.org> 2.4-alt1
+- rename project pico_osc -> spp-picoosc
+- move all other spp interfaces to separate repos (spp-picoadc, spp-ads1115)
+- move tools for handling .sig file format to a separate repo (sig-tools), thanks to @suntar
+- remove old unsupported core (pyphon scripts by M.Will, my old pico3000 interface)
+- add tools for building deb package
+- remove ebuild file for gentoo (@suntar)
+- pico_osc: set correct timebase for all known models
+
 * Tue Oct 13 2020 Vladislav Zavjalov <slazav@altlinux.org> 2.3-alt1
 changes in pico_adc:
  - rewrite code keeping old interface
